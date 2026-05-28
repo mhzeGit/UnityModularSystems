@@ -2,6 +2,8 @@
   <Project Path="com.mhze.firstperson-controller.Runtime.csproj" />
   <Project Path="com.mhze.interact-system.Runtime.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
+  <Project Path="com.mhze.freeform-camera.Runtime.csproj" />
+  <Project Path="com.mhze.freeform-camera.Editor.csproj" />
   <Project Path="com.mhze.firstperson-controller.Editor.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
 </Solution>
