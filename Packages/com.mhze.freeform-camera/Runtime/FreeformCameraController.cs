@@ -114,8 +114,8 @@ namespace MHZE.FreeformCamera
             if (_keyboard.sKey.isPressed) direction -= _transform.forward;
             if (_keyboard.aKey.isPressed) direction -= _transform.right;
             if (_keyboard.dKey.isPressed) direction += _transform.right;
-            if (_keyboard.spaceKey.isPressed) direction += Vector3.up;
-            if (_keyboard.ctrlKey.isPressed) direction += Vector3.down;
+            if (_keyboard.eKey.isPressed) direction += Vector3.up;
+            if (_keyboard.qKey.isPressed) direction += Vector3.down;
 
             if (direction == Vector3.zero) return;
 
