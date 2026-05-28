@@ -402,12 +402,12 @@ namespace MHZE.FirstPersonController
             if (physicsMode == FPCPhysicsMode.CharacterController)
             {
                 if (characterController == null) return;
-                driver = new CharacterDriver(characterController);
+                driver = new CharacterDriver(characterController, settings);
             }
             else
             {
                 if (playerRigidbody == null || playerCapsule == null) return;
-                driver = new PhysicsDriver(playerRigidbody, playerCapsule);
+                driver = new PhysicsDriver(playerRigidbody, playerCapsule, settings);
                 playerRigidbody.isKinematic = false;
                 playerRigidbody.useGravity = false;
             }
@@ -507,9 +507,38 @@ namespace MHZE.FirstPersonController
 
         private void OnDrawGizmosSelected()
         {
+            float height, radius;
+            Vector3 center;
+
+            if (physicsMode == FPCPhysicsMode.CharacterController && characterController != null)
+            {
+                height = characterController.height;
+                radius = characterController.radius;
+                center = characterController.center;
+            }
+            else if (physicsMode == FPCPhysicsMode.Rigidbody && playerCapsule != null)
+            {
+                height = playerCapsule.height;
+                radius = playerCapsule.radius;
+                center = playerCapsule.center;
+            }
+            else
+            {
+                height = 1.8f;
+                radius = 0.3f;
+                center = new Vector3(0f, 0.9f, 0f);
+            }
+
+            float radiusScale = settings != null ? settings.groundCheckRadiusScale : 0.9f;
+            float raise = settings != null ? settings.groundCheckRaise : 0.05f;
+            float depth = settings != null ? settings.groundCheckDepth : 0.1f;
+
+            Vector3 bottom = transform.position + center - Vector3.up * (height * 0.5f);
+            float castDist = (height * 0.5f) - radius + depth;
+            Vector3 checkPos = bottom + Vector3.up * (radius + raise) + Vector3.down * castDist;
+
             Gizmos.color = Application.isPlaying && IsGrounded ? Color.green : Color.red;
-            Vector3 checkPos = transform.position + Vector3.down * (1.8f * 0.5f - 0.05f);
-            Gizmos.DrawWireSphere(checkPos, 0.1f);
+            Gizmos.DrawWireSphere(checkPos, radius * radiusScale);
         }
     }
 }

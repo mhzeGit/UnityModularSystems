@@ -2,14 +2,11 @@ using UnityEngine;
 
 namespace MHZE.FirstPersonController
 {
-    /// <summary>
-    /// IFPCMovementDriver implementation using a Rigidbody + CapsuleCollider (physics-based movement).
-    /// The player can be affected by external forces (explosions, knockback) and interact with physics objects.
-    /// </summary>
     public class PhysicsDriver : IFPCMovementDriver
     {
         private readonly Rigidbody rb;
         private readonly CapsuleCollider capsule;
+        private readonly FPCSettings settings;
         private readonly PhysicsDriverBridge bridge;
 
         private Vector3 pendingVelocity;
@@ -37,23 +34,28 @@ namespace MHZE.FirstPersonController
         {
             get
             {
-                // Ground check via spherecast from capsule base
-                Vector3 origin = rb.position + Vector3.up * (capsule.radius + 0.05f);
-                float castDist = (capsule.height * 0.5f) - capsule.radius + 0.1f;
-                return Physics.SphereCast(origin, capsule.radius * 0.9f, Vector3.down,
-                    out _, castDist);
+                // Spherecast from just above the capsule base downward
+                Vector3 bottom = rb.position
+                    + capsule.center
+                    - Vector3.up * (capsule.height * 0.5f);
+                Vector3 origin = bottom + Vector3.up * (capsule.radius + settings.groundCheckRaise);
+                float castDist = (capsule.height * 0.5f)
+                    - capsule.radius
+                    + settings.groundCheckDepth;
+                return Physics.SphereCast(origin, capsule.radius * settings.groundCheckRadiusScale,
+                    Vector3.down, out _, castDist);
             }
         }
 
-        public PhysicsDriver(Rigidbody rigidbody, CapsuleCollider collider)
+        public PhysicsDriver(Rigidbody rigidbody, CapsuleCollider collider, FPCSettings settings)
         {
             rb = rigidbody;
             capsule = collider;
+            this.settings = settings;
             rb.useGravity = false;
             rb.interpolation = RigidbodyInterpolation.Interpolate;
             rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
 
-            // Attach a bridge MonoBehaviour to handle FixedUpdate
             bridge = rb.gameObject.GetComponent<PhysicsDriverBridge>();
             if (bridge == null)
                 bridge = rb.gameObject.AddComponent<PhysicsDriverBridge>();
@@ -62,14 +64,12 @@ namespace MHZE.FirstPersonController
 
         public void ApplyMotion(Vector3 motion)
         {
-            // Convert motion (world units) to a velocity
             float dt = Time.deltaTime;
             pendingVelocity = dt > 0.001f ? motion / dt : Vector3.zero;
         }
 
         public void Teleport(Vector3 position, Quaternion rotation)
         {
-            // Schedule for next FixedUpdate to avoid physics interference
             pendingTeleport = true;
             teleportPosition = position;
             teleportRotation = rotation;
@@ -89,14 +89,9 @@ namespace MHZE.FirstPersonController
                 return;
             }
 
-            // Apply velocity (includes gravity + horizontal movement from FPCMovement)
             rb.linearVelocity = pendingVelocity;
-
-            // Keep rotation fixed (only yaw changes via FPCLook)
-            // Pitch is handled by the camera child, not the rigidbody
         }
 
-        // Called by the controller when the driver is no longer needed
         public void Cleanup()
         {
             if (bridge != null)
@@ -104,10 +99,6 @@ namespace MHZE.FirstPersonController
                 bridge.FixedUpdateCallback -= OnFixedUpdate;
             }
         }
-
-        // --- Small bridge MonoBehaviour --------------------------
-        // Lives on the same GameObject so we get FixedUpdate calls
-        // without polluting the main controller.
 
         [DefaultExecutionOrder(-100)]
         private class PhysicsDriverBridge : MonoBehaviour
