@@ -35,7 +35,7 @@ namespace MHZE.FirstPersonController
             }
         }
 
-        public void Update(float speed, float deltaTime)
+        public void Update(float speed, bool isGrounded, float deltaTime)
         {
             if (settings == null)
                 return;
@@ -47,7 +47,7 @@ namespace MHZE.FirstPersonController
                 return;
             }
 
-            FPCHeadbobPreset targetPreset = SelectPreset(speed);
+            FPCHeadbobPreset targetPreset = SelectPreset(speed, isGrounded);
             InterpolateTowards(targetPreset, deltaTime);
 
             float targetIntensity = targetPreset.minSpeed > 0.001f
@@ -158,10 +158,13 @@ namespace MHZE.FirstPersonController
             currentRotationAmplitude = preset.rotationAmplitude;
         }
 
-        private FPCHeadbobPreset SelectPreset(float speed)
+        private FPCHeadbobPreset SelectPreset(float speed, bool isGrounded)
         {
             FPCHeadbobPreset best = settings.presets[0];
             currentPresetIndex = 0;
+
+            if (!isGrounded)
+                return best;
 
             if (speed >= settings.minSpeed)
             {

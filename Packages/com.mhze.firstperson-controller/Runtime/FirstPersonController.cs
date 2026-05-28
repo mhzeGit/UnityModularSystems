@@ -327,7 +327,7 @@ namespace MHZE.FirstPersonController
             ApplyFovSpeedEffect();
 
             if (headbob != null)
-                headbob.Update(actualHorizontalSpeed, Time.deltaTime);
+                headbob.Update(actualHorizontalSpeed, movement.IsGrounded, Time.deltaTime);
 
             UpdateState();
             input.ConsumeFrame();
