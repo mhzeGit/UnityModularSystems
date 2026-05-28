@@ -1,0 +1,14 @@
+{
+  "name": "com.mhze.firstperson-controller.Editor",
+  "rootNamespace": "MHZE.FirstPersonController.Editor",
+  "references": [
+    "com.mhze.firstperson-controller.Runtime"
+  ],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": []
+}

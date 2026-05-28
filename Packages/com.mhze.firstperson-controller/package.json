@@ -1,0 +1,16 @@
+{
+  "name": "com.mhze.firstperson-controller",
+  "version": "0.1.0",
+  "displayName": "MHZE First Person Controller",
+  "description": "Modular, compact first person controller with smooth movement, camera, crouch, jump, force look, and force move.",
+  "unity": "2022.3",
+  "keywords": ["fps", "controller", "first person", "movement"],
+  "author": {
+    "name": "mhze",
+    "email": "mhze@example.com",
+    "url": ""
+  },
+  "dependencies": {
+    "com.unity.inputsystem": "1.7.0"
+  }
+}

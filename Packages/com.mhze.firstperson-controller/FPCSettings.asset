@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b1c5e88c903772a4dad2cb94b0eb59dc, type: 3}
+  m_Name: FPCSettings
+  m_EditorClassIdentifier: com.mhze.firstperson-controller.Runtime::MHZE.FirstPersonController.FPCSettings
+  walkSpeed: 4.5
+  runSpeed: 7.5
+  acceleration: 40
+  deceleration: 30
+  airControl: 0.522
+  maxSlopeAngle: 45
+  stepOffset: 0.2
+  crouchHeight: 0.8
+  standHeight: 1.8
+  crouchSpeed: 2.5
+  crouchTransitionSpeed: 8
+  toggleCrouch: 0
+  jumpForce: 1
+  gravity: -15
+  groundedThreshold: 0.1
+  coyoteTime: 0.15
+  jumpBufferTime: 0.1
+  sensitivity: {x: 1, y: 1}
+  smoothTime: 0.04
+  verticalRange: {x: -90, y: 90}
+  invertY: 0
+  inputMultiplier: 0.1
+  lookAtSpeed: 180
+  returnSpeed: 120
+  tolerance: 1
+  moveSpeed: 5
+  arriveDistance: 0.05
+  stoppingDistance: 0.01
+  forceAcceleration: 15
+  debugLogging: 0

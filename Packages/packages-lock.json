@@ -1,5 +1,13 @@
 {
   "dependencies": {
+    "com.mhze.firstperson-controller": {
+      "version": "file:com.mhze.firstperson-controller",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.unity.inputsystem": "1.7.0"
+      }
+    },
     "com.mhze.interact-system": {
       "version": "file:com.mhze.interact-system",
       "depth": 0,
