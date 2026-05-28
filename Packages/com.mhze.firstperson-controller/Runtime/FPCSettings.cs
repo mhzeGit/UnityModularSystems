@@ -46,6 +46,20 @@ namespace MHZE.FirstPersonController
         public float stoppingDistance = 0.01f;
         public float forceAcceleration = 15f;
 
+        [Header("Camera Effects")]
+        [Tooltip("Widen FOV based on horizontal speed.")]
+        public bool enableFovSpeedEffect = true;
+        [Tooltip("Camera FOV when standing still.")]
+        public float fovBaseValue = 80f;
+        [Tooltip("Camera FOV at full speed.")]
+        public float fovMaxValue = 90f;
+        [Tooltip("Horizontal speed at which FOV effect is fully applied.")]
+        public float fovSpeedThreshold = 7f;
+        [Tooltip("How fast FOV widens when accelerating (higher = snappier).")]
+        public float fovIncreaseSpeed = 8f;
+        [Tooltip("How fast FOV narrows when decelerating (higher = snappier).")]
+        public float fovDecreaseSpeed = 4f;
+
         [Header("State")]
         public bool debugLogging = false;
     }

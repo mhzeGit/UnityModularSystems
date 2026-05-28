@@ -44,6 +44,9 @@ namespace MHZE.FirstPersonController
         private FPCState currentState;
         private Transform cachedCameraPivot;
         private float standingCameraHeight;
+        private float currentFov;
+        private Vector3 lastPosition;           // for actual velocity measurement
+        private float actualHorizontalSpeed;    // post-collision |v.xz|
         private UnityEngine.InputSystem.Keyboard keyboard;
         private UnityEngine.InputSystem.Mouse mouse;
 
@@ -190,6 +193,7 @@ namespace MHZE.FirstPersonController
         {
             movement?.Teleport(position, transform.rotation);
             look?.SyncWithTransform();
+            lastPosition = transform.position; // avoid velocity spike after teleport
         }
 
         public void SetRotation(Quaternion rotation)
@@ -202,6 +206,7 @@ namespace MHZE.FirstPersonController
         {
             movement?.Teleport(position, rotation);
             look?.SyncWithTransform();
+            lastPosition = transform.position;
         }
 
         public void EnableControls()
@@ -246,6 +251,11 @@ namespace MHZE.FirstPersonController
 
             if (cachedCameraPivot != null)
                 standingCameraHeight = cachedCameraPivot.localPosition.y;
+
+            if (playerCamera != null)
+                currentFov = playerCamera.fieldOfView;
+
+            lastPosition = transform.position;
         }
 
         private void OnEnable()
@@ -264,7 +274,6 @@ namespace MHZE.FirstPersonController
         {
             if (controlsEnabled)
                 LockCursor();
-
             UpdateState();
         }
 
@@ -280,19 +289,15 @@ namespace MHZE.FirstPersonController
         {
             if (!controlsEnabled || settings == null || movement == null) return;
 
-            // --- Cursor management (via Input System) ------------
+            // --- Cursor management -------------------------------
             if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
-            {
                 UnlockCursor();
-            }
             else if (Cursor.lockState == CursorLockMode.None && mouse != null)
             {
                 if (mouse.leftButton.wasPressedThisFrame
                     || mouse.rightButton.wasPressedThisFrame
                     || mouse.middleButton.wasPressedThisFrame)
-                {
                     LockCursor();
-                }
             }
 
             input.Poll();
@@ -302,7 +307,19 @@ namespace MHZE.FirstPersonController
             look.Update(input, Time.deltaTime);
             forceLook.Update(Time.deltaTime);
 
+            // --- Actual velocity from position delta -------------
+            // This captures the TRUE movement after collision resolution.
+            // Holding W against a wall ? actualHorizontalSpeed ˜ 0.
+            Vector3 displacement = transform.position - lastPosition;
+            lastPosition = transform.position;
+
+            float dt = Time.deltaTime;
+            actualHorizontalSpeed = dt > 0.0001f
+                ? new Vector3(displacement.x, 0f, displacement.z).magnitude / dt
+                : 0f;
+
             ApplyCameraCrouchOffset();
+            ApplyFovSpeedEffect();
             UpdateState();
             input.ConsumeFrame();
 
@@ -409,6 +426,8 @@ namespace MHZE.FirstPersonController
             movement.OnAirborne      += () => OnAirborne?.Invoke();
         }
 
+        // --- Camera crouch offset -------------------------------
+
         private void ApplyCameraCrouchOffset()
         {
             if (cachedCameraPivot == null) return;
@@ -422,6 +441,28 @@ namespace MHZE.FirstPersonController
             pos.y = targetY;
             cachedCameraPivot.localPosition = pos;
         }
+
+        // --- FOV speed effect (actual-velocity-based) ------------
+
+        private void ApplyFovSpeedEffect()
+        {
+            if (playerCamera == null) return;
+            if (!settings.enableFovSpeedEffect) return;
+
+            // actualHorizontalSpeed is computed from position delta,
+            // so it goes to ~0 when the player is blocked by geometry.
+            float t = Mathf.Clamp01(actualHorizontalSpeed / settings.fovSpeedThreshold);
+            float targetFov = Mathf.Lerp(settings.fovBaseValue, settings.fovMaxValue, t);
+
+            float speed = targetFov >= currentFov
+                ? settings.fovIncreaseSpeed
+                : settings.fovDecreaseSpeed;
+
+            currentFov = Mathf.Lerp(currentFov, targetFov, speed * Time.deltaTime);
+            playerCamera.fieldOfView = currentFov;
+        }
+
+        // --- State -----------------------------------------------
 
         private void UpdateState()
         {

@@ -41,4 +41,10 @@ MonoBehaviour:
   arriveDistance: 0.05
   stoppingDistance: 0.01
   forceAcceleration: 15
+  enableFovSpeedEffect: 1
+  fovBaseValue: 80
+  fovMaxValue: 120
+  fovSpeedThreshold: 20
+  fovIncreaseSpeed: 4
+  fovDecreaseSpeed: 3
   debugLogging: 0
