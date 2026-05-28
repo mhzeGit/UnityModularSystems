@@ -1,0 +1,14 @@
+{
+  "name": "com.mhze.freeform-camera.Runtime",
+  "rootNamespace": "MHZE.FreeformCamera",
+  "references": [
+    "Unity.InputSystem"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": []
+}
