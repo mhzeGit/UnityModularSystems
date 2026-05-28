@@ -1,0 +1,14 @@
+{
+  "name": "com.mhze.interact-system",
+  "version": "1.0.0",
+  "displayName": "Interact System",
+  "description": "A modular interaction system with raycast detection, hold-to-interact support, and prompt management.",
+  "unity": "2021.3",
+  "author": {
+    "name": "MHZE",
+    "url": "https://github.com/mhze"
+  },
+  "dependencies": {
+    "com.unity.inputsystem": "1.4.0"
+  }
+}

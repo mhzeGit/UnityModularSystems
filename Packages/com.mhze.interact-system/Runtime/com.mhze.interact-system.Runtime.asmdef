@@ -1,0 +1,14 @@
+{
+  "name": "com.mhze.interact-system.Runtime",
+  "rootNamespace": "MHZE.InteractSystem",
+  "references": [
+    "Unity.InputSystem"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": []
+}

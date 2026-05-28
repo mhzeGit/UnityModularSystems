@@ -1,5 +1,13 @@
 {
   "dependencies": {
+    "com.mhze.interact-system": {
+      "version": "file:com.mhze.interact-system",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.unity.inputsystem": "1.4.0"
+      }
+    },
     "com.unity.ai.navigation": {
       "version": "2.0.12",
       "depth": 0,
