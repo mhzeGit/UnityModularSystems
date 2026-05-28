@@ -39,6 +39,7 @@ namespace MHZE.FirstPersonController
         private FPCForceLook forceLook;
         private FPCForceMove forceMove;
         private FPCHeadbob headbob;
+        private FPCCameraEffects cameraEffects;
 
         // State
         private bool controlsEnabled = true;
@@ -195,6 +196,7 @@ namespace MHZE.FirstPersonController
             movement?.Teleport(position, transform.rotation);
             look?.SyncWithTransform();
             headbob?.Snap();
+            cameraEffects?.Snap();
             lastPosition = transform.position; // avoid velocity spike after teleport
         }
 
@@ -203,6 +205,7 @@ namespace MHZE.FirstPersonController
             movement?.Teleport(transform.position, rotation);
             look?.SyncWithTransform();
             headbob?.Snap();
+            cameraEffects?.Snap();
         }
 
         public void SetPositionAndRotation(Vector3 position, Quaternion rotation)
@@ -210,6 +213,7 @@ namespace MHZE.FirstPersonController
             movement?.Teleport(position, rotation);
             look?.SyncWithTransform();
             headbob?.Snap();
+            cameraEffects?.Snap();
             lastPosition = transform.position;
         }
 
@@ -227,6 +231,7 @@ namespace MHZE.FirstPersonController
             UnlockCursor();
             StopForceMove();
             headbob?.Snap();
+            cameraEffects?.Snap();
         }
 
         // --- Cursor management ----------------------------------
@@ -329,6 +334,9 @@ namespace MHZE.FirstPersonController
             if (headbob != null)
                 headbob.Update(actualHorizontalSpeed, movement.IsGrounded, Time.deltaTime);
 
+            if (cameraEffects != null)
+                cameraEffects.Apply(Time.deltaTime);
+
             UpdateState();
             input.ConsumeFrame();
 
@@ -428,11 +436,12 @@ namespace MHZE.FirstPersonController
             forceLook = new FPCForceLook(look, settings);
             forceMove = new FPCForceMove(movement, settings);
             headbob = new FPCHeadbob(playerCamera.transform, settings.headbobSettings);
+            cameraEffects = new FPCCameraEffects(playerCamera.transform, settings);
 
             movement.OnCrouchStarted += () => OnCrouchStarted?.Invoke();
             movement.OnCrouchEnded   += () => OnCrouchEnded?.Invoke();
-            movement.OnJumped        += () => OnJumped?.Invoke();
-            movement.OnGrounded      += () => OnGrounded?.Invoke();
+            movement.OnJumped        += () => { OnJumped?.Invoke(); cameraEffects?.TriggerJump(); };
+            movement.OnGrounded      += () => { OnGrounded?.Invoke(); cameraEffects?.TriggerLanding(); };
             movement.OnAirborne      += () => OnAirborne?.Invoke();
         }
 

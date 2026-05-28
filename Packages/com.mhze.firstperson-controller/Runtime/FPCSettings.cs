@@ -60,6 +60,37 @@ namespace MHZE.FirstPersonController
         [Tooltip("How fast FOV narrows when decelerating (higher = snappier).")]
         public float fovDecreaseSpeed = 4f;
 
+        [Header("Jump / Land Camera Effects")]
+        [Tooltip("Enable procedural camera effects on jump and landing.")]
+        public bool enableJumpLandEffects = true;
+
+        [Header("Jump Effect")]
+        [Tooltip("Duration of the jump camera effect in seconds.")]
+        public float jumpEffectDuration = 0.3f;
+        [Tooltip("Pitch offset over normalized time (0→1). Negative = tilts down.")]
+        public AnimationCurve jumpPitchCurve = new AnimationCurve(
+            new Keyframe(0f, -4f),
+            new Keyframe(0.15f, -1f),
+            new Keyframe(0.3f, 0f)
+        );
+
+        [Header("Landing Effect")]
+        [Tooltip("Duration of the landing camera effect in seconds.")]
+        public float landingEffectDuration = 0.3f;
+        [Tooltip("Pitch offset over normalized time (0→1) on landing.")]
+        public AnimationCurve landingPitchCurve = new AnimationCurve(
+            new Keyframe(0f, 2f),
+            new Keyframe(0.15f, 0.5f),
+            new Keyframe(0.3f, 0f)
+        );
+        [Tooltip("Y position offset over normalized time (0→1) on landing.")]
+        public AnimationCurve landingPositionCurve = new AnimationCurve(
+            new Keyframe(0f, -0.08f),
+            new Keyframe(0.15f, -0.02f),
+            new Keyframe(0.3f, 0f)
+        );
+
+
         [Header("Headbob")]
         [Tooltip("Headbob settings asset. Controls per-state position/rotation oscillation.")]
         public FPCHeadbobSettings headbobSettings;
