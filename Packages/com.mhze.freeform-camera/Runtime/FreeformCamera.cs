@@ -56,10 +56,46 @@ namespace MHZE.FreeformCamera
             public MethodInfo enableMethod;
         }
 
+        private const string PrefToggleKey = "FFC_ToggleKey";
+        private const string PrefBaseSpeed = "FFC_BaseSpeed";
+        private const string PrefBoostMul = "FFC_BoostMultiplier";
+        private const string PrefSmoothTime = "FFC_SmoothTime";
+        private const string PrefLookSens = "FFC_LookSensitivity";
+        private const string PrefInvertY = "FFC_InvertY";
+        private const string PrefEnableCol = "FFC_EnableCollision";
+        private const string PrefColMask = "FFC_CollisionLayerMask";
+        private const string PrefColRadius = "FFC_CollisionRadius";
+        private const string PrefColOffset = "FFC_CollisionOffset";
+
         private void Awake()
         {
             _keyboard = Keyboard.current;
             _suspendEntries = new List<SuspendEntry>();
+            LoadFromPlayerPrefs();
+        }
+
+        private void LoadFromPlayerPrefs()
+        {
+            if (PlayerPrefs.HasKey(PrefToggleKey))
+                toggleKey = (Key)PlayerPrefs.GetInt(PrefToggleKey);
+            if (PlayerPrefs.HasKey(PrefBaseSpeed))
+                baseSpeed = PlayerPrefs.GetFloat(PrefBaseSpeed);
+            if (PlayerPrefs.HasKey(PrefBoostMul))
+                boostMultiplier = PlayerPrefs.GetFloat(PrefBoostMul);
+            if (PlayerPrefs.HasKey(PrefSmoothTime))
+                smoothTime = PlayerPrefs.GetFloat(PrefSmoothTime);
+            if (PlayerPrefs.HasKey(PrefLookSens))
+                lookSensitivity = PlayerPrefs.GetFloat(PrefLookSens);
+            if (PlayerPrefs.HasKey(PrefInvertY))
+                invertY = PlayerPrefs.GetInt(PrefInvertY) == 1;
+            if (PlayerPrefs.HasKey(PrefEnableCol))
+                enableCollision = PlayerPrefs.GetInt(PrefEnableCol) == 1;
+            if (PlayerPrefs.HasKey(PrefColMask))
+                collisionMask = PlayerPrefs.GetInt(PrefColMask);
+            if (PlayerPrefs.HasKey(PrefColRadius))
+                collisionRadius = PlayerPrefs.GetFloat(PrefColRadius);
+            if (PlayerPrefs.HasKey(PrefColOffset))
+                collisionOffset = PlayerPrefs.GetFloat(PrefColOffset);
         }
 
         private void Update()

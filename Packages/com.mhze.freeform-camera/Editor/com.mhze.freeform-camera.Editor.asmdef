@@ -2,7 +2,8 @@
   "name": "com.mhze.freeform-camera.Editor",
   "rootNamespace": "MHZE.FreeformCamera.Editor",
   "references": [
-    "com.mhze.freeform-camera.Runtime"
+    "com.mhze.freeform-camera.Runtime",
+    "Unity.InputSystem"
   ],
   "includePlatforms": ["Editor"],
   "excludePlatforms": [],
