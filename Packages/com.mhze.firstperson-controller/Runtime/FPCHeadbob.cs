@@ -9,11 +9,15 @@ namespace MHZE.FirstPersonController
         private readonly Vector3 defaultLocalPosition;
         private readonly Quaternion defaultLocalRotation;
 
-        private float positionBobTimer;
-        private float rotationBobTimer;
+        private float positionPhase;
+        private float rotationPhase;
         private float bobIntensity;
-        private Vector3 currentPositionOffset;
-        private Vector3 currentRotationOffset;
+        private int currentPresetIndex;
+
+        private float currentPositionFrequency;
+        private float currentRotationFrequency;
+        private Vector3 currentPositionAmplitude;
+        private Vector3 currentRotationAmplitude;
 
         public FPCHeadbob(Transform cameraTransform, FPCHeadbobSettings settings)
         {
@@ -21,103 +25,147 @@ namespace MHZE.FirstPersonController
             this.settings = settings;
             this.defaultLocalPosition = cameraTransform.localPosition;
             this.defaultLocalRotation = cameraTransform.localRotation;
+
+            if (settings != null && settings.presets.Count > 0)
+            {
+                ApplyPresetImmediate(settings.presets[0]);
+                currentPresetIndex = 0;
+            }
         }
 
-        public void Update(float speed, bool isGrounded, bool isMoving, bool isCrouching, bool isSprinting, float deltaTime)
+        public void Update(float speed, float deltaTime)
         {
-            if (settings == null || !settings.enabled)
+            if (settings == null)
+                return;
+
+            if (!settings.enabled)
             {
-                if (HasOffset())
-                    Reset();
+                if (bobIntensity > 0f)
+                    SnapToDefault();
                 return;
             }
 
-            FPCHeadbobPreset preset = SelectPreset(isMoving, isGrounded, isCrouching, isSprinting);
-            if (preset == null)
-            {
-                if (HasOffset())
-                    Reset();
-                return;
-            }
+            FPCHeadbobPreset targetPreset = SelectPreset(speed);
+            InterpolateTowards(targetPreset, deltaTime);
 
-            bool isIdle = isGrounded && !isMoving && !isCrouching;
+            float targetIntensity = targetPreset.minSpeed > 0.001f
+                ? Mathf.Clamp01(speed / targetPreset.minSpeed)
+                : 1f;
 
-            float targetIntensity;
-            if (isIdle)
-            {
-                targetIntensity = 1f;
-            }
-            else
-            {
-                bool shouldBob = isGrounded && isMoving && speed >= settings.minSpeed;
-                targetIntensity = shouldBob ? Mathf.Clamp01(speed / 4.5f) : 0f;
-            }
-
-            bobIntensity = Mathf.Lerp(bobIntensity, targetIntensity,
-                settings.smoothing * deltaTime);
+            bobIntensity = Mathf.Lerp(bobIntensity, targetIntensity, settings.smoothing * deltaTime);
 
             if (bobIntensity > 0.005f)
             {
-                float dtAdvance = isIdle ? deltaTime : speed * deltaTime;
+                positionPhase += currentPositionFrequency * deltaTime;
+                rotationPhase += currentRotationFrequency * deltaTime;
 
-                positionBobTimer += dtAdvance;
-                rotationBobTimer += dtAdvance;
-
-                float posX = Mathf.Cos(positionBobTimer * preset.positionFrequency) * preset.positionAmplitude.x;
-                float posY = Mathf.Sin(positionBobTimer * preset.positionFrequency * 2f) * preset.positionAmplitude.y;
-                currentPositionOffset = new Vector3(posX, posY, 0f) * bobIntensity;
-
-                float rotPitch = Mathf.Sin(rotationBobTimer * preset.rotationFrequency * 2f) * preset.rotationAmplitude.x;
-                float rotRoll = Mathf.Cos(rotationBobTimer * preset.rotationFrequency) * preset.rotationAmplitude.y;
-                currentRotationOffset = new Vector3(rotPitch, 0f, rotRoll) * bobIntensity;
+                cameraTransform.localPosition = defaultLocalPosition + CalculatePositionOffset() * bobIntensity;
+                cameraTransform.localRotation = defaultLocalRotation * Quaternion.Euler(CalculateRotationOffset() * bobIntensity);
+            }
+            else if (HasOffset())
+            {
+                ReturnToDefault(deltaTime);
             }
             else
             {
-                positionBobTimer = 0f;
-                rotationBobTimer = 0f;
-                currentPositionOffset = Vector3.Lerp(currentPositionOffset, Vector3.zero,
-                    settings.smoothing * deltaTime);
-                currentRotationOffset = Vector3.Lerp(currentRotationOffset, Vector3.zero,
-                    settings.smoothing * deltaTime);
-
-                if (currentPositionOffset.sqrMagnitude < 0.0001f)
-                    currentPositionOffset = Vector3.zero;
-                if (currentRotationOffset.sqrMagnitude < 0.0001f)
-                    currentRotationOffset = Vector3.zero;
+                positionPhase = 0f;
+                rotationPhase = 0f;
             }
 
-            cameraTransform.localPosition = defaultLocalPosition + currentPositionOffset;
-            cameraTransform.localRotation = defaultLocalRotation * Quaternion.Euler(currentRotationOffset);
+            if (settings.debugLogging)
+            {
+                Debug.Log(
+                    $"[FPC Headbob] Preset[{currentPresetIndex}] Spd={speed:F2} Int={bobIntensity:F3} " +
+                    $"PosAmp={currentPositionAmplitude} RotAmp={currentRotationAmplitude}");
+            }
         }
 
-        public void Reset()
+        public void Snap()
         {
-            positionBobTimer = 0f;
-            rotationBobTimer = 0f;
+            SnapToDefault();
+        }
+
+        private Vector3 CalculatePositionOffset()
+        {
+            return new Vector3(
+                Mathf.Cos(positionPhase) * currentPositionAmplitude.x,
+                Mathf.Sin(positionPhase * 2f) * currentPositionAmplitude.y,
+                Mathf.Sin(positionPhase) * currentPositionAmplitude.z
+            );
+        }
+
+        private Vector3 CalculateRotationOffset()
+        {
+            return new Vector3(
+                Mathf.Sin(rotationPhase * 2f) * currentRotationAmplitude.x,
+                Mathf.Sin(rotationPhase) * currentRotationAmplitude.y,
+                Mathf.Cos(rotationPhase) * currentRotationAmplitude.z
+            );
+        }
+
+        private void SnapToDefault()
+        {
+            positionPhase = 0f;
+            rotationPhase = 0f;
             bobIntensity = 0f;
-            currentPositionOffset = Vector3.zero;
-            currentRotationOffset = Vector3.zero;
             cameraTransform.localPosition = defaultLocalPosition;
             cameraTransform.localRotation = defaultLocalRotation;
+
+            if (settings != null && settings.presets.Count > 0)
+            {
+                ApplyPresetImmediate(settings.presets[0]);
+                currentPresetIndex = 0;
+            }
         }
 
         private bool HasOffset()
         {
-            return currentPositionOffset.sqrMagnitude > 0f
-                || currentRotationOffset.sqrMagnitude > 0f;
+            return Vector3.Distance(cameraTransform.localPosition, defaultLocalPosition) > 0.0001f
+                || Quaternion.Angle(cameraTransform.localRotation, defaultLocalRotation) > 0.01f;
         }
 
-        private FPCHeadbobPreset SelectPreset(bool isMoving, bool isGrounded, bool isCrouching, bool isSprinting)
+        private void ReturnToDefault(float deltaTime)
         {
-            if (!isGrounded)
-                return settings.airborne;
-            if (isCrouching)
-                return settings.crouching;
-            if (!isMoving)
-                return settings.idle;
-            if (isSprinting)
-                return settings.running;
-            return settings.walking;
+            float t = Mathf.Clamp01(settings.smoothing * deltaTime);
+            cameraTransform.localPosition = Vector3.Lerp(cameraTransform.localPosition, defaultLocalPosition, t);
+            cameraTransform.localRotation = Quaternion.Slerp(cameraTransform.localRotation, defaultLocalRotation, t);
+        }
+
+        private void InterpolateTowards(FPCHeadbobPreset target, float deltaTime)
+        {
+            float t = Mathf.Clamp01(settings.smoothing * deltaTime);
+            currentPositionFrequency = Mathf.Lerp(currentPositionFrequency, target.positionFrequency, t);
+            currentRotationFrequency = Mathf.Lerp(currentRotationFrequency, target.rotationFrequency, t);
+            currentPositionAmplitude = Vector3.Lerp(currentPositionAmplitude, target.positionAmplitude, t);
+            currentRotationAmplitude = Vector3.Lerp(currentRotationAmplitude, target.rotationAmplitude, t);
+        }
+
+        private void ApplyPresetImmediate(FPCHeadbobPreset preset)
+        {
+            currentPositionFrequency = preset.positionFrequency;
+            currentRotationFrequency = preset.rotationFrequency;
+            currentPositionAmplitude = preset.positionAmplitude;
+            currentRotationAmplitude = preset.rotationAmplitude;
+        }
+
+        private FPCHeadbobPreset SelectPreset(float speed)
+        {
+            FPCHeadbobPreset best = settings.presets[0];
+            currentPresetIndex = 0;
+
+            if (speed >= settings.minSpeed)
+            {
+                for (int i = 0; i < settings.presets.Count; i++)
+                {
+                    if (speed >= settings.presets[i].minSpeed)
+                    {
+                        best = settings.presets[i];
+                        currentPresetIndex = i;
+                    }
+                }
+            }
+
+            return best;
         }
     }
 }

@@ -13,25 +13,22 @@ MonoBehaviour:
   m_Name: FPCHeadbobSettings
   m_EditorClassIdentifier: com.mhze.firstperson-controller.Runtime::MHZE.FirstPersonController.FPCHeadbobSettings
   enabled: 1
-  smoothing: 6
-  minSpeed: 0.5
-  idle:
-    frequency: 1.5
-    positionAmplitude: {x: 0.005, y: 0.005}
-    rotationAmplitude: {x: 0.1, y: 0.05}
-  walking:
-    frequency: 2
-    positionAmplitude: {x: 0.04, y: 0.03}
-    rotationAmplitude: {x: 0.5, y: 0.3}
-  running:
-    frequency: 6
-    positionAmplitude: {x: 0.06, y: 0.05}
-    rotationAmplitude: {x: 0.8, y: 0.5}
-  crouching:
-    frequency: 3
-    positionAmplitude: {x: 0.02, y: 0.015}
-    rotationAmplitude: {x: 0.2, y: 0.1}
-  airborne:
-    frequency: 2
-    positionAmplitude: {x: 0.01, y: 0.005}
-    rotationAmplitude: {x: 0.1, y: 0.05}
+  smoothing: 8
+  minSpeed: 0.1
+  debugLogging: 0
+  presets:
+  - minSpeed: 0
+    positionFrequency: 1.5
+    positionAmplitude: {x: 0.015, y: 0.01, z: 0.005}
+    rotationFrequency: 2
+    rotationAmplitude: {x: 0.5, y: 0.1, z: 1}
+  - minSpeed: 2
+    positionFrequency: 4
+    positionAmplitude: {x: 0.04, y: 0.03, z: 0.01}
+    rotationFrequency: 4
+    rotationAmplitude: {x: 0.5, y: 0.2, z: 1.5}
+  - minSpeed: 6
+    positionFrequency: 6
+    positionAmplitude: {x: 0.06, y: 0.05, z: 0.015}
+    rotationFrequency: 5
+    rotationAmplitude: {x: 0.8, y: 0.3, z: 2}

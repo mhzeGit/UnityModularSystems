@@ -194,7 +194,7 @@ namespace MHZE.FirstPersonController
         {
             movement?.Teleport(position, transform.rotation);
             look?.SyncWithTransform();
-            headbob?.Reset();
+            headbob?.Snap();
             lastPosition = transform.position; // avoid velocity spike after teleport
         }
 
@@ -202,14 +202,14 @@ namespace MHZE.FirstPersonController
         {
             movement?.Teleport(transform.position, rotation);
             look?.SyncWithTransform();
-            headbob?.Reset();
+            headbob?.Snap();
         }
 
         public void SetPositionAndRotation(Vector3 position, Quaternion rotation)
         {
             movement?.Teleport(position, rotation);
             look?.SyncWithTransform();
-            headbob?.Reset();
+            headbob?.Snap();
             lastPosition = transform.position;
         }
 
@@ -226,7 +226,7 @@ namespace MHZE.FirstPersonController
             input?.Disable();
             UnlockCursor();
             StopForceMove();
-            headbob?.Reset();
+            headbob?.Snap();
         }
 
         // --- Cursor management ----------------------------------
@@ -327,8 +327,7 @@ namespace MHZE.FirstPersonController
             ApplyFovSpeedEffect();
 
             if (headbob != null)
-                headbob.Update(actualHorizontalSpeed, movement.IsGrounded, movement.IsMoving,
-                    movement.IsCrouching, input.SprintHeld, Time.deltaTime);
+                headbob.Update(actualHorizontalSpeed, Time.deltaTime);
 
             UpdateState();
             input.ConsumeFrame();
