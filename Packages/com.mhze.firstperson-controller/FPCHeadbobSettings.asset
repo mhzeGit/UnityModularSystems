@@ -13,22 +13,35 @@ MonoBehaviour:
   m_Name: FPCHeadbobSettings
   m_EditorClassIdentifier: com.mhze.firstperson-controller.Runtime::MHZE.FirstPersonController.FPCHeadbobSettings
   enabled: 1
-  smoothing: 8
+  smoothing: 5
   minSpeed: 0.1
   debugLogging: 0
   presets:
   - minSpeed: 0
-    positionFrequency: 1.5
-    positionAmplitude: {x: 0.015, y: 0.01, z: 0.005}
-    rotationFrequency: 2
-    rotationAmplitude: {x: 0.5, y: 0.1, z: 1}
+    positionFrequency: {x: 2, y: 2, z: 0.5}
+    positionAmplitude: {x: 0.04, y: 0.07, z: 0.1}
+    positionPhaseOffset: {x: 0, y: 0, z: 0}
+    rotationFrequency: {x: 0, y: 0, z: 0}
+    rotationAmplitude: {x: 2, y: 0, z: 0}
+    rotationPhaseOffset: {x: 0, y: 0, z: 0}
   - minSpeed: 2
-    positionFrequency: 4
-    positionAmplitude: {x: 0.04, y: 0.03, z: 0.01}
-    rotationFrequency: 4
-    rotationAmplitude: {x: 0.5, y: 0.2, z: 1.5}
-  - minSpeed: 6
-    positionFrequency: 6
-    positionAmplitude: {x: 0.06, y: 0.05, z: 0.015}
-    rotationFrequency: 5
-    rotationAmplitude: {x: 0.8, y: 0.3, z: 2}
+    positionFrequency: {x: 6, y: 6, z: 10}
+    positionAmplitude: {x: 0.01, y: 0.03, z: 0.005}
+    positionPhaseOffset: {x: 0, y: 0, z: 0}
+    rotationFrequency: {x: 6, y: 3, z: 0}
+    rotationAmplitude: {x: 1, y: 1, z: 0}
+    rotationPhaseOffset: {x: 1.5, y: 0, z: 0}
+  - minSpeed: 4
+    positionFrequency: {x: 10, y: 10, z: 10}
+    positionAmplitude: {x: 0.01, y: 0.05, z: 0.01}
+    positionPhaseOffset: {x: 0, y: 0, z: 0}
+    rotationFrequency: {x: 10, y: 5, z: 10}
+    rotationAmplitude: {x: 1, y: 2, z: 0.5}
+    rotationPhaseOffset: {x: 1.77, y: 0, z: 0}
+  - minSpeed: 7
+    positionFrequency: {x: 20, y: 20, z: 20}
+    positionAmplitude: {x: 0.01, y: 0.02, z: 0.01}
+    positionPhaseOffset: {x: 0, y: 0, z: 0}
+    rotationFrequency: {x: 20, y: 10, z: 20}
+    rotationAmplitude: {x: 1.5, y: 2, z: 0.5}
+    rotationPhaseOffset: {x: 1.5, y: 0, z: 0}

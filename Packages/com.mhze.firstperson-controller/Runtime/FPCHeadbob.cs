@@ -9,13 +9,15 @@ namespace MHZE.FirstPersonController
         private readonly Vector3 defaultLocalPosition;
         private readonly Quaternion defaultLocalRotation;
 
-        private float positionPhase;
-        private float rotationPhase;
+        private Vector3 positionPhase;
+        private Vector3 rotationPhase;
         private float bobIntensity;
         private int currentPresetIndex;
 
-        private float currentPositionFrequency;
-        private float currentRotationFrequency;
+        private Vector3 currentPositionFrequency;
+        private Vector3 currentRotationFrequency;
+        private Vector3 currentPositionPhaseOffset;
+        private Vector3 currentRotationPhaseOffset;
         private Vector3 currentPositionAmplitude;
         private Vector3 currentRotationAmplitude;
 
@@ -56,8 +58,12 @@ namespace MHZE.FirstPersonController
 
             if (bobIntensity > 0.005f)
             {
-                positionPhase += currentPositionFrequency * deltaTime;
-                rotationPhase += currentRotationFrequency * deltaTime;
+                positionPhase.x += currentPositionFrequency.x * deltaTime;
+                positionPhase.y += currentPositionFrequency.y * deltaTime;
+                positionPhase.z += currentPositionFrequency.z * deltaTime;
+                rotationPhase.x += currentRotationFrequency.x * deltaTime;
+                rotationPhase.y += currentRotationFrequency.y * deltaTime;
+                rotationPhase.z += currentRotationFrequency.z * deltaTime;
 
                 cameraTransform.localPosition = defaultLocalPosition + CalculatePositionOffset() * bobIntensity;
                 cameraTransform.localRotation = defaultLocalRotation * Quaternion.Euler(CalculateRotationOffset() * bobIntensity);
@@ -68,8 +74,8 @@ namespace MHZE.FirstPersonController
             }
             else
             {
-                positionPhase = 0f;
-                rotationPhase = 0f;
+                positionPhase = Vector3.zero;
+                rotationPhase = Vector3.zero;
             }
 
             if (settings.debugLogging)
@@ -88,25 +94,25 @@ namespace MHZE.FirstPersonController
         private Vector3 CalculatePositionOffset()
         {
             return new Vector3(
-                Mathf.Cos(positionPhase) * currentPositionAmplitude.x,
-                Mathf.Sin(positionPhase * 2f) * currentPositionAmplitude.y,
-                Mathf.Sin(positionPhase) * currentPositionAmplitude.z
+                Mathf.Sin(positionPhase.x + currentPositionPhaseOffset.x) * currentPositionAmplitude.x,
+                Mathf.Sin(positionPhase.y + currentPositionPhaseOffset.y) * currentPositionAmplitude.y,
+                Mathf.Sin(positionPhase.z + currentPositionPhaseOffset.z) * currentPositionAmplitude.z
             );
         }
 
         private Vector3 CalculateRotationOffset()
         {
             return new Vector3(
-                Mathf.Sin(rotationPhase * 2f) * currentRotationAmplitude.x,
-                Mathf.Sin(rotationPhase) * currentRotationAmplitude.y,
-                Mathf.Cos(rotationPhase) * currentRotationAmplitude.z
+                Mathf.Sin(rotationPhase.x + currentRotationPhaseOffset.x) * currentRotationAmplitude.x,
+                Mathf.Sin(rotationPhase.y + currentRotationPhaseOffset.y) * currentRotationAmplitude.y,
+                Mathf.Sin(rotationPhase.z + currentRotationPhaseOffset.z) * currentRotationAmplitude.z
             );
         }
 
         private void SnapToDefault()
         {
-            positionPhase = 0f;
-            rotationPhase = 0f;
+            positionPhase = Vector3.zero;
+            rotationPhase = Vector3.zero;
             bobIntensity = 0f;
             cameraTransform.localPosition = defaultLocalPosition;
             cameraTransform.localRotation = defaultLocalRotation;
@@ -134,8 +140,10 @@ namespace MHZE.FirstPersonController
         private void InterpolateTowards(FPCHeadbobPreset target, float deltaTime)
         {
             float t = Mathf.Clamp01(settings.smoothing * deltaTime);
-            currentPositionFrequency = Mathf.Lerp(currentPositionFrequency, target.positionFrequency, t);
-            currentRotationFrequency = Mathf.Lerp(currentRotationFrequency, target.rotationFrequency, t);
+            currentPositionFrequency = Vector3.Lerp(currentPositionFrequency, target.positionFrequency, t);
+            currentRotationFrequency = Vector3.Lerp(currentRotationFrequency, target.rotationFrequency, t);
+            currentPositionPhaseOffset = Vector3.Lerp(currentPositionPhaseOffset, target.positionPhaseOffset, t);
+            currentRotationPhaseOffset = Vector3.Lerp(currentRotationPhaseOffset, target.rotationPhaseOffset, t);
             currentPositionAmplitude = Vector3.Lerp(currentPositionAmplitude, target.positionAmplitude, t);
             currentRotationAmplitude = Vector3.Lerp(currentRotationAmplitude, target.rotationAmplitude, t);
         }
@@ -144,6 +152,8 @@ namespace MHZE.FirstPersonController
         {
             currentPositionFrequency = preset.positionFrequency;
             currentRotationFrequency = preset.rotationFrequency;
+            currentPositionPhaseOffset = preset.positionPhaseOffset;
+            currentRotationPhaseOffset = preset.rotationPhaseOffset;
             currentPositionAmplitude = preset.positionAmplitude;
             currentRotationAmplitude = preset.rotationAmplitude;
         }
