@@ -1,5 +1,6 @@
 using UnityEditor;
 using UnityEngine;
+using System.IO;
 
 namespace MHZE.FirstPersonController.Editor
 {
@@ -21,7 +22,7 @@ namespace MHZE.FirstPersonController.Editor
 
         // --- GameObject menu entries -----------------------------
 
-        private const float EyeHeight = 1.65f; // standHeight - 0.15
+        private const float EyeHeight = 1.65f;
 
         [MenuItem("GameObject/MHZE/First Person Controller/Character Controller", false, 10)]
         private static void CreateCharacterFPC() => CreateFPC(FPCPhysicsMode.CharacterController);
@@ -40,7 +41,6 @@ namespace MHZE.FirstPersonController.Editor
             var fpc = go.AddComponent<FirstPersonController>();
             var so = new SerializedObject(fpc);
 
-            // Add collider components + set pivot references via MigrateComponents
             so.FindProperty("physicsMode").enumValueIndex = (int)mode;
             so.ApplyModifiedProperties();
 
@@ -48,7 +48,16 @@ namespace MHZE.FirstPersonController.Editor
             editor.MigrateComponents();
             DestroyImmediate(editor);
 
-            // --- Camera hierarchy: CameraPivot at eye height -----
+            // --- Settings: find or create -------------------------
+            var settingsAsset = FindOrCreateSettings();
+            if (settingsAsset != null)
+            {
+                so.Update();
+                so.FindProperty("settings").objectReferenceValue = settingsAsset;
+                so.ApplyModifiedProperties();
+            }
+
+            // --- Camera hierarchy at eye height ------------------
             GameObject pivot = new GameObject("CameraPivot");
             Undo.RegisterCreatedObjectUndo(pivot, "Create FPC Camera");
             pivot.transform.SetParent(go.transform);
@@ -65,7 +74,6 @@ namespace MHZE.FirstPersonController.Editor
             cam.tag = "MainCamera";
             camObj.AddComponent<AudioListener>();
 
-            // Wire references
             so.Update();
             so.FindProperty("playerCamera").objectReferenceValue = cam;
             so.FindProperty("cameraPivot").objectReferenceValue = pivot.transform;
@@ -74,7 +82,37 @@ namespace MHZE.FirstPersonController.Editor
             Selection.activeGameObject = go;
         }
 
-        // --- MigrateComponents (used by ContextMenu + creation) --
+        // --- Settings asset resolver ------------------------------
+
+        /// <summary>Find the first FPCSettings in the project, or create one if none exist.</summary>
+        internal static FPCSettings FindOrCreateSettings()
+        {
+            // Search all assets of type FPCSettings
+            string[] guids = AssetDatabase.FindAssets("t:FPCSettings");
+            if (guids.Length > 0)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guids[0]);
+                return AssetDatabase.LoadAssetAtPath<FPCSettings>(path);
+            }
+
+            // None found — create one in Assets/Settings/
+            string folder = "Assets/Settings";
+            if (!Directory.Exists(folder))
+                Directory.CreateDirectory(folder);
+
+            string assetPath = AssetDatabase.GenerateUniqueAssetPath(
+                $"{folder}/FPCSettings.asset");
+
+            var instance = ScriptableObject.CreateInstance<FPCSettings>();
+            AssetDatabase.CreateAsset(instance, assetPath);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            Debug.Log($"[FPC] Created new settings asset at {assetPath}", instance);
+            return instance;
+        }
+
+        // --- MigrateComponents -----------------------------------
 
         internal void MigrateComponents()
         {
@@ -133,7 +171,6 @@ namespace MHZE.FirstPersonController.Editor
 
             serializedObject.ApplyModifiedProperties();
 
-            // Restore camera pivot to eye height after collider swap
             var pivot = fpc.transform.Find("CameraPivot");
             if (pivot != null)
             {
@@ -164,7 +201,6 @@ namespace MHZE.FirstPersonController.Editor
         {
             serializedObject.Update();
 
-            // Read-only mode indicator
             string modeLabel = physicsMode.enumValueIndex == 0
                 ? "Character Controller" : "Rigidbody (Physics)";
 
@@ -175,7 +211,6 @@ namespace MHZE.FirstPersonController.Editor
             }
             EditorGUILayout.Space(2);
 
-            // References
             EditorGUILayout.LabelField("References", EditorStyles.boldLabel);
 
             if (physicsMode.enumValueIndex == 0)
@@ -192,7 +227,6 @@ namespace MHZE.FirstPersonController.Editor
             EditorGUILayout.Space(4);
             EditorGUILayout.PropertyField(settings);
 
-            // Input Actions
             EditorGUILayout.Space(4);
             EditorGUILayout.LabelField("Input Actions", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(moveAction);
