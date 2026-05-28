@@ -9,7 +9,7 @@ namespace MHZE.FirstPersonController
         [Header("Global")]
         public bool enabled = true;
         [Tooltip("How smoothly the headbob fades in/out and transitions between presets.")]
-        public float smoothing = 8f;
+        public float smoothing = 5f;
         [Tooltip("Global minimum speed. Below this, the first preset (idle) is used.")]
         public float minSpeed = 0.1f;
         [Tooltip("Log headbob state to console.")]
@@ -22,32 +22,42 @@ namespace MHZE.FirstPersonController
             new FPCHeadbobPreset
             {
                 minSpeed = 0f,
-                positionFrequency = new Vector3(1.5f, 3f, 1.5f),
-                positionAmplitude = new Vector3(0.015f, 0.01f, 0.005f),
-                positionPhaseOffset = new Vector3(1.5708f, 0f, 0f),
-                rotationFrequency = new Vector3(4f, 2f, 2f),
-                rotationAmplitude = new Vector3(0.5f, 0.1f, 1f),
-                rotationPhaseOffset = new Vector3(0f, 0f, 1.5708f)
+                positionFrequency = new Vector3(2f, 2f, 0.5f),
+                positionAmplitude = new Vector3(0.04f, 0.07f, 0.1f),
+                positionPhaseOffset = Vector3.zero,
+                rotationFrequency = Vector3.zero,
+                rotationAmplitude = new Vector3(2f, 0f, 0f),
+                rotationPhaseOffset = Vector3.zero
             },
             new FPCHeadbobPreset
             {
                 minSpeed = 2f,
-                positionFrequency = new Vector3(4f, 8f, 4f),
-                positionAmplitude = new Vector3(0.04f, 0.03f, 0.01f),
-                positionPhaseOffset = new Vector3(1.5708f, 0f, 0f),
-                rotationFrequency = new Vector3(8f, 4f, 4f),
-                rotationAmplitude = new Vector3(0.5f, 0.2f, 1.5f),
-                rotationPhaseOffset = new Vector3(0f, 0f, 1.5708f)
+                positionFrequency = new Vector3(6f, 6f, 10f),
+                positionAmplitude = new Vector3(0.01f, 0.03f, 0.005f),
+                positionPhaseOffset = Vector3.zero,
+                rotationFrequency = new Vector3(6f, 3f, 0f),
+                rotationAmplitude = new Vector3(1f, 1f, 0f),
+                rotationPhaseOffset = new Vector3(1.5f, 0f, 0f)
             },
             new FPCHeadbobPreset
             {
-                minSpeed = 6f,
-                positionFrequency = new Vector3(6f, 12f, 6f),
-                positionAmplitude = new Vector3(0.06f, 0.05f, 0.015f),
-                positionPhaseOffset = new Vector3(1.5708f, 0f, 0f),
-                rotationFrequency = new Vector3(10f, 5f, 5f),
-                rotationAmplitude = new Vector3(0.8f, 0.3f, 2f),
-                rotationPhaseOffset = new Vector3(0f, 0f, 1.5708f)
+                minSpeed = 4f,
+                positionFrequency = new Vector3(10f, 10f, 10f),
+                positionAmplitude = new Vector3(0.01f, 0.05f, 0.01f),
+                positionPhaseOffset = Vector3.zero,
+                rotationFrequency = new Vector3(10f, 5f, 10f),
+                rotationAmplitude = new Vector3(1f, 2f, 0.5f),
+                rotationPhaseOffset = new Vector3(1.77f, 0f, 0f)
+            },
+            new FPCHeadbobPreset
+            {
+                minSpeed = 7f,
+                positionFrequency = new Vector3(20f, 20f, 20f),
+                positionAmplitude = new Vector3(0.01f, 0.02f, 0.01f),
+                positionPhaseOffset = Vector3.zero,
+                rotationFrequency = new Vector3(20f, 10f, 20f),
+                rotationAmplitude = new Vector3(1.5f, 2f, 0.5f),
+                rotationPhaseOffset = new Vector3(1.5f, 0f, 0f)
             }
         };
     }
