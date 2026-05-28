@@ -1,223 +1,236 @@
-﻿//Made By MHZE
-
-using System;
+﻿using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class InteractSystem : MonoBehaviour
+namespace MHZE.InteractSystem
 {
-
-    [Header("Inputs")]
-    [SerializeField] InputActionReference InteractInputAction;
-
-    [Header("Raycast Settings")]
-    [SerializeField] private Camera playerCamera;
-    [SerializeField] private LayerMask interactableLayer = -1;
-    [SerializeField] private float maxDistance = 5f;
-
-    [Header("Debug")]
-    [SerializeField] private bool showDebugRay = true;
-
-    [HideInInspector] public IInteractable currentInteractableInterface;
-    [HideInInspector] public GameObject currentInteractableGameobject;
-
-    private RaycastHit? lastRaycastHit;
-
-    public event Action<IInteractable> OnInteractableFound;
-    public event Action<GameObject> OnPerformedInteraction;
-    public event Action OnInteractableLost;
-
-    public event Action<float> OnHoldAttemptStarted;  // only if holdTime > 0
-    public event Action OnHoldAttemptEnded;           // only if holdTime > 0
-
-    public event Action OnCurrentInteractableUpdated; // The main event that gets triggerd each time something changes (anything)
-
-    private bool isHolding;
-    public float HoldTimer;
-
-    void OnEnable()
+    public class InteractSystem : MonoBehaviour, IInteractor
     {
-        InteractInputAction.action.started += InteractInputStarted;
-        InteractInputAction.action.canceled += InteractInputCanceled;
-        InteractInputAction.action.Enable();
-    }
+        [Header("Inputs")]
+        [SerializeField] private InputActionReference interactInputAction;
 
-    void OnDisable()
-    {
-        InteractInputAction.action.started -= InteractInputStarted;
-        InteractInputAction.action.canceled -= InteractInputCanceled;
-        InteractInputAction.action.Disable();
-    }
+        [Header("Raycast Settings")]
+        [SerializeField] private Camera playerCamera;
+        [SerializeField] private LayerMask interactableLayer = -1;
+        [SerializeField] private float maxDistance = 5f;
 
-    void InteractInputStarted(InputAction.CallbackContext context)
-    {
-        if (currentInteractableInterface == null) return;
-        if (currentInteractableInterface.GetIsInteractable() != true) return; // checking if interactable item is acctully interactable or not.
-        float holdTime = currentInteractableInterface.GetInteractHoldTime();
+        [Header("Debug")]
+        [SerializeField] private bool showDebugRay = true;
 
-        if (holdTime > 0f)
+        public IInteractable CurrentInteractable { get; private set; }
+        public GameObject CurrentInteractableObject { get; private set; }
+        Camera IInteractor.PlayerCamera => playerCamera;
+
+        public string InteractionBindingDisplayString
         {
-            isHolding = true;
-            HoldTimer = 0f;
-
-            OnHoldAttemptStarted?.Invoke(holdTime);
-
-            if (currentInteractableInterface is InteractableItemBase item)
-                item.TriggerHoldStarted(holdTime);
-        }
-        else
-        {
-            currentInteractableInterface.OnInteract();
-            OnPerformedInteraction?.Invoke(currentInteractableGameobject);
-        }
-    }
-
-    void InteractInputCanceled(InputAction.CallbackContext context)
-    {
-        if (currentInteractableInterface is InteractableItemBase item)
-        {
-            if (currentInteractableInterface.GetInteractHoldTime() > 0f)
+            get
             {
-                OnHoldAttemptEnded?.Invoke();
-                item.TriggerHoldEnded();
-            }
-
-            item.TriggerInteractReleased();
-        }
-
-        isHolding = false;
-        HoldTimer = 0f;
-    }
-
-    void Update()
-    {
-        PerformRaycast();
-        DrawDebugRay();
-
-        if (isHolding && currentInteractableInterface != null)
-        {
-            HoldTimer += Time.deltaTime;
-            float holdTime = currentInteractableInterface.GetInteractHoldTime();
-
-            if (holdTime > 0f && HoldTimer >= holdTime)
-            {
-                currentInteractableInterface.OnInteract();
-                OnPerformedInteraction?.Invoke(currentInteractableGameobject);
-
-                if (currentInteractableInterface is InteractableItemBase item)
-                    item.TriggerHoldEnded();
-
-                OnHoldAttemptEnded?.Invoke();
-
-                isHolding = false;
-                HoldTimer = 0f;
+                if (interactInputAction == null) return "E";
+                return interactInputAction.action.GetBindingDisplayString(0);
             }
         }
-    }
 
-    private void DrawDebugRay()
-    {
-        if (!showDebugRay || playerCamera == null) return;
+        private RaycastHit? lastRaycastHit;
+        private RaycastHit[] raycastHitBuffer = new RaycastHit[8];
 
-        Ray ray = playerCamera.ViewportPointToRay(Vector3.one * 0.5f);
-        Vector3 endPoint;
+        public event Action<IInteractable, IInteractor> OnInteractableFound;
+        public event Action<GameObject, IInteractor> OnPerformedInteraction;
+        public event Action<IInteractable, IInteractor> OnInteractableLost;
 
-        if (lastRaycastHit.HasValue)
+        public event Action<float> OnHoldAttemptStarted;
+        public event Action OnHoldAttemptEnded;
+
+        public event Action OnCurrentInteractableUpdated;
+
+        private bool isHolding;
+        private float holdTimer;
+
+        void OnEnable()
         {
-            endPoint = lastRaycastHit.Value.point;
-            bool hitInteractable = currentInteractableInterface != null;
-            Debug.DrawLine(ray.origin, endPoint, hitInteractable ? Color.green : Color.yellow);
-            Debug.DrawLine(endPoint, ray.origin + ray.direction * maxDistance, Color.red);
+            if (interactInputAction == null)
+            {
+                Debug.LogWarning("InteractInputAction is not assigned in " + name, this);
+                return;
+            }
+            interactInputAction.action.started += InteractInputStarted;
+            interactInputAction.action.canceled += InteractInputCanceled;
+            interactInputAction.action.Enable();
         }
-        else
+
+        void OnDisable()
         {
-            endPoint = ray.origin + ray.direction * maxDistance;
-            Debug.DrawLine(ray.origin, endPoint, Color.red);
+            if (interactInputAction == null) return;
+            interactInputAction.action.started -= InteractInputStarted;
+            interactInputAction.action.canceled -= InteractInputCanceled;
+            interactInputAction.action.Disable();
         }
-    }
 
-    private void PerformRaycast()
-    {
-        if (playerCamera == null) return;
-
-        Ray ray = playerCamera.ViewportPointToRay(Vector3.one * 0.5f);
-
-        if (Physics.Raycast(ray, out RaycastHit hit, maxDistance, interactableLayer))
+        void InteractInputStarted(InputAction.CallbackContext context)
         {
-            lastRaycastHit = hit;
-            CheckInteractable(hit.collider.gameObject);
+            if (CurrentInteractable == null || !CurrentInteractable.IsInteractable) return;
+
+            float holdTime = CurrentInteractable.HoldTime;
+
+            if (holdTime > 0f)
+            {
+                isHolding = true;
+                holdTimer = 0f;
+                OnHoldAttemptStarted?.Invoke(holdTime);
+            }
+            else
+            {
+                CurrentInteractable.OnInteract(this);
+                OnPerformedInteraction?.Invoke(CurrentInteractableObject, this);
+            }
         }
-        else
+
+        void InteractInputCanceled(InputAction.CallbackContext context)
         {
+            if (CurrentInteractable != null)
+                CurrentInteractable.OnInteractReleased(this);
+
+            if (isHolding)
+                OnHoldAttemptEnded?.Invoke();
+
+            isHolding = false;
+            holdTimer = 0f;
+        }
+
+        void Update()
+        {
+            if (CurrentInteractableObject == null && CurrentInteractable != null)
+                OnLostObjectPerformed();
+
+            PerformRaycast();
+            DrawDebugRay();
+
+            if (isHolding && CurrentInteractable != null)
+            {
+                holdTimer += Time.deltaTime;
+                float holdTime = CurrentInteractable.HoldTime;
+
+                if (holdTime > 0f && holdTimer >= holdTime)
+                {
+                    CurrentInteractable.OnInteract(this);
+                    OnPerformedInteraction?.Invoke(CurrentInteractableObject, this);
+                    OnHoldAttemptEnded?.Invoke();
+                    isHolding = false;
+                    holdTimer = 0f;
+                }
+            }
+        }
+
+        private void DrawDebugRay()
+        {
+            if (!showDebugRay || playerCamera == null) return;
+
+            Ray ray = playerCamera.ViewportPointToRay(Vector3.one * 0.5f);
+            Vector3 endPoint;
+
+            if (lastRaycastHit.HasValue)
+            {
+                endPoint = lastRaycastHit.Value.point;
+                bool hitInteractable = CurrentInteractable != null;
+                Debug.DrawLine(ray.origin, endPoint, hitInteractable ? Color.green : Color.yellow);
+                Debug.DrawLine(endPoint, ray.origin + ray.direction * maxDistance, Color.red);
+            }
+            else
+            {
+                endPoint = ray.origin + ray.direction * maxDistance;
+                Debug.DrawLine(ray.origin, endPoint, Color.red);
+            }
+        }
+
+        private void PerformRaycast()
+        {
+            if (playerCamera == null) return;
+
+            Ray ray = playerCamera.ViewportPointToRay(Vector3.one * 0.5f);
+            int hitCount = Physics.RaycastNonAlloc(ray, raycastHitBuffer, maxDistance, interactableLayer);
+
+            if (hitCount > 0)
+            {
+                for (int i = 0; i < hitCount; i++)
+                {
+                    RaycastHit hit = raycastHitBuffer[i];
+                    var interactable = hit.collider.GetComponent<IInteractable>();
+                    if (interactable != null)
+                    {
+                        lastRaycastHit = hit;
+                        CheckInteractable(interactable, hit.collider.gameObject);
+                        return;
+                    }
+                }
+            }
+
             lastRaycastHit = null;
             OnLostObjectPerformed();
         }
-    }
 
-    public void OnDetectedObjectPerformed(RaycastHit hitResult)
-    {
-        CheckInteractable(hitResult.collider.gameObject);
-    }
-
-    public void CheckInteractable(GameObject ObjectFound)
-    {
-        if (ObjectFound != null)
+        public void OnDetectedObjectPerformed(RaycastHit hitResult)
         {
-            var interactable = ObjectFound.GetComponent<IInteractable>();
+            var interactable = hitResult.collider.GetComponent<IInteractable>();
             if (interactable != null)
             {
-                SwitchCurrentInteractable(interactable, ObjectFound);
-
-
-                // invoke regardless of interactable state
-                OnInteractableFound?.Invoke(currentInteractableInterface);
-
-
-                // always say "something changed"
-                OnCurrentInteractableUpdated?.Invoke();
-                return;
+                lastRaycastHit = hitResult;
+                CheckInteractable(interactable, hitResult.collider.gameObject);
+            }
+            else
+            {
+                OnLostObjectPerformed();
             }
         }
-        OnLostObjectPerformed();
-    }
 
-    public void OnLostObjectPerformed() // when lost focus from the interactable item in the past (looked away or something blocking the view)
-    {
-        if (currentInteractableInterface != null)
+        private void CheckInteractable(IInteractable interactable, GameObject obj)
         {
+            if (interactable == CurrentInteractable && obj == CurrentInteractableObject)
+                return;
+
             UnsubscribeCurrent();
-            currentInteractableGameobject = null;
-            currentInteractableInterface = null;
-            OnInteractableLost?.Invoke();
+
+            if (CurrentInteractable != null)
+                CurrentInteractable.OnHoverExit(this);
+
+            CurrentInteractable = interactable;
+            CurrentInteractableObject = obj;
+
+            if (CurrentInteractable != null)
+            {
+                CurrentInteractable.OnInteractableUpdated += HandleInteractableUpdated;
+                CurrentInteractable.OnHoverEnter(this);
+            }
+
+            OnInteractableFound?.Invoke(CurrentInteractable, this);
+            OnCurrentInteractableUpdated?.Invoke();
         }
 
-        isHolding = false;
-        HoldTimer = 0f;
+        public void OnLostObjectPerformed()
+        {
+            if (CurrentInteractable != null)
+            {
+                CurrentInteractable.OnHoverExit(this);
+                UnsubscribeCurrent();
 
-        // lost = also a change
-        OnCurrentInteractableUpdated?.Invoke();
-    }
+                OnInteractableLost?.Invoke(CurrentInteractable, this);
 
-    // subscription and unsubscription of each new found interactable item to detect if anything is changed (for example when the isinteractable state change or prompt change) it would let the interacy system know about it.
-    void SwitchCurrentInteractable(IInteractable newInteractable, GameObject obj)
-    {
-        UnsubscribeCurrent();
+                CurrentInteractable = null;
+                CurrentInteractableObject = null;
+            }
 
-        currentInteractableInterface = newInteractable;
-        currentInteractableGameobject = obj;
+            isHolding = false;
+            holdTimer = 0f;
+            OnCurrentInteractableUpdated?.Invoke();
+        }
 
-        if (currentInteractableInterface is InteractableItemBase item)
-            item.OnInteractableUpdated += HandleInteractableUpdated;
-    }
+        private void UnsubscribeCurrent()
+        {
+            if (CurrentInteractable != null)
+                CurrentInteractable.OnInteractableUpdated -= HandleInteractableUpdated;
+        }
 
-    void UnsubscribeCurrent() 
-    {
-        if (currentInteractableInterface is InteractableItemBase item)
-            item.OnInteractableUpdated -= HandleInteractableUpdated;
-    }
-
-    void HandleInteractableUpdated()
-    {
-        OnCurrentInteractableUpdated?.Invoke();
+        private void HandleInteractableUpdated()
+        {
+            OnCurrentInteractableUpdated?.Invoke();
+        }
     }
 }

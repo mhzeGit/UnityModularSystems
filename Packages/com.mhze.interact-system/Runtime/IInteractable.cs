@@ -1,15 +1,19 @@
-// Made By MHZE
 using System;
 
-public interface IInteractable
+namespace MHZE.InteractSystem
 {
-    void OnInteract();
-    bool GetIsInteractable();
-    void SetIsInteractable(bool Bool);
-    bool GetAllowInteractPrompt();
-    void SetAllowInteractPrompt(bool Bool);
-    float GetInteractHoldTime();
-    string GetInteractPrompt(int promptIndex);
-    void SetInteractPrompt(string prefix, string suffix);
-    event Action OnInteractableUpdated;
+    public interface IInteractable
+    {
+        void OnInteract(IInteractor interactor);
+        void OnInteractReleased(IInteractor interactor);
+        void OnHoverEnter(IInteractor interactor);
+        void OnHoverExit(IInteractor interactor);
+
+        bool IsInteractable { get; set; }
+        bool AllowPrompt { get; set; }
+        float HoldTime { get; }
+        string PromptText { get; set; }
+
+        event Action OnInteractableUpdated;
+    }
 }
