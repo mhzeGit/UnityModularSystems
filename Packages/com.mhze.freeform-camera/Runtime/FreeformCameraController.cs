@@ -9,7 +9,6 @@ namespace MHZE.FreeformCamera
     {
         public float baseSpeed = 10f;
         public float boostMultiplier = 2f;
-        public float smoothTime = 0.15f;
         public float lookSensitivity = 3f;
         public bool invertY;
         public bool enableCollision;
@@ -25,7 +24,6 @@ namespace MHZE.FreeformCamera
         private float _pitch;
         private float _yaw;
         private Vector3 _targetPosition;
-        private Vector3 _smoothVelocity;
         private float _speed;
 
         private Keyboard _keyboard;
@@ -126,31 +124,42 @@ namespace MHZE.FreeformCamera
 
         private void ApplyMovement()
         {
-            Vector3 desiredPos = Vector3.SmoothDamp(
-                _transform.position, _targetPosition, ref _smoothVelocity, smoothTime);
+            Vector3 moveDir = _targetPosition - _transform.position;
+            float dist = moveDir.magnitude;
+
+            if (dist <= 0.0001f) return;
+
+            Vector3 dir = moveDir / dist;
 
             if (enableCollision)
             {
-                Vector3 moveDir = desiredPos - _transform.position;
-                float dist = moveDir.magnitude;
-
-                if (dist > 0.0001f)
+                if (Physics.SphereCast(_transform.position, collisionRadius, dir,
+                    out RaycastHit hit, dist + collisionOffset, collisionMask))
                 {
-                    Vector3 dir = moveDir / dist;
-                    if (Physics.SphereCast(_transform.position, collisionRadius, dir,
-                        out RaycastHit hit, dist + collisionOffset, collisionMask))
+                    float maxDist = Mathf.Max(0f, hit.distance - collisionOffset);
+                    float remainder = dist - maxDist;
+
+                    if (remainder > 0.001f)
                     {
-                        Vector3 newPos = _transform.position
-                            + dir * Mathf.Max(0f, hit.distance - collisionOffset);
-                        _targetPosition = newPos;
-                        _smoothVelocity = Vector3.zero;
-                        _transform.position = newPos;
-                        return;
+                        Vector3 slideDir = Vector3.ProjectOnPlane(dir, hit.normal);
+                        if (slideDir.sqrMagnitude > 0.0001f)
+                        {
+                            slideDir.Normalize();
+                            _targetPosition = _transform.position + dir * maxDist + slideDir * remainder;
+                        }
+                        else
+                        {
+                            _targetPosition = _transform.position + dir * maxDist;
+                        }
+                    }
+                    else
+                    {
+                        _targetPosition = _transform.position + dir * maxDist;
                     }
                 }
             }
 
-            _transform.position = desiredPos;
+            _transform.position = _targetPosition;
         }
     }
 }

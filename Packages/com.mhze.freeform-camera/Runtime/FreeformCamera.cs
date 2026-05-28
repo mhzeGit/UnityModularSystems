@@ -148,7 +148,6 @@ namespace MHZE.FreeformCamera
             var ctrl = _freeformCameraObject.AddComponent<FreeformCameraController>();
             ctrl.baseSpeed = baseSpeed;
             ctrl.boostMultiplier = boostMultiplier;
-            ctrl.smoothTime = smoothTime;
             ctrl.lookSensitivity = lookSensitivity;
             ctrl.invertY = invertY;
             ctrl.enableCollision = enableCollision;
