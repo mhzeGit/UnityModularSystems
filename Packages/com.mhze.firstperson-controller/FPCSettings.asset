@@ -47,4 +47,5 @@ MonoBehaviour:
   fovSpeedThreshold: 20
   fovIncreaseSpeed: 4
   fovDecreaseSpeed: 3
+  headbobSettings: {fileID: 11400000, guid: e32c2c92d2f4c3d4b93dd90d03e3edbd, type: 2}
   debugLogging: 0

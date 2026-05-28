@@ -60,6 +60,10 @@ namespace MHZE.FirstPersonController
         [Tooltip("How fast FOV narrows when decelerating (higher = snappier).")]
         public float fovDecreaseSpeed = 4f;
 
+        [Header("Headbob")]
+        [Tooltip("Headbob settings asset. Controls per-state position/rotation oscillation.")]
+        public FPCHeadbobSettings headbobSettings;
+
         [Header("State")]
         public bool debugLogging = false;
     }
