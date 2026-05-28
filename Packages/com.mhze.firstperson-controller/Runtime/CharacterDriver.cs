@@ -26,15 +26,10 @@ namespace MHZE.FirstPersonController
         {
             get
             {
-                // Spherecast from just above the capsule base downward
-                Vector3 bottom = Transform.position
-                    + characterController.center
-                    - Vector3.up * (characterController.height * 0.5f);
-                Vector3 origin = bottom + Vector3.up * (characterController.radius + settings.groundCheckRaise);
-                float castDist = (characterController.height * 0.5f)
-                    - characterController.radius
-                    + settings.groundCheckDepth;
-                return Physics.SphereCast(origin, characterController.radius * settings.groundCheckRadiusScale,
+                float radius = characterController.radius;
+                Vector3 origin = Transform.position + Vector3.up * (radius + 0.05f);
+                float castDist = radius + settings.groundCheckDepth;
+                return Physics.SphereCast(origin, radius * settings.groundCheckRadiusScale,
                     Vector3.down, out _, castDist);
             }
         }

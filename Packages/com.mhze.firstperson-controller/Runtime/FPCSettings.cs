@@ -25,9 +25,7 @@ namespace MHZE.FirstPersonController
         [Tooltip("Radius of the ground check sphere as a fraction of the capsule radius.")]
         [Range(0.1f, 1f)]
         public float groundCheckRadiusScale = 0.9f;
-        [Tooltip("Upward offset from the capsule base where the spherecast starts. Prevents self-grounding on the capsule's own sides.")]
-        public float groundCheckRaise = 0.05f;
-        [Tooltip("Extra distance below the capsule base to cast for ground contact. Larger = easier to stay grounded.")]
+        [Tooltip("Distance below the character's feet to check for ground. Larger = easier to stay grounded.")]
         public float groundCheckDepth = 0.1f;
 
         [Header("Jump")]

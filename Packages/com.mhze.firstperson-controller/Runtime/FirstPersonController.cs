@@ -507,35 +507,19 @@ namespace MHZE.FirstPersonController
 
         private void OnDrawGizmosSelected()
         {
-            float height, radius;
-            Vector3 center;
-
-            if (physicsMode == FPCPhysicsMode.CharacterController && characterController != null)
-            {
-                height = characterController.height;
+            float radius;
+            if (characterController != null)
                 radius = characterController.radius;
-                center = characterController.center;
-            }
-            else if (physicsMode == FPCPhysicsMode.Rigidbody && playerCapsule != null)
-            {
-                height = playerCapsule.height;
+            else if (playerCapsule != null)
                 radius = playerCapsule.radius;
-                center = playerCapsule.center;
-            }
             else
-            {
-                height = 1.8f;
                 radius = 0.3f;
-                center = new Vector3(0f, 0.9f, 0f);
-            }
 
             float radiusScale = settings != null ? settings.groundCheckRadiusScale : 0.9f;
-            float raise = settings != null ? settings.groundCheckRaise : 0.05f;
             float depth = settings != null ? settings.groundCheckDepth : 0.1f;
 
-            Vector3 bottom = transform.position + center - Vector3.up * (height * 0.5f);
-            float castDist = (height * 0.5f) - radius + depth;
-            Vector3 checkPos = bottom + Vector3.up * (radius + raise) + Vector3.down * castDist;
+            Vector3 checkPos = transform.position + Vector3.up * (radius + 0.05f)
+                + Vector3.down * (radius + depth);
 
             Gizmos.color = Application.isPlaying && IsGrounded ? Color.green : Color.red;
             Gizmos.DrawWireSphere(checkPos, radius * radiusScale);
