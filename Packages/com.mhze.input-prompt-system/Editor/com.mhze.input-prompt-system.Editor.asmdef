@@ -1,0 +1,15 @@
+{
+  "name": "com.mhze.input-prompt-system.Editor",
+  "rootNamespace": "MHZE.InputPromptSystem.Editor",
+  "references": [
+    "com.mhze.input-prompt-system.Runtime",
+    "Unity.InputSystem"
+  ],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": []
+}

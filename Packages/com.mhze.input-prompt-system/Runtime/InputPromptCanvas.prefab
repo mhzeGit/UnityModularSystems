@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 5893696141616234843}
   - component: {fileID: 6052029462048712916}
   - component: {fileID: 2263692940918642136}
+  - component: {fileID: 4216859193320948705}
   m_Layer: 5
   m_Name: InputPromptCanvas
   m_TagString: Untagged
@@ -104,6 +105,22 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &4216859193320948705
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1263246490950966168}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc9510b82352e1b4ca97460a934fa74c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.mhze.input-prompt-system.Runtime::MHZE.InputPromptSystem.InputPromptUI
+  promptPrefab: {fileID: 7262219184702004876, guid: 91695c938bdd1a947b83d08777633c95, type: 3}
+  leftAnchor: {fileID: 0}
+  centerAnchor: {fileID: 2825436032346386042}
+  rightAnchor: {fileID: 8470226938717775722}
 --- !u!1 &6222034885932249479
 GameObject:
   m_ObjectHideFlags: 0
