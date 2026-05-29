@@ -21,17 +21,19 @@ public class InputPromptDefinition : ScriptableObject
     public string PrefixText => prefixText;
     public string SuffixText => suffixText;
 
-    public bool MatchesKey(string value)
+    public string ResolveBinding(InputPromptManager.DeviceType deviceType, out string deviceLayoutName, out string controlPath)
     {
-        return !string.IsNullOrWhiteSpace(key)
-               && !string.IsNullOrWhiteSpace(value)
-               && string.Equals(key, value, System.StringComparison.OrdinalIgnoreCase);
+        return ResolveBindingText(deviceType, out deviceLayoutName, out controlPath);
     }
 
     public string BuildDisplayText(InputPromptManager.DeviceType deviceType)
     {
         var bindingText = ResolveBindingText(deviceType, out _, out _);
+        return BuildDisplayText(bindingText);
+    }
 
+    public string BuildDisplayText(string bindingText)
+    {
         if (string.IsNullOrWhiteSpace(bindingText))
         {
             return JoinNonEmpty(prefixText, suffixText);
@@ -42,19 +44,8 @@ public class InputPromptDefinition : ScriptableObject
 
     public bool TryResolveBindingMetadata(InputPromptManager.DeviceType deviceType, out string deviceLayoutName, out string controlPath)
     {
-        _ = ResolveBindingText(deviceType, out deviceLayoutName, out controlPath);
+        _ = ResolveBinding(deviceType, out deviceLayoutName, out controlPath);
         return !string.IsNullOrWhiteSpace(controlPath);
-    }
-
-    public string BuildSuffixText(InputPromptManager.DeviceType deviceType, bool includeBindingText)
-    {
-        var bindingText = ResolveBindingText(deviceType, out _, out _);
-        if (!includeBindingText || string.IsNullOrWhiteSpace(bindingText))
-        {
-            return suffixText;
-        }
-
-        return JoinNonEmpty(bindingText, suffixText);
     }
 
     private string ResolveBindingText(InputPromptManager.DeviceType deviceType, out string deviceLayoutName, out string controlPath)
@@ -82,7 +73,7 @@ public class InputPromptDefinition : ScriptableObject
                 InputBinding.DisplayStringOptions.DontUseShortDisplayNames);
         }
 
-        var fallbackIndex = FindFirstSimpleBindingIndex(action);
+        var fallbackIndex = FindFallbackBindingIndex(action, deviceType);
         if (fallbackIndex < 0)
         {
             return string.Empty;
@@ -105,12 +96,7 @@ public class InputPromptDefinition : ScriptableObject
                 continue;
             }
 
-            if (string.IsNullOrWhiteSpace(binding.groups))
-            {
-                continue;
-            }
-
-            if (binding.groups.Contains(group))
+            if (HasExactBindingGroup(binding.groups, group))
             {
                 return i;
             }
@@ -119,18 +105,51 @@ public class InputPromptDefinition : ScriptableObject
         return -1;
     }
 
-    private static int FindFirstSimpleBindingIndex(InputAction action)
+    private static int FindFallbackBindingIndex(InputAction action, InputPromptManager.DeviceType deviceType)
     {
         for (var i = 0; i < action.bindings.Count; i++)
         {
             var binding = action.bindings[i];
-            if (!binding.isComposite && !binding.isPartOfComposite)
+            if (binding.isComposite || binding.isPartOfComposite)
+            {
+                continue;
+            }
+
+            if (BindingMatchesDevice(binding.path, deviceType))
             {
                 return i;
             }
         }
 
         return -1;
+    }
+
+    private static bool HasExactBindingGroup(string groups, string group)
+    {
+        if (string.IsNullOrEmpty(groups))
+        {
+            return false;
+        }
+
+        foreach (var part in groups.Split(';'))
+        {
+            if (part.Trim() == group)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool BindingMatchesDevice(string path, InputPromptManager.DeviceType deviceType)
+    {
+        if (deviceType == InputPromptManager.DeviceType.Gamepad)
+        {
+            return path.Contains("<Gamepad>");
+        }
+
+        return path.Contains("<Keyboard>") || path.Contains("<Mouse>");
     }
 
     private static string JoinNonEmpty(params string[] parts)

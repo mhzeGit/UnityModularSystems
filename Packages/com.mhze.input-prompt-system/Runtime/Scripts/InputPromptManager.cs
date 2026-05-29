@@ -14,18 +14,70 @@ public class InputPromptManager : MonoBehaviour
         Gamepad
     }
 
-    private class ActivePrompt
+    private abstract class ActivePrompt
     {
         public string PromptId;
-        public InputPromptDefinition Definition;
         public InputPromptView View;
+        public abstract void Refresh(DeviceType currentDevice, InputBindingIconLibrary iconLibrary, InputPromptUI promptUI);
+    }
+
+    private sealed class DefinitionPrompt : ActivePrompt
+    {
+        public InputPromptDefinition Definition;
         public bool HasTextOverride;
         public string OverridePrefix;
         public string OverrideSuffix;
-        public bool IsCustom;
+
+        public override void Refresh(DeviceType currentDevice, InputBindingIconLibrary iconLibrary, InputPromptUI promptUI)
+        {
+            if (View == null)
+            {
+                return;
+            }
+
+            if (Definition == null)
+            {
+                promptUI?.ReleaseView(View);
+                return;
+            }
+
+            var bindingText = Definition.ResolveBinding(currentDevice, out var deviceLayoutName, out var controlPath);
+            Sprite icon = null;
+            if (iconLibrary != null && !string.IsNullOrWhiteSpace(controlPath))
+            {
+                iconLibrary.TryGetIcon(deviceLayoutName, controlPath, out icon);
+            }
+
+            var prefix = HasTextOverride ? OverridePrefix : Definition.PrefixText;
+            var suffix = HasTextOverride ? OverrideSuffix : Definition.SuffixText;
+
+            if (icon == null && !HasTextOverride)
+            {
+                prefix = string.Empty;
+                suffix = Definition.BuildDisplayText(bindingText);
+            }
+
+            View.SetContent(icon, prefix, suffix);
+            View.SetVisible(true);
+        }
+    }
+
+    private sealed class CustomPrompt : ActivePrompt
+    {
         public string CustomPrefix;
         public string CustomSuffix;
         public Sprite CustomIcon;
+
+        public override void Refresh(DeviceType currentDevice, InputBindingIconLibrary iconLibrary, InputPromptUI promptUI)
+        {
+            if (View == null)
+            {
+                return;
+            }
+
+            View.SetContent(CustomIcon, CustomPrefix, CustomSuffix);
+            View.SetVisible(true);
+        }
     }
 
     [Header("Data")]
@@ -42,16 +94,42 @@ public class InputPromptManager : MonoBehaviour
 
     private DeviceType currentDevice = DeviceType.KeyboardMouse;
 
+    private float lastInputTime;
+    private float lastPollTime;
+    private const float PollInterval = 0.25f;
+    private const float DeviceInactivityThreshold = 2f;
+
     public bool PromptSystemEnabled => promptSystemEnabled;
 
     private void OnEnable()
     {
         UnityEngine.InputSystem.InputSystem.onActionChange += HandleActionChange;
+        UnityEngine.InputSystem.InputSystem.onDeviceChange += HandleDeviceChange;
     }
 
     private void OnDisable()
     {
         UnityEngine.InputSystem.InputSystem.onActionChange -= HandleActionChange;
+        UnityEngine.InputSystem.InputSystem.onDeviceChange -= HandleDeviceChange;
+    }
+
+    private void HandleDeviceChange(InputDevice device, InputDeviceChange change)
+    {
+        if (change != InputDeviceChange.Added
+            && change != InputDeviceChange.Removed
+            && change != InputDeviceChange.Reconnected)
+        {
+            return;
+        }
+
+        var detected = DetectDeviceType();
+        if (detected == currentDevice)
+        {
+            return;
+        }
+
+        currentDevice = detected;
+        RefreshAllPrompts();
     }
 
     public void ShowPrompt(string promptKey)
@@ -102,7 +180,7 @@ public class InputPromptManager : MonoBehaviour
             return;
         }
 
-        var prompt = new ActivePrompt
+        var prompt = new DefinitionPrompt
         {
             PromptId = promptId,
             Definition = definition,
@@ -142,11 +220,10 @@ public class InputPromptManager : MonoBehaviour
             return;
         }
 
-        var prompt = new ActivePrompt
+        var prompt = new CustomPrompt
         {
             PromptId = promptId,
             View = view,
-            IsCustom = true,
             CustomPrefix = prefix,
             CustomSuffix = suffix,
             CustomIcon = icon
@@ -203,13 +280,52 @@ public class InputPromptManager : MonoBehaviour
 
     private void Update()
     {
-        var detected = DetectDeviceType();
-        if (detected == currentDevice)
+        var now = Time.unscaledTime;
+        if (now - lastPollTime < PollInterval)
         {
             return;
         }
 
-        currentDevice = detected;
+        lastPollTime = now;
+
+        bool currentUsed;
+        if (currentDevice == DeviceType.KeyboardMouse)
+        {
+            currentUsed = WasKeyboardOrMouseUsed();
+        }
+        else
+        {
+            currentUsed = WasGamepadUsed();
+        }
+
+        if (currentUsed)
+        {
+            lastInputTime = now;
+            return;
+        }
+
+        if (now - lastInputTime < DeviceInactivityThreshold)
+        {
+            return;
+        }
+
+        bool otherUsed;
+        if (currentDevice == DeviceType.KeyboardMouse)
+        {
+            otherUsed = WasGamepadUsed();
+        }
+        else
+        {
+            otherUsed = WasKeyboardOrMouseUsed();
+        }
+
+        if (!otherUsed)
+        {
+            return;
+        }
+
+        currentDevice = currentDevice == DeviceType.KeyboardMouse ? DeviceType.Gamepad : DeviceType.KeyboardMouse;
+        lastInputTime = now;
         RefreshAllPrompts();
     }
 
@@ -289,78 +405,20 @@ public class InputPromptManager : MonoBehaviour
             return;
         }
 
-        var snapshot = new List<ActivePrompt>(activePrompts.Values);
-        for (var i = 0; i < snapshot.Count; i++)
+        foreach (var prompt in activePrompts.Values)
         {
-            RefreshPrompt(snapshot[i]);
+            RefreshPrompt(prompt);
         }
     }
 
     private void RefreshPrompt(ActivePrompt prompt)
     {
-        if (prompt == null || prompt.View == null)
+        if (prompt?.View == null)
         {
             return;
         }
 
-        if (prompt.IsCustom)
-        {
-            prompt.View.SetContent(prompt.CustomIcon, prompt.CustomPrefix, prompt.CustomSuffix);
-            prompt.View.SetVisible(true);
-            return;
-        }
-
-        if (prompt.Definition == null)
-        {
-            if (promptUI != null)
-            {
-                promptUI.ReleaseView(prompt.View);
-            }
-
-            if (!string.IsNullOrWhiteSpace(prompt.PromptId))
-            {
-                activePrompts.Remove(prompt.PromptId);
-            }
-            return;
-        }
-
-        var icon = ResolveIcon(prompt.Definition);
-        var prefix = prompt.HasTextOverride ? prompt.OverridePrefix : prompt.Definition.PrefixText;
-        var suffix = prompt.HasTextOverride ? prompt.OverrideSuffix : prompt.Definition.SuffixText;
-
-        if (icon == null)
-        {
-            if (prompt.HasTextOverride)
-            {
-                prefix = prefix ?? string.Empty;
-                suffix = suffix ?? string.Empty;
-            }
-            else
-            {
-                prefix = string.Empty;
-                suffix = prompt.Definition.BuildDisplayText(currentDevice);
-            }
-        }
-
-        prompt.View.SetContent(icon, prefix, suffix);
-        prompt.View.SetVisible(true);
-    }
-
-    private Sprite ResolveIcon(InputPromptDefinition definition)
-    {
-        if (definition == null || bindingIconLibrary == null)
-        {
-            return null;
-        }
-
-        if (!definition.TryResolveBindingMetadata(currentDevice, out var deviceLayoutName, out var controlPath))
-        {
-            return null;
-        }
-
-        return bindingIconLibrary.TryGetIcon(deviceLayoutName, controlPath, out var icon)
-            ? icon
-            : null;
+        prompt.Refresh(currentDevice, bindingIconLibrary, promptUI);
     }
 
     private void HandleActionChange(object changedObject, InputActionChange change)

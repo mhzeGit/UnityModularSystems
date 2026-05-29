@@ -13,6 +13,18 @@ public class InteractInputPromptMediator : MonoBehaviour
 
     private void OnEnable()
     {
+        if (interactSystem == null)
+        {
+            Debug.LogError("[InteractInputPromptMediator] interactSystem is not assigned.", this);
+            return;
+        }
+
+        if (inputPromptManager == null)
+        {
+            Debug.LogError("[InteractInputPromptMediator] inputPromptManager is not assigned.", this);
+            return;
+        }
+
         if (interactPromptDefinition == null)
         {
             Debug.LogWarning("[InteractInputPromptMediator] interactPromptDefinition is not assigned.", this);
@@ -28,6 +40,11 @@ public class InteractInputPromptMediator : MonoBehaviour
 
     private void OnDisable()
     {
+        if (interactSystem == null)
+        {
+            return;
+        }
+
         interactSystem.OnInteractableFound -= HandleInteractableFound;
         interactSystem.OnInteractableLost -= HandleInteractableLost;
         interactSystem.OnCurrentInteractableUpdated -= HandleCurrentInteractableUpdated;
@@ -38,7 +55,7 @@ public class InteractInputPromptMediator : MonoBehaviour
 
     private void HandleInteractableFound(IInteractable interactable, IInteractor interactor)
     {
-        if (interactPromptDefinition == null) return;
+        if (inputPromptManager == null || interactPromptDefinition == null) return;
 
         if (interactable.AllowPrompt)
         {
@@ -48,6 +65,8 @@ public class InteractInputPromptMediator : MonoBehaviour
 
     private void HandleInteractableLost(IInteractable interactable, IInteractor interactor)
     {
+        if (inputPromptManager == null) return;
+
         if (interactPromptDefinition != null)
         {
             inputPromptManager.HidePrompt(interactPromptDefinition.Key);
@@ -61,6 +80,8 @@ public class InteractInputPromptMediator : MonoBehaviour
 
     private void HandleCurrentInteractableUpdated()
     {
+        if (inputPromptManager == null) return;
+
         var interactable = interactSystem.CurrentInteractable;
         if (interactable != null && interactable.AllowPrompt)
         {
@@ -85,6 +106,8 @@ public class InteractInputPromptMediator : MonoBehaviour
 
     private void HandleHoldAttemptStarted(float holdTime)
     {
+        if (inputPromptManager == null) return;
+
         if (interactPromptDefinition != null)
         {
             inputPromptManager.HidePrompt(interactPromptDefinition.Key);
@@ -103,6 +126,8 @@ public class InteractInputPromptMediator : MonoBehaviour
 
     private void HandleHoldAttemptEnded()
     {
+        if (inputPromptManager == null) return;
+
         if (holdPromptDefinition != null)
         {
             inputPromptManager.HidePrompt(holdPromptDefinition.Key);
@@ -113,6 +138,8 @@ public class InteractInputPromptMediator : MonoBehaviour
 
     private void HandlePerformedInteraction(GameObject obj, IInteractor interactor)
     {
+        if (inputPromptManager == null) return;
+
         if (interactPromptDefinition != null)
         {
             inputPromptManager.HidePrompt(interactPromptDefinition.Key);
@@ -126,7 +153,7 @@ public class InteractInputPromptMediator : MonoBehaviour
 
     private void RefreshPrompt()
     {
-        if (interactPromptDefinition == null) return;
+        if (inputPromptManager == null || interactPromptDefinition == null) return;
 
         var interactable = interactSystem.CurrentInteractable;
         if (interactable != null && interactable.AllowPrompt)

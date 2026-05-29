@@ -5,6 +5,8 @@ namespace MHZE.InputPromptSystem
 {
 public class InputPromptUI : MonoBehaviour
 {
+    private const int MaxPoolSize = 20;
+
     [SerializeField] private InputPromptView promptPrefab;
     [SerializeField] private RectTransform leftAnchor;
     [SerializeField] private RectTransform centerAnchor;
@@ -34,6 +36,12 @@ public class InputPromptUI : MonoBehaviour
 
         if (view == null)
         {
+            if (promptPool.Count >= MaxPoolSize)
+            {
+                Debug.LogWarning($"[InputPromptUI] Pool has reached maximum size ({MaxPoolSize}). Cannot create new view.");
+                return null;
+            }
+
             if (promptPrefab == null)
             {
                 Debug.LogError("[InputPromptUI] Prompt prefab is not assigned.");
@@ -67,6 +75,22 @@ public class InputPromptUI : MonoBehaviour
             {
                 promptPool[i].gameObject.SetActive(false);
             }
+        }
+
+        TrimPool();
+    }
+
+    private void TrimPool()
+    {
+        while (promptPool.Count > MaxPoolSize)
+        {
+            var index = promptPool.Count - 1;
+            var excess = promptPool[index];
+            if (excess != null)
+            {
+                Destroy(excess.gameObject);
+            }
+            promptPool.RemoveAt(index);
         }
     }
 

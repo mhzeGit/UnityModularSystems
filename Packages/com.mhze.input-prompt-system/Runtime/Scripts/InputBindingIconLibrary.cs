@@ -20,9 +20,40 @@ public class InputBindingIconLibrary : ScriptableObject
         public string controlPath;
 
         public Sprite icon;
+
+        [NonSerialized] internal string normalizedControlPath;
+        [NonSerialized] internal string normalizedDeviceLayout;
+
+        internal void Normalize()
+        {
+            normalizedControlPath = string.IsNullOrWhiteSpace(controlPath)
+                ? string.Empty
+                : controlPath.Trim().ToLowerInvariant();
+            normalizedDeviceLayout = string.IsNullOrWhiteSpace(deviceLayout)
+                ? string.Empty
+                : deviceLayout.Trim().ToLowerInvariant();
+        }
     }
 
     [SerializeField] private List<IconEntry> entries = new();
+
+    private void OnEnable()
+    {
+        NormalizeEntries();
+    }
+
+    private void OnValidate()
+    {
+        NormalizeEntries();
+    }
+
+    private void NormalizeEntries()
+    {
+        for (var i = 0; i < entries.Count; i++)
+        {
+            entries[i]?.Normalize();
+        }
+    }
 
     public bool TryGetIcon(string deviceLayout, string controlPath, out Sprite icon)
     {
@@ -35,6 +66,7 @@ public class InputBindingIconLibrary : ScriptableObject
         var normalizedPath = Normalize(controlPath);
         var normalizedLayout = Normalize(deviceLayout);
         var bestScore = -1;
+        Sprite fallbackIcon = null;
 
         for (var i = 0; i < entries.Count; i++)
         {
@@ -44,44 +76,35 @@ public class InputBindingIconLibrary : ScriptableObject
                 continue;
             }
 
-            if (Normalize(entry.controlPath) != normalizedPath)
+            if (entry.normalizedControlPath != normalizedPath)
             {
                 continue;
             }
 
-            var entryLayout = Normalize(entry.deviceLayout);
-
-            var score = GetLayoutMatchScore(normalizedLayout, entryLayout);
-            if (score < 0)
+            var score = GetLayoutMatchScore(normalizedLayout, entry.normalizedDeviceLayout);
+            if (score >= 0)
             {
-                continue;
+                if (score > bestScore)
+                {
+                    icon = entry.icon;
+                    bestScore = score;
+                }
             }
-
-            if (score > bestScore)
+            else if (fallbackIcon == null)
             {
-                icon = entry.icon;
-                bestScore = score;
+                fallbackIcon = entry.icon;
             }
         }
 
-        if (icon != null)
+        if (bestScore >= 0)
         {
             return true;
         }
 
-        for (var i = 0; i < entries.Count; i++)
+        if (fallbackIcon != null)
         {
-            var entry = entries[i];
-            if (entry == null || entry.icon == null)
-            {
-                continue;
-            }
-
-            if (Normalize(entry.controlPath) == normalizedPath)
-            {
-                icon = entry.icon;
-                return true;
-            }
+            icon = fallbackIcon;
+            return true;
         }
 
         return false;
@@ -117,8 +140,9 @@ public class InputBindingIconLibrary : ScriptableObject
                 return 2;
             }
         }
-        catch
+        catch (Exception ex)
         {
+            Debug.LogWarning($"[InputBindingIconLibrary] Failed to compare layouts '{currentLayout}' and '{entryLayout}'. Verify layout names are valid: {ex.Message}");
             return -1;
         }
 
