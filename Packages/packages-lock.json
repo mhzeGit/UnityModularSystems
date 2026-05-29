@@ -10,8 +10,16 @@
       },
       "hash": "78ee5418415953b79c358bfe6355fcc3fde7912b"
     },
+    "com.mhze.firstperson-controller": {
+      "version": "file:com.mhze.firstperson-controller",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.unity.inputsystem": "1.7.0"
+      }
+    },
     "com.mhze.freeform-camera": {
-      "version": "file:com.modular.freeform-camera",
+      "version": "file:com.mhze.freeform-camera",
       "depth": 0,
       "source": "embedded",
       "dependencies": {
@@ -35,47 +43,39 @@
       }
     },
     "com.mhze.unity-editor-navigator": {
-      "version": "https://github.com/mhzeGit/unity-editor-navigator.git",
+      "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Packages/com.mhze.unity-editor-navigator",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "d4dac313d3df8fe6ff42cf771ec57e44c59f2036"
+      "hash": "8c15433a87e71811c878be2490360a84aed5fa26"
+    },
+    "com.mhze.unity-editor-visual-tweaks": {
+      "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Packages/com.mhze.unity-editor-visual-tweaks",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "8c15433a87e71811c878be2490360a84aed5fa26"
     },
     "com.mhze.unity-fast-play-button": {
-      "version": "https://github.com/mhzeGit/unity-fast-play-button.git",
+      "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Packages/com.mhze.unity-fast-play-button",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "fef68e9ecd9d80ae98811cc5592940d517f24f4a"
+      "hash": "8c15433a87e71811c878be2490360a84aed5fa26"
     },
     "com.mhze.unity-folder-colorizer": {
-      "version": "https://github.com/mhzeGit/unity-folder-colorizer.git",
+      "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Packages/com.mhze.unity-folder-colorizer",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "738710f925776e40691d54d36c5a55171e85387d"
+      "hash": "8c15433a87e71811c878be2490360a84aed5fa26"
     },
     "com.mhze.unity-git-integration": {
-      "version": "https://github.com/mhzeGit/unity-git-integration.git",
+      "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Packages/com.mhze.unity-git-integration",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "5e3b0a2b66024719081e5d74eacfcfddfba62b01"
-    },
-    "com.modular.firstperson-controller": {
-      "version": "file:com.modular.firstperson-controller",
-      "depth": 0,
-      "source": "embedded",
-      "dependencies": {
-        "com.unity.inputsystem": "1.7.0"
-      }
-    },
-    "com.mycompany.unity-editor-visual-tweaks": {
-      "version": "https://github.com/mhzeGit/unity-editor-visual-tweaks.git",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "8a4ea8107eb86a2e250760d94b00da2bc5f328e6"
+      "hash": "8c15433a87e71811c878be2490360a84aed5fa26"
     },
     "com.unity.ai.navigation": {
       "version": "2.0.12",
@@ -178,11 +178,11 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.objectsnaptool": {
-      "version": "https://github.com/mhzeGit/unity-object-snap-tool.git",
+      "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Packages/com.unity.objectsnaptool",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "35fa0aa48939749f53af8ed0290eb86aa538b56a"
+      "hash": "8c15433a87e71811c878be2490360a84aed5fa26"
     },
     "com.unity.quick-texture-tools": {
       "version": "https://github.com/mhzeGit/unity-quick-texture-tools.git",
