@@ -1,5 +1,13 @@
 {
   "dependencies": {
+    "com.mhze.unity-folder-colorizer": "https://github.com/mhzeGit/unity-folder-colorizer.git",
+    "com.mhze.unity-fast-play-button": "https://github.com/mhzeGit/unity-fast-play-button.git",
+    "com.mhze.unity-editor-navigator": "https://github.com/mhzeGit/unity-editor-navigator.git",
+    "com.mhze.unity-git-integration": "https://github.com/mhzeGit/unity-git-integration.git",
+    "com.mycompany.unity-editor-visual-tweaks": "https://github.com/mhzeGit/unity-editor-visual-tweaks.git",
+    "com.unity.quick-texture-tools": "https://github.com/mhzeGit/unity-quick-texture-tools.git",
+    "com.unity.objectsnaptool": "https://github.com/mhzeGit/unity-object-snap-tool.git",
+    "com.coplaydev.unity-mcp": "https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#main",
     "com.unity.ai.navigation": "2.0.12",
     "com.unity.collab-proxy": "2.12.4",
     "com.unity.ide.rider": "3.0.39",

@@ -1,5 +1,15 @@
 {
   "dependencies": {
+    "com.coplaydev.unity-mcp": {
+      "version": "https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#main",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {
+        "com.unity.nuget.newtonsoft-json": "3.0.2",
+        "com.unity.test-framework": "1.1.31"
+      },
+      "hash": "78ee5418415953b79c358bfe6355fcc3fde7912b"
+    },
     "com.mhze.firstperson-controller": {
       "version": "file:com.mhze.firstperson-controller",
       "depth": 0,
@@ -23,6 +33,41 @@
       "dependencies": {
         "com.unity.inputsystem": "1.4.0"
       }
+    },
+    "com.mhze.unity-editor-navigator": {
+      "version": "https://github.com/mhzeGit/unity-editor-navigator.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "d4dac313d3df8fe6ff42cf771ec57e44c59f2036"
+    },
+    "com.mhze.unity-fast-play-button": {
+      "version": "https://github.com/mhzeGit/unity-fast-play-button.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "fef68e9ecd9d80ae98811cc5592940d517f24f4a"
+    },
+    "com.mhze.unity-folder-colorizer": {
+      "version": "https://github.com/mhzeGit/unity-folder-colorizer.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "738710f925776e40691d54d36c5a55171e85387d"
+    },
+    "com.mhze.unity-git-integration": {
+      "version": "https://github.com/mhzeGit/unity-git-integration.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "5e3b0a2b66024719081e5d74eacfcfddfba62b01"
+    },
+    "com.mycompany.unity-editor-visual-tweaks": {
+      "version": "https://github.com/mhzeGit/unity-editor-visual-tweaks.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "8a4ea8107eb86a2e250760d94b00da2bc5f328e6"
     },
     "com.unity.ai.navigation": {
       "version": "2.0.12",
@@ -116,6 +161,27 @@
       "source": "registry",
       "dependencies": {},
       "url": "https://packages.unity.com"
+    },
+    "com.unity.nuget.newtonsoft-json": {
+      "version": "3.2.2",
+      "depth": 1,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://packages.unity.com"
+    },
+    "com.unity.objectsnaptool": {
+      "version": "https://github.com/mhzeGit/unity-object-snap-tool.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "35fa0aa48939749f53af8ed0290eb86aa538b56a"
+    },
+    "com.unity.quick-texture-tools": {
+      "version": "https://github.com/mhzeGit/unity-quick-texture-tools.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "73e607df0a08bcb0d91adf69a8a44fdfa70aab84"
     },
     "com.unity.render-pipelines.core": {
       "version": "17.4.0",
