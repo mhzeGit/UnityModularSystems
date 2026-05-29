@@ -10,15 +10,7 @@
       },
       "hash": "78ee5418415953b79c358bfe6355fcc3fde7912b"
     },
-    "com.modular.firstperson-controller": {
-      "version": "file:com.modular.firstperson-controller",
-      "depth": 0,
-      "source": "embedded",
-      "dependencies": {
-        "com.unity.inputsystem": "1.7.0"
-      }
-    },
-    "com.modular.freeform-camera": {
+    "com.mhze.freeform-camera": {
       "version": "file:com.modular.freeform-camera",
       "depth": 0,
       "source": "embedded",
@@ -69,6 +61,14 @@
       "source": "git",
       "dependencies": {},
       "hash": "5e3b0a2b66024719081e5d74eacfcfddfba62b01"
+    },
+    "com.modular.firstperson-controller": {
+      "version": "file:com.modular.firstperson-controller",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.unity.inputsystem": "1.7.0"
+      }
     },
     "com.mycompany.unity-editor-visual-tweaks": {
       "version": "https://github.com/mhzeGit/unity-editor-visual-tweaks.git",

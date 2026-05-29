@@ -1,5 +1,5 @@
 {
-  "name": "com.modular.firstperson-controller",
+  "name": "com.mhze.firstperson-controller",
   "version": "1.2.0",
   "displayName": "First Person Controller",
   "description": "Modular, compact first person controller with smooth movement, camera, crouch, jump, force look, and force move.",

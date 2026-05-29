@@ -1,5 +1,5 @@
 {
-  "name": "com.modular.freeform-camera",
+  "name": "com.mhze.freeform-camera",
   "version": "1.2.0",
   "displayName": "Freeform Camera",
   "description": "Free-fly camera controller with WASD movement, mouse look, speed control, and optional collision. Editor & development build only.",
