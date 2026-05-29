@@ -54,6 +54,10 @@ namespace MHZE.FirstPersonController
         private UnityEngine.InputSystem.Keyboard keyboard;
         private UnityEngine.InputSystem.Mouse mouse;
 
+        // Camera smoothing (unparented follow)
+        private GameObject cameraSmoother;
+        private Vector3 cameraSmoothVelocity;
+
         // --- Context menu ----------------------------------------
 
         [ContextMenu("Switch to Character Controller Mode")]
@@ -199,6 +203,7 @@ namespace MHZE.FirstPersonController
             look?.SyncWithTransform();
             headbob?.Snap();
             cameraEffects?.Snap();
+            SnapCameraSmoother();
             lastPosition = transform.position; // avoid velocity spike after teleport
         }
 
@@ -208,6 +213,7 @@ namespace MHZE.FirstPersonController
             look?.SyncWithTransform();
             headbob?.Snap();
             cameraEffects?.Snap();
+            SnapCameraSmoother();
         }
 
         public void SetPositionAndRotation(Vector3 position, Quaternion rotation)
@@ -216,6 +222,7 @@ namespace MHZE.FirstPersonController
             look?.SyncWithTransform();
             headbob?.Snap();
             cameraEffects?.Snap();
+            SnapCameraSmoother();
             lastPosition = transform.position;
         }
 
@@ -287,6 +294,22 @@ namespace MHZE.FirstPersonController
             if (controlsEnabled)
                 LockCursor();
             UpdateState();
+
+            if (playerCamera != null && cachedCameraPivot != null)
+            {
+                cameraSmoother = new GameObject("CameraSmoother");
+                cameraSmoother.transform.position = cachedCameraPivot.position;
+                cameraSmoother.transform.rotation = cachedCameraPivot.rotation;
+                playerCamera.transform.SetParent(cameraSmoother.transform, true);
+                playerCamera.transform.localPosition = Vector3.zero;
+                playerCamera.transform.localRotation = Quaternion.identity;
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (cameraSmoother != null)
+                Destroy(cameraSmoother);
         }
 
         private void OnApplicationFocus(bool hasFocus)
@@ -332,6 +355,8 @@ namespace MHZE.FirstPersonController
 
             ApplyCameraCrouchOffset();
             ApplyFovSpeedEffect();
+
+            ApplyCameraSmoothing();
 
             if (headbob != null)
                 headbob.Update(actualHorizontalSpeed, movement.IsGrounded, Time.deltaTime);
@@ -461,6 +486,30 @@ namespace MHZE.FirstPersonController
             Vector3 pos = cachedCameraPivot.localPosition;
             pos.y = targetY;
             cachedCameraPivot.localPosition = pos;
+        }
+
+        // --- Camera smoothing (unparented follow) -----------------
+
+        private void ApplyCameraSmoothing()
+        {
+            if (cameraSmoother == null || cachedCameraPivot == null) return;
+
+            cameraSmoother.transform.position = Vector3.SmoothDamp(
+                cameraSmoother.transform.position,
+                cachedCameraPivot.position,
+                ref cameraSmoothVelocity,
+                settings.cameraSmoothTime);
+
+            cameraSmoother.transform.rotation = cachedCameraPivot.rotation;
+        }
+
+        private void SnapCameraSmoother()
+        {
+            if (cameraSmoother == null || cachedCameraPivot == null) return;
+
+            cameraSmoother.transform.position = cachedCameraPivot.position;
+            cameraSmoother.transform.rotation = cachedCameraPivot.rotation;
+            cameraSmoothVelocity = Vector3.zero;
         }
 
         // --- FOV speed effect (actual-velocity-based) ------------

@@ -54,6 +54,10 @@ namespace MHZE.FirstPersonController
         public float stoppingDistance = 0.01f;
         public float forceAcceleration = 15f;
 
+        [Header("Camera Smoothing")]
+        [Tooltip("How quickly the camera follows the pivot when unparented. Higher = smoother but more laggy. Typical range: 0.05–0.15.")]
+        public float cameraSmoothTime = 0.08f;
+
         [Header("Camera Effects")]
         [Tooltip("Widen FOV based on horizontal speed.")]
         public bool enableFovSpeedEffect = true;
