@@ -18,8 +18,8 @@
         "com.unity.inputsystem": "1.7.0"
       }
     },
-    "com.mhze.freeform-camera": {
-      "version": "file:com.mhze.freeform-camera",
+    "com.modular.freeform-camera": {
+      "version": "file:com.modular.freeform-camera",
       "depth": 0,
       "source": "embedded",
       "dependencies": {

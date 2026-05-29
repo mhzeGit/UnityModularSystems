@@ -5,7 +5,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace MHZE.FreeformCamera
+namespace ModularSystems.FreeformCamera
 {
     public class FreeformCameraController : MonoBehaviour
     {

@@ -5,7 +5,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace MHZE.FreeformCamera.Editor
+namespace ModularSystems.FreeformCamera.Editor
 {
     [InitializeOnLoad]
     internal static class FreeformCameraEditorHooks

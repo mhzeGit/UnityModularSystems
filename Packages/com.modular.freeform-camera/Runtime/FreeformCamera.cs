@@ -7,7 +7,7 @@ using System.Reflection;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace MHZE.FreeformCamera
+namespace ModularSystems.FreeformCamera
 {
     public static class FreeformCameraManager
     {

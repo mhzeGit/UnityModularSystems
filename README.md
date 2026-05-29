@@ -4,7 +4,7 @@ Modular Unity packages for first-person controller, interaction systems, and mor
 
 ## Packages
 
-### First Person Controller
+### MHZE First Person Controller
 
 ```
 https://github.com/mhzeGit/mhzeModularSystems.git?path=/Packages/com.modular.firstperson-controller
@@ -15,7 +15,7 @@ Modular, compact first person controller with smooth movement, camera, crouch, j
 ### MHZE Freeform Camera
 
 ```
-https://github.com/mhzeGit/mhzeModularSystems.git?path=/Packages/com.mhze.freeform-camera
+https://github.com/mhzeGit/mhzeModularSystems.git?path=/Packages/com.modular.freeform-camera
 ```
 
 Free-fly camera controller with WASD movement, mouse look, speed control, and optional collision. Editor & development build only.

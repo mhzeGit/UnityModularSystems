@@ -1,8 +1,8 @@
 {
-  "name": "com.mhze.freeform-camera.Editor",
-  "rootNamespace": "MHZE.FreeformCamera.Editor",
+  "name": "com.modular.freeform-camera.Editor",
+  "rootNamespace": "ModularSystems.FreeformCamera.Editor",
   "references": [
-    "com.mhze.freeform-camera.Runtime",
+    "com.modular.freeform-camera.Runtime",
     "Unity.InputSystem"
   ],
   "includePlatforms": ["Editor"],
