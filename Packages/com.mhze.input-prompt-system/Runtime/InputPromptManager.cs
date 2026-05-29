@@ -1,9 +1,11 @@
-// Central controller that manages all input prompts on screen. It detects whether the player is using keyboard+mouse or a gamepad, looks up the right binding icon from the icon library, and spawns or hides prompt UI elements using an object pool. Supports both predefined prompts from a collection and fully custom ones with your own text and icon. Places prompts on left, center, or right anchors and automatically refreshes everything when the player switches input devices.
+// Central controller that manages all input prompts on screen. It detects whether the player is using keyboard+mouse or a gamepad, looks up the right binding icon from the icon library, and coordinates prompt visibility. UI management (pool, anchors, views) is delegated to InputPromptUI. Supports both predefined prompts from a collection and fully custom ones with your own text and icon. Automatically refreshes everything when the player switches input devices.
 
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+namespace MHZE.InputPromptSystem
+{
 public class InputPromptManager : MonoBehaviour
 {
     public enum DeviceType
@@ -31,16 +33,12 @@ public class InputPromptManager : MonoBehaviour
     [SerializeField] private InputBindingIconLibrary bindingIconLibrary;
 
     [Header("UI")]
-    [SerializeField] private InputPromptView promptPrefab;
-    [SerializeField] private RectTransform leftAnchor;
-    [SerializeField] private RectTransform centerAnchor;
-    [SerializeField] private RectTransform rightAnchor;
+    [SerializeField] private InputPromptUI promptUI;
 
     [Header("Settings")]
     [SerializeField] private bool promptSystemEnabled = true;
 
     private readonly Dictionary<string, ActivePrompt> activePrompts = new();
-    private readonly List<InputPromptView> promptPool = new();
 
     private DeviceType currentDevice = DeviceType.KeyboardMouse;
 
@@ -98,21 +96,11 @@ public class InputPromptManager : MonoBehaviour
 
         HidePrompt(promptId);
 
-        var view = GetPooledView();
+        var view = promptUI != null ? promptUI.GetView(definition.Location) : null;
         if (view == null)
         {
             return;
         }
-
-        var parent = GetAnchor(definition.Location);
-        if (parent == null)
-        {
-            Debug.LogWarning($"[InputPromptManager] Missing anchor for location {definition.Location}.");
-            ReleaseView(view);
-            return;
-        }
-
-        view.transform.SetParent(parent, false);
 
         var prompt = new ActivePrompt
         {
@@ -148,21 +136,11 @@ public class InputPromptManager : MonoBehaviour
 
         HidePrompt(promptId);
 
-        var view = GetPooledView();
+        var view = promptUI != null ? promptUI.GetView(location) : null;
         if (view == null)
         {
             return;
         }
-
-        var parent = GetAnchor(location);
-        if (parent == null)
-        {
-            Debug.LogWarning($"[InputPromptManager] Missing anchor for location {location}.");
-            ReleaseView(view);
-            return;
-        }
-
-        view.transform.SetParent(parent, false);
 
         var prompt = new ActivePrompt
         {
@@ -190,7 +168,11 @@ public class InputPromptManager : MonoBehaviour
             return;
         }
 
-        ReleaseView(prompt.View);
+        if (promptUI != null)
+        {
+            promptUI.ReleaseView(prompt.View);
+        }
+
         activePrompts.Remove(promptId);
     }
 
@@ -201,12 +183,9 @@ public class InputPromptManager : MonoBehaviour
 
     public void HideAllPrompts()
     {
-        foreach (var pair in activePrompts)
+        if (promptUI != null)
         {
-            if (pair.Value?.View != null)
-            {
-                pair.Value.View.SetVisible(false);
-            }
+            promptUI.ReleaseAllViews();
         }
 
         activePrompts.Clear();
@@ -333,7 +312,11 @@ public class InputPromptManager : MonoBehaviour
 
         if (prompt.Definition == null)
         {
-            ReleaseView(prompt.View);
+            if (promptUI != null)
+            {
+                promptUI.ReleaseView(prompt.View);
+            }
+
             if (!string.IsNullOrWhiteSpace(prompt.PromptId))
             {
                 activePrompts.Remove(prompt.PromptId);
@@ -394,48 +377,5 @@ public class InputPromptManager : MonoBehaviour
 
         RefreshAllPrompts();
     }
-
-    private InputPromptView GetPooledView()
-    {
-        for (var i = 0; i < promptPool.Count; i++)
-        {
-            var pooled = promptPool[i];
-            if (pooled != null && !pooled.gameObject.activeInHierarchy)
-            {
-                pooled.gameObject.SetActive(true);
-                return pooled;
-            }
-        }
-
-        if (promptPrefab == null)
-        {
-            Debug.LogError("[InputPromptManager] Prompt prefab is not assigned.");
-            return null;
-        }
-
-        var instance = Instantiate(promptPrefab, transform);
-        promptPool.Add(instance);
-        instance.gameObject.SetActive(true);
-        return instance;
-    }
-
-    private static void ReleaseView(InputPromptView view)
-    {
-        if (view == null)
-        {
-            return;
-        }
-
-        view.gameObject.SetActive(false);
-    }
-
-    private RectTransform GetAnchor(InputPromptLocation location)
-    {
-        return location switch
-        {
-            InputPromptLocation.Left => leftAnchor,
-            InputPromptLocation.Right => rightAnchor,
-            _ => centerAnchor
-        };
-    }
+}
 }

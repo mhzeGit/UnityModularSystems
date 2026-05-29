@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+namespace MHZE.InputPromptSystem
+{
 [CreateAssetMenu(fileName = "InputBindingIconLibrary", menuName = "Input Prompts/Input Binding Icon Library")]
 public class InputBindingIconLibrary : ScriptableObject
 {
@@ -129,4 +131,5 @@ public class InputBindingIconLibrary : ScriptableObject
             ? string.Empty
             : value.Trim().ToLowerInvariant();
     }
+}
 }

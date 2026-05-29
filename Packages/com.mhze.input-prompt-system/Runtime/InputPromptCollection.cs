@@ -3,6 +3,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+namespace MHZE.InputPromptSystem
+{
 [CreateAssetMenu(fileName = "InputPromptCollection", menuName = "Input Prompts/Input Prompt Collection")]
 public class InputPromptCollection : ScriptableObject
 {
@@ -52,4 +54,5 @@ public class InputPromptCollection : ScriptableObject
             lookup[normalized] = prompt;
         }
     }
+}
 }

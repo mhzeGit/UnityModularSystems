@@ -4,6 +4,8 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
+namespace MHZE.InputPromptSystem
+{
 public class InputPromptView : MonoBehaviour
 {
     [SerializeField] private Image iconImage;
@@ -35,4 +37,5 @@ public class InputPromptView : MonoBehaviour
     {
         gameObject.SetActive(isVisible);
     }
+}
 }

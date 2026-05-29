@@ -1,0 +1,16 @@
+{
+  "name": "com.mhze.input-prompt-system.Runtime",
+  "rootNamespace": "MHZE.InputPromptSystem",
+  "references": [
+    "Unity.InputSystem",
+    "Unity.TextMeshPro",
+    "UnityEngine.UI"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": []
+}

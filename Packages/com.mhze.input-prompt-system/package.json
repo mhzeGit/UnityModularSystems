@@ -1,0 +1,14 @@
+{
+  "name": "com.mhze.input-prompt-system",
+  "version": "1.0.0",
+  "displayName": "Input Prompt System",
+  "description": "Dynamic input prompt UI system that detects keyboard+mouse vs gamepad, looks up binding icons from an icon library, and displays contextual prompts with text and sprites on configurable screen anchors.",
+  "unity": "2022.3",
+  "author": {
+    "name": "MHZE",
+    "url": "https://github.com/mhze"
+  },
+  "dependencies": {
+    "com.unity.inputsystem": "1.7.0"
+  }
+}

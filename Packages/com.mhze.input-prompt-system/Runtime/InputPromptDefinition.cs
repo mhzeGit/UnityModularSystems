@@ -3,6 +3,8 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+namespace MHZE.InputPromptSystem
+{
 [CreateAssetMenu(fileName = "InputPromptDefinition", menuName = "Input Prompts/Input Prompt Definition")]
 public class InputPromptDefinition : ScriptableObject
 {
@@ -152,4 +154,5 @@ public class InputPromptDefinition : ScriptableObject
 
         return result;
     }
+}
 }

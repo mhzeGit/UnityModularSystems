@@ -463,6 +463,7 @@ GameObject:
   - component: {fileID: 515654367}
   - component: {fileID: 515654366}
   - component: {fileID: 515654365}
+  - component: {fileID: 515654369}
   m_Layer: 0
   m_Name: Cube
   m_TagString: Untagged
@@ -557,12 +558,43 @@ Transform:
   m_GameObject: {fileID: 515654364}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -2.29}
+  m_LocalPosition: {x: 0, y: 0.5, z: -2.29}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &515654369
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 515654364}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d7f43a4470358d94f8d3a6fea8be47b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.mhze.interact-system.Runtime::MHZE.InteractSystem.InteractableItemBase
+  isInteractable: 1
+  allowPrompt: 1
+  holdTime: 0
+  promptFormat: Press {KEY} To Interact
+  OnInteractedWithEvent:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 515654364}
+        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+        m_MethodName: SetActive
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
@@ -642,7 +674,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractSystem
   interactInputAction: {fileID: 1781555164194001046, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-  playerCamera: {fileID: 0}
+  playerCamera: {fileID: 376041755}
   interactableLayer:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -1149,10 +1181,10 @@ SceneRoots:
   m_Roots:
   - {fileID: 410087041}
   - {fileID: 832575519}
-  - {fileID: 980384544}
   - {fileID: 439615645}
   - {fileID: 1025130636}
   - {fileID: 1354315430}
   - {fileID: 2136329613}
   - {fileID: 515654368}
   - {fileID: 1940762176}
+  - {fileID: 980384544}

@@ -26,6 +26,14 @@
         "com.unity.inputsystem": "1.7.0"
       }
     },
+    "com.mhze.input-prompt-system": {
+      "version": "file:com.mhze.input-prompt-system",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.unity.inputsystem": "1.7.0"
+      }
+    },
     "com.mhze.interact-system": {
       "version": "file:com.mhze.interact-system",
       "depth": 0,
