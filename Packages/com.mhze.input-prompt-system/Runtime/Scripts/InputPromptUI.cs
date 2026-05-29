@@ -1,3 +1,5 @@
+// Manages the object pool of InputPromptView instances and assigns them to the correct screen anchor (left, center, or right). Handles view lifecycle — getting a pooled or newly-instantiated view, releasing views back to the pool, releasing all views, and trimming the pool to a maximum size to prevent memory leaks.
+
 using System.Collections.Generic;
 using UnityEngine;
 
