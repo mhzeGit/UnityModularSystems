@@ -1,4 +1,4 @@
-// Default interactable object behaviour. Stores whether it is interactable, whether it shows a prompt, the hold time, and a prompt format string with a {KEY} placeholder. Fires C# events and a UnityEvent when interacted with. Manages hover enter/exit to track the current interactor for binding display.
+// Default interactable object behaviour. Stores whether it is interactable, whether it shows a prompt, the hold time, and optional prefix/suffix overrides for the input prompt. Fires C# events and a UnityEvent when interacted with.
 
 using System;
 using UnityEngine;
@@ -11,9 +11,8 @@ namespace MHZE.InteractSystem
         [SerializeField] private bool isInteractable = true;
         [SerializeField] private bool allowPrompt = true;
         [SerializeField] private float holdTime = 0f;
-        [SerializeField] private string promptFormat = "Press {KEY} To Interact";
-
-        private IInteractor currentInteractor;
+        [SerializeField] private string promptPrefix = string.Empty;
+        [SerializeField] private string promptSuffix = string.Empty;
 
         public event Action OnInteractableUpdated;
 
@@ -45,21 +44,8 @@ namespace MHZE.InteractSystem
 
         public float HoldTime => holdTime;
 
-        public string PromptText
-        {
-            get
-            {
-                if (!allowPrompt) return string.Empty;
-                string binding = currentInteractor?.InteractionBindingDisplayString ?? "KEY";
-                return promptFormat.Replace("{KEY}", binding);
-            }
-            set
-            {
-                if (promptFormat == value) return;
-                promptFormat = value;
-                OnInteractableUpdated?.Invoke();
-            }
-        }
+        public string PromptPrefix => promptPrefix;
+        public string PromptSuffix => promptSuffix;
 
         public virtual void OnInteract(IInteractor interactor)
         {
@@ -72,15 +58,8 @@ namespace MHZE.InteractSystem
             InteractReleased?.Invoke(interactor);
         }
 
-        public virtual void OnHoverEnter(IInteractor interactor)
-        {
-            currentInteractor = interactor;
-        }
+        public virtual void OnHoverEnter(IInteractor interactor) { }
 
-        public virtual void OnHoverExit(IInteractor interactor)
-        {
-            if (currentInteractor == interactor)
-                currentInteractor = null;
-        }
+        public virtual void OnHoverExit(IInteractor interactor) { }
     }
 }

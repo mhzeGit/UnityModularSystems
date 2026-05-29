@@ -59,7 +59,7 @@ public class InteractInputPromptMediator : MonoBehaviour
 
         if (interactable.AllowPrompt)
         {
-            inputPromptManager.ShowPrompt(interactPromptDefinition.Key);
+            ShowInteractPrompt(interactable);
         }
     }
 
@@ -87,7 +87,7 @@ public class InteractInputPromptMediator : MonoBehaviour
         {
             if (interactPromptDefinition != null)
             {
-                inputPromptManager.ShowPrompt(interactPromptDefinition.Key);
+                ShowInteractPrompt(interactable);
             }
         }
         else
@@ -115,11 +115,14 @@ public class InteractInputPromptMediator : MonoBehaviour
 
         if (holdPromptDefinition != null)
         {
+            var interactable = interactSystem.CurrentInteractable;
+            var prefix = ResolvePrefix(interactable, holdPromptDefinition);
+            var suffix = ResolveSuffix(interactable, holdPromptDefinition);
             inputPromptManager.ShowCustomPrompt(
                 holdPromptDefinition.Key,
                 holdPromptDefinition.Location,
-                holdPromptDefinition.PrefixText,
-                holdPromptDefinition.SuffixText
+                prefix,
+                suffix
             );
         }
     }
@@ -151,6 +154,29 @@ public class InteractInputPromptMediator : MonoBehaviour
         }
     }
 
+    private void ShowInteractPrompt(IInteractable interactable)
+    {
+        if (inputPromptManager == null || interactPromptDefinition == null) return;
+
+        var prefix = ResolvePrefix(interactable, interactPromptDefinition);
+        var suffix = ResolveSuffix(interactable, interactPromptDefinition);
+        inputPromptManager.ShowPrompt(interactPromptDefinition.Key, interactPromptDefinition.Key, prefix, suffix);
+    }
+
+    private static string ResolvePrefix(IInteractable interactable, InputPromptDefinition definition)
+    {
+        if (interactable == null || string.IsNullOrEmpty(interactable.PromptPrefix))
+            return definition.PrefixText;
+        return interactable.PromptPrefix;
+    }
+
+    private static string ResolveSuffix(IInteractable interactable, InputPromptDefinition definition)
+    {
+        if (interactable == null || string.IsNullOrEmpty(interactable.PromptSuffix))
+            return definition.SuffixText;
+        return interactable.PromptSuffix;
+    }
+
     private void RefreshPrompt()
     {
         if (inputPromptManager == null || interactPromptDefinition == null) return;
@@ -158,7 +184,7 @@ public class InteractInputPromptMediator : MonoBehaviour
         var interactable = interactSystem.CurrentInteractable;
         if (interactable != null && interactable.AllowPrompt)
         {
-            inputPromptManager.ShowPrompt(interactPromptDefinition.Key);
+            ShowInteractPrompt(interactable);
         }
     }
 }
