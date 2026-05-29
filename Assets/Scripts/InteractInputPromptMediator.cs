@@ -7,16 +7,17 @@ public class InteractInputPromptMediator : MonoBehaviour
     [SerializeField] private InteractSystem interactSystem;
     [SerializeField] private InputPromptManager inputPromptManager;
 
-    [Header("Prompt Configuration")]
-    [SerializeField] private string promptKey = "Interact";
-    [SerializeField] private string promptId = "InteractPrompt";
-    [SerializeField] private string holdPromptId = "InteractHoldPrompt";
-    [SerializeField] private InputPromptLocation holdPromptLocation = InputPromptLocation.Center;
-    [SerializeField] private string holdPromptPrefix = "";
-    [SerializeField] private string holdPromptSuffix = "Release to interact...";
+    [Header("Prompt Definitions")]
+    [SerializeField] private InputPromptDefinition interactPromptDefinition;
+    [SerializeField] private InputPromptDefinition holdPromptDefinition;
 
     private void OnEnable()
     {
+        if (interactPromptDefinition == null)
+        {
+            Debug.LogWarning("[InteractInputPromptMediator] interactPromptDefinition is not assigned.", this);
+        }
+
         interactSystem.OnInteractableFound += HandleInteractableFound;
         interactSystem.OnInteractableLost += HandleInteractableLost;
         interactSystem.OnCurrentInteractableUpdated += HandleCurrentInteractableUpdated;
@@ -37,16 +38,25 @@ public class InteractInputPromptMediator : MonoBehaviour
 
     private void HandleInteractableFound(IInteractable interactable, IInteractor interactor)
     {
+        if (interactPromptDefinition == null) return;
+
         if (interactable.AllowPrompt)
         {
-            inputPromptManager.ShowPrompt(promptKey, promptId);
+            inputPromptManager.ShowPrompt(interactPromptDefinition.Key);
         }
     }
 
     private void HandleInteractableLost(IInteractable interactable, IInteractor interactor)
     {
-        inputPromptManager.HidePrompt(promptId);
-        inputPromptManager.HidePrompt(holdPromptId);
+        if (interactPromptDefinition != null)
+        {
+            inputPromptManager.HidePrompt(interactPromptDefinition.Key);
+        }
+
+        if (holdPromptDefinition != null)
+        {
+            inputPromptManager.HidePrompt(holdPromptDefinition.Key);
+        }
     }
 
     private void HandleCurrentInteractableUpdated()
@@ -54,44 +64,74 @@ public class InteractInputPromptMediator : MonoBehaviour
         var interactable = interactSystem.CurrentInteractable;
         if (interactable != null && interactable.AllowPrompt)
         {
-            inputPromptManager.ShowPrompt(promptKey, promptId);
+            if (interactPromptDefinition != null)
+            {
+                inputPromptManager.ShowPrompt(interactPromptDefinition.Key);
+            }
         }
         else
         {
-            inputPromptManager.HidePrompt(promptId);
-            inputPromptManager.HidePrompt(holdPromptId);
+            if (interactPromptDefinition != null)
+            {
+                inputPromptManager.HidePrompt(interactPromptDefinition.Key);
+            }
+
+            if (holdPromptDefinition != null)
+            {
+                inputPromptManager.HidePrompt(holdPromptDefinition.Key);
+            }
         }
     }
 
     private void HandleHoldAttemptStarted(float holdTime)
     {
-        inputPromptManager.HidePrompt(promptId);
-        inputPromptManager.ShowCustomPrompt(
-            holdPromptId,
-            holdPromptLocation,
-            holdPromptPrefix,
-            holdPromptSuffix
-        );
+        if (interactPromptDefinition != null)
+        {
+            inputPromptManager.HidePrompt(interactPromptDefinition.Key);
+        }
+
+        if (holdPromptDefinition != null)
+        {
+            inputPromptManager.ShowCustomPrompt(
+                holdPromptDefinition.Key,
+                holdPromptDefinition.Location,
+                holdPromptDefinition.PrefixText,
+                holdPromptDefinition.SuffixText
+            );
+        }
     }
 
     private void HandleHoldAttemptEnded()
     {
-        inputPromptManager.HidePrompt(holdPromptId);
+        if (holdPromptDefinition != null)
+        {
+            inputPromptManager.HidePrompt(holdPromptDefinition.Key);
+        }
+
         RefreshPrompt();
     }
 
     private void HandlePerformedInteraction(GameObject obj, IInteractor interactor)
     {
-        inputPromptManager.HidePrompt(promptId);
-        inputPromptManager.HidePrompt(holdPromptId);
+        if (interactPromptDefinition != null)
+        {
+            inputPromptManager.HidePrompt(interactPromptDefinition.Key);
+        }
+
+        if (holdPromptDefinition != null)
+        {
+            inputPromptManager.HidePrompt(holdPromptDefinition.Key);
+        }
     }
 
     private void RefreshPrompt()
     {
+        if (interactPromptDefinition == null) return;
+
         var interactable = interactSystem.CurrentInteractable;
         if (interactable != null && interactable.AllowPrompt)
         {
-            inputPromptManager.ShowPrompt(promptKey, promptId);
+            inputPromptManager.ShowPrompt(interactPromptDefinition.Key);
         }
     }
 }
