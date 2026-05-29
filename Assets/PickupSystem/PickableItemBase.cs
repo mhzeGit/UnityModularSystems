@@ -33,7 +33,7 @@ public class PickableItemBase : MonoBehaviour, IPickable
     public GameObject TakeThisPickableItem()
     {
         // Find the pickup system in the scene
-        PickupSystem pickupSystem = FindFirstObjectByType<PickupSystem>();
+        PickupSystem pickupSystem = FindAnyObjectByType<PickupSystem>();
         
         if (pickupSystem == null)
         {

@@ -59,7 +59,7 @@ namespace MHZE.InteractSystem
             playerCamera = Camera.main;
 
             if (playerCamera == null)
-                playerCamera = FindObjectOfType<Camera>();
+                playerCamera = FindAnyObjectByType<Camera>();
 
             if (playerCamera != null)
                 Debug.Log("PlayerCamera was not assigned, auto-found " + playerCamera.name, this);
