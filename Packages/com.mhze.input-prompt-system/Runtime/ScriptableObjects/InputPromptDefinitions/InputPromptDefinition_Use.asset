@@ -12,10 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f67481e796611404c911351e53d42b7f, type: 3}
   m_Name: InputPromptDefinition_Use
   m_EditorClassIdentifier: 
-  key: 
+  key: Use
   prefixText: Press
   suffixText: to interact
   inputAction: {fileID: 0}
-  keyboardMouseBindingGroup: Keyboard&Mouse
-  gamepadBindingGroup: Gamepad
   location: 1

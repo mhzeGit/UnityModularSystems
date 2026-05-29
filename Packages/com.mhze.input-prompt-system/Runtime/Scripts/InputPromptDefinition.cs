@@ -12,8 +12,8 @@ public class InputPromptDefinition : ScriptableObject
     [SerializeField] private string prefixText = "Press";
     [SerializeField] private string suffixText = "to interact";
     [SerializeField] private InputActionReference inputAction;
-    [SerializeField] private string keyboardMouseBindingGroup = "Keyboard&Mouse";
-    [SerializeField] private string gamepadBindingGroup = "Gamepad";
+    private const string KeyboardMouseBindingGroup = "Keyboard&Mouse";
+    private const string GamepadBindingGroup = "Gamepad";
     [SerializeField] private InputPromptLocation location = InputPromptLocation.Center;
 
     public string Key => key;
@@ -69,8 +69,8 @@ public class InputPromptDefinition : ScriptableObject
 
         var action = inputAction.action;
         var group = deviceType == InputPromptManager.DeviceType.Gamepad
-            ? gamepadBindingGroup
-            : keyboardMouseBindingGroup;
+            ? GamepadBindingGroup
+            : KeyboardMouseBindingGroup;
 
         var bindingIndex = FindBindingIndex(action, group);
         if (bindingIndex >= 0)

@@ -12,4 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5d1975cb62420994aaacebfb835bcca3, type: 3}
   m_Name: InputPromptCollection
   m_EditorClassIdentifier: 
-  prompts: []
+  prompts:
+  - {fileID: 11400000, guid: 5d2b40aa332c65443b4a7ef44612a77f, type: 2}
