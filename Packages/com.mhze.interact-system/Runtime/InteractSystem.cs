@@ -45,6 +45,26 @@ namespace MHZE.InteractSystem
         private bool isHolding;
         private float holdTimer;
 
+        void Awake()
+        {
+            TryFindCamera();
+        }
+
+        private void TryFindCamera()
+        {
+            if (playerCamera != null) return;
+
+            playerCamera = Camera.main;
+
+            if (playerCamera == null)
+                playerCamera = FindObjectOfType<Camera>();
+
+            if (playerCamera != null)
+                Debug.Log("PlayerCamera was not assigned, auto-found " + playerCamera.name, this);
+            else
+                Debug.LogWarning("Could not find a Camera in the scene. InteractSystem will not function until a camera is available.", this);
+        }
+
         void OnEnable()
         {
             if (interactInputAction == null)
@@ -122,7 +142,9 @@ namespace MHZE.InteractSystem
 
         private void DrawDebugRay()
         {
-            if (!showDebugRay || playerCamera == null) return;
+            if (!showDebugRay) return;
+            if (playerCamera == null) TryFindCamera();
+            if (playerCamera == null) return;
 
             Ray ray = playerCamera.ViewportPointToRay(Vector3.one * 0.5f);
             Vector3 endPoint;
@@ -143,6 +165,7 @@ namespace MHZE.InteractSystem
 
         private void PerformRaycast()
         {
+            if (playerCamera == null) TryFindCamera();
             if (playerCamera == null) return;
 
             Ray ray = playerCamera.ViewportPointToRay(Vector3.one * 0.5f);
