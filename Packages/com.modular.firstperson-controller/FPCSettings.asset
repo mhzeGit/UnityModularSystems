@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b1c5e88c903772a4dad2cb94b0eb59dc, type: 3}
   m_Name: FPCSettings
-  m_EditorClassIdentifier: com.mhze.firstperson-controller.Runtime::MHZE.FirstPersonController.FPCSettings
+  m_EditorClassIdentifier: com.modular.firstperson-controller.Runtime::ModularSystems.FirstPersonController.FPCSettings
   walkSpeed: 4.5
   runSpeed: 7.5
   acceleration: 40

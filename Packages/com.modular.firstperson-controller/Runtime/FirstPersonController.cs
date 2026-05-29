@@ -3,7 +3,7 @@
 using System;
 using UnityEngine;
 
-namespace MHZE.FirstPersonController
+namespace ModularSystems.FirstPersonController
 {
     public enum FPCPhysicsMode
     {

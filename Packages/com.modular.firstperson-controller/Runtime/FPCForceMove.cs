@@ -3,7 +3,7 @@
 using System;
 using UnityEngine;
 
-namespace MHZE.FirstPersonController
+namespace ModularSystems.FirstPersonController
 {
     /// <summary>
     /// Smooth force-move towards a target position.

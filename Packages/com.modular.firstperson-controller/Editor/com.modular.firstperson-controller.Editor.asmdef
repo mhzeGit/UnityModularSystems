@@ -1,0 +1,14 @@
+{
+  "name": "com.modular.firstperson-controller.Editor",
+  "rootNamespace": "ModularSystems.FirstPersonController.Editor",
+  "references": [
+    "com.modular.firstperson-controller.Runtime"
+  ],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": []
+}

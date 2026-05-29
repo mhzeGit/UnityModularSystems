@@ -1,10 +1,10 @@
 {
-  "name": "com.mhze.firstperson-controller.Editor",
-  "rootNamespace": "MHZE.FirstPersonController.Editor",
+  "name": "com.modular.firstperson-controller.Runtime",
+  "rootNamespace": "ModularSystems.FirstPersonController",
   "references": [
-    "com.mhze.firstperson-controller.Runtime"
+    "Unity.InputSystem"
   ],
-  "includePlatforms": ["Editor"],
+  "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
   "overrideReferences": false,

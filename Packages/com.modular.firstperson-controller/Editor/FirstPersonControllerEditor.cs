@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEngine;
 using System.IO;
 
-namespace MHZE.FirstPersonController.Editor
+namespace ModularSystems.FirstPersonController.Editor
 {
     [CustomEditor(typeof(FirstPersonController))]
     public class FirstPersonControllerEditor : UnityEditor.Editor
@@ -26,10 +26,10 @@ namespace MHZE.FirstPersonController.Editor
 
         private const float EyeHeight = 1.65f;
 
-        [MenuItem("GameObject/MHZE/First Person Controller/Character Controller", false, 10)]
+        [MenuItem("GameObject/First Person Controller/Character Controller", false, 10)]
         private static void CreateCharacterFPC() => CreateFPC(FPCPhysicsMode.CharacterController);
 
-        [MenuItem("GameObject/MHZE/First Person Controller/Rigidbody (Physics)", false, 11)]
+        [MenuItem("GameObject/First Person Controller/Rigidbody (Physics)", false, 11)]
         private static void CreatePhysicsFPC() => CreateFPC(FPCPhysicsMode.Rigidbody);
 
         private static void CreateFPC(FPCPhysicsMode mode)

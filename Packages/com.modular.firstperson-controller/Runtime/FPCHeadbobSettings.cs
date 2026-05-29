@@ -3,9 +3,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace MHZE.FirstPersonController
+namespace ModularSystems.FirstPersonController
 {
-    [CreateAssetMenu(fileName = "FPCHeadbobSettings", menuName = "MHZE/First Person Controller/Headbob Settings", order = 2)]
+    [CreateAssetMenu(fileName = "FPCHeadbobSettings", menuName = "First Person Controller/Headbob Settings", order = 2)]
     public class FPCHeadbobSettings : ScriptableObject
     {
         [Header("Global")]

@@ -10,8 +10,8 @@
       },
       "hash": "78ee5418415953b79c358bfe6355fcc3fde7912b"
     },
-    "com.mhze.firstperson-controller": {
-      "version": "file:com.mhze.firstperson-controller",
+    "com.modular.firstperson-controller": {
+      "version": "file:com.modular.firstperson-controller",
       "depth": 0,
       "source": "embedded",
       "dependencies": {

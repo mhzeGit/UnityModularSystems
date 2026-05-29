@@ -2,9 +2,9 @@
 
 using UnityEngine;
 
-namespace MHZE.FirstPersonController
+namespace ModularSystems.FirstPersonController
 {
-    [CreateAssetMenu(fileName = "FPCSettings", menuName = "MHZE/First Person Controller/Settings", order = 1)]
+    [CreateAssetMenu(fileName = "FPCSettings", menuName = "First Person Controller/Settings", order = 1)]
     public class FPCSettings : ScriptableObject
     {
         [Header("Movement")]
