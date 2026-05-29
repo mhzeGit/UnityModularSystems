@@ -1,3 +1,5 @@
+// Default interactable object behaviour. Stores whether it is interactable, whether it shows a prompt, the hold time, and a prompt format string with a {KEY} placeholder. Fires C# events and a UnityEvent when interacted with. Manages hover enter/exit to track the current interactor for binding display.
+
 using System;
 using UnityEngine;
 using UnityEngine.Events;

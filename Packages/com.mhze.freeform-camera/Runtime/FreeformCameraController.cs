@@ -1,3 +1,5 @@
+// Controls the freefly camera once activated. Right-click+drag to look around, WASD to move, E/Q for up/down, scroll wheel to adjust speed, Shift to boost, Escape to release cursor. Supports collision with configurable radius and layer mask. Movement is velocity-based with smooth position lerp and automatic wall sliding.
+
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
 
 using UnityEngine;

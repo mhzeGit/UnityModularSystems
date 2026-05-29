@@ -1,3 +1,5 @@
+// Ensures the cursor is unlocked and visible when the editor exits play mode, preventing the cursor from staying locked after a freeform camera session stops.
+
 #if UNITY_EDITOR
 
 using UnityEditor;

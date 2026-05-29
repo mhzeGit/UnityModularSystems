@@ -1,3 +1,5 @@
+// CharacterController-based movement driver that implements IFPCMovementDriver. Directly calls CharacterController.Move for motion and disables/re-enables the controller for teleportation. Ground check uses a sphere cast and ceiling check uses collision flags.
+
 using UnityEngine;
 
 namespace MHZE.FirstPersonController

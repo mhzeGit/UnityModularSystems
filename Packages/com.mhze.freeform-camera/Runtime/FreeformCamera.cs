@@ -1,3 +1,5 @@
+// Development-only freefly camera toggleable with F8 (configurable). When activated, it spawns a separate camera GameObject, suspends all player scripts on the root object via DisableControls/EnableControls conventions, and hides the original camera. When deactivated it restores everything. Works only in editor and development builds.
+
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
 
 using System.Collections.Generic;

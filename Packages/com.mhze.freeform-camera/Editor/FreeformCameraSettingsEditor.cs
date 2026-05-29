@@ -1,3 +1,5 @@
+// Editor window (Window > Freecamera Settings) for configuring the freeform camera settings at edit time or at runtime. Settings are saved to both EditorPrefs and PlayerPrefs and are pushed to the live manager while in play mode. Includes a reset-to-defaults button and a keyboard shortcut reference.
+
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.InputSystem;

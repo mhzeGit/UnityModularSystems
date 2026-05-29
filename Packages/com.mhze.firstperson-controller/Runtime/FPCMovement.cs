@@ -1,3 +1,5 @@
+// Core movement logic for the first person controller. Handles horizontal movement with acceleration/deceleration, gravity, jumping with coyote time and jump buffer, crouch with smooth height transition, slope compensation, and force-move towards a target position. Detects ground state transitions (grounded, jumping, falling, landing) and fires corresponding events. Works with any IFPCMovementDriver.
+
 using System;
 using UnityEngine;
 

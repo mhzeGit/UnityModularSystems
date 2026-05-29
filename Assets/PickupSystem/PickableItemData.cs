@@ -1,3 +1,5 @@
+// ScriptableObject that stores all config data for a pickable item: name, shop info, whether it is currently pickable, position/rotation offsets when held, hand offset, and hold pressure/type.
+
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "NewPickableItemData", menuName = "ScriptableObjects/PickableItemData")]

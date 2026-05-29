@@ -1,3 +1,5 @@
+// Reads input action references and exposes clean polling values (MoveInput, LookInput, edge-detect flags for jump/crouch, hold states for sprint/crouch). Also fires events for jump and crouch press/release. Must be polled each frame and consumed at the end to clear one-shot flags.
+
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;

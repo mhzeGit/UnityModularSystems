@@ -1,3 +1,5 @@
+// Thin wrapper around FPCMovement's force-move feature. Provides a clean public API to start moving toward a position at a given speed, stop, and be notified on arrival via a callback. Tracks active state for external consumers to query.
+
 using System;
 using UnityEngine;
 

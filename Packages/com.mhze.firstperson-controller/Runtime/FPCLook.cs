@@ -1,3 +1,5 @@
+// Handles all camera rotation logic. Accumulates mouse input into target yaw/pitch, applies sensitivity and vertical clamping, then smooths toward the target using exponential smoothing. Supports force-look that rotates the camera toward a world point, optionally for a duration then returns. Also provides methods for adding relative yaw/pitch, syncing from the transform, and calculating crouch camera offset.
+
 using UnityEngine;
 
 namespace MHZE.FirstPersonController

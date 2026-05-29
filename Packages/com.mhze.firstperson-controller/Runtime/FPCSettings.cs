@@ -1,3 +1,5 @@
+// ScriptableObject holding all tunable values for the first person controller: movement speeds, acceleration, crouch height/speed, ground check settings, jump force/gravity/coyote/buffer, look sensitivity/smoothing/range, force look and force move parameters, FOV speed effect settings, jump/land camera effect curves, and headbob settings reference.
+
 using UnityEngine;
 
 namespace MHZE.FirstPersonController

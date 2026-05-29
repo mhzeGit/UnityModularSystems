@@ -1,4 +1,6 @@
-﻿using System.Collections;
+﻿// Handles picking up and dropping objects. When the player interacts with a pickable item, it parents the object to a holder transform, applies position/rotation offsets, disables physics and shadow casting, and fires events. If the player already holds an item, it queues the new pickup for a short delay and fires an occupied-attempt event. Also supports a drop input action to let go.
+
+using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 

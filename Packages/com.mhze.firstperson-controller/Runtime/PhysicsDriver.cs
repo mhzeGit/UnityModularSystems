@@ -1,3 +1,5 @@
+// Rigidbody-based movement driver that implements IFPCMovementDriver. Applies motion by converting a per-frame displacement into velocity, using a bridge MonoBehaviour to apply it in FixedUpdate. Handles teleport by setting the rigidbody kinematic, moving it, and zeroing velocity. Ground check uses a sphere cast from the capsule base.
+
 using UnityEngine;
 
 namespace MHZE.FirstPersonController

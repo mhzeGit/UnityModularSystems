@@ -1,3 +1,5 @@
+// Applies procedural camera effects on jump and landing. Jump tilts the camera pitch down via an animation curve. Landing applies both a pitch bump and a vertical position dip based on separate curves. Effects are additive to the camera's local transform and can be snapped off instantly.
+
 using UnityEngine;
 
 namespace MHZE.FirstPersonController

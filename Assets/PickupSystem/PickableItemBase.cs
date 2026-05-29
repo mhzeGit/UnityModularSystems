@@ -1,3 +1,5 @@
+// Default pickable item that sits on any object the player can pick up. Holds a reference to PickableItemData for settings and fires UnityEvents when picked or dropped. Also has a helper to force-drop itself from the pickup system and return the dropped GameObject.
+
 using UnityEngine;
 using UnityEngine.Events;
 

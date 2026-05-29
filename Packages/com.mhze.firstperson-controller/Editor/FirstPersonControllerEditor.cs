@@ -1,3 +1,5 @@
+// Custom inspector and GameObject creation menu for FirstPersonController. Provides context menu items to create FPC GameObjects with Character Controller or Rigidbody physics mode, auto-sets up the CameraPivot and PlayerCamera hierarchy, finds or creates an FPCSettings asset, and draws a clean inspector that adapts to the selected physics mode.
+
 using UnityEditor;
 using UnityEngine;
 using System.IO;

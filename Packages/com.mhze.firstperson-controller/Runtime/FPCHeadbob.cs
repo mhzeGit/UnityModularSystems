@@ -1,3 +1,5 @@
+// Procedural headbob that oscillates the camera position and rotation using sine waves. Supports multiple speed-based presets that blend smoothly between each other. Each preset defines per-axis frequency, amplitude, and phase offset for both position and rotation. Returns to the default pose when speed is below the threshold or headbob is disabled globally.
+
 using UnityEngine;
 
 namespace MHZE.FirstPersonController

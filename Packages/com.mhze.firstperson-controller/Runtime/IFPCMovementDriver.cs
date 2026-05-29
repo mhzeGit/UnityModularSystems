@@ -1,3 +1,5 @@
+// Abstracts the low-level movement mechanism so FPCMovement works with both CharacterController and Rigidbody. Defines properties for grounded state, transform, collider dimensions, ceiling detection, and methods for applying motion and teleporting.
+
 using UnityEngine;
 
 namespace MHZE.FirstPersonController

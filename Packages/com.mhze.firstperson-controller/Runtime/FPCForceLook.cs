@@ -1,3 +1,5 @@
+// Thin wrapper around FPCLook's force-look feature. Provides a clean public API to force the camera to look at a world point or Transform, optionally for a duration, and to release the forced look (with optional snap-back). Tracks active state for external consumers to query.
+
 using UnityEngine;
 
 namespace MHZE.FirstPersonController

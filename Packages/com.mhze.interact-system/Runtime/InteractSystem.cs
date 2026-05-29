@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Main interaction system that raycasts from the camera center to find IInteractable objects. Tracks the current interactable, fires events when something is found or lost, and supports both instant interactions and hold-to-interact (with a timer). Exposes the current binding display string for prompt UI. Debug ray visualization included.
+
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 

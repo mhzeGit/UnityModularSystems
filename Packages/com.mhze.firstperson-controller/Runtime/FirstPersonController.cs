@@ -1,3 +1,5 @@
+// Main entry point for the first person controller. Supports two physics modes (CharacterController and Rigidbody) and orchestrates all sub-modules: input polling, movement, look, headbob, camera effects, force look, and force move. Exposes a public API for cursor lock, position/rotation teleport, enabling/disabling controls, and scripted force-look and force-move. Updates FPCState each frame and fires events on state changes, crouch, jump, ground/air transitions. Context menu items in the inspector let you switch physics modes at edit time.
+
 using System;
 using UnityEngine;
 

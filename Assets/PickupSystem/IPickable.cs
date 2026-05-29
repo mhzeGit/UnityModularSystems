@@ -1,4 +1,4 @@
-//Made By MHZE
+// Interface any pickable object must implement. Defines the contract for picking up, dropping, checking if pickable, getting hand/item offset positions and rotations, hold pressure, hold type, and the item name.
 
 using UnityEngine;
 

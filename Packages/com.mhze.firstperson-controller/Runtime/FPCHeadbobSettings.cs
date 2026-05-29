@@ -1,3 +1,5 @@
+// ScriptableObject that configures headbob behaviour. Contains global enable toggle, smoothing rate, minimum speed threshold, and a list of speed-based presets with per-axis oscillation parameters. Also includes a serializable FPCHeadbobPreset struct for defining frequency, amplitude, and phase offset for both position and rotation waves.
+
 using System.Collections.Generic;
 using UnityEngine;
 
