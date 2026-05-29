@@ -27,3 +27,11 @@ https://github.com/mhzeGit/mhzeModularSystems.git?path=/Packages/com.mhze.input-
 ```
 
 Dynamic input prompt UI system that detects keyboard+mouse vs gamepad, looks up binding icons from an icon library, and displays contextual prompts with text and sprites on configurable screen anchors.
+
+### Interact System
+
+```
+https://github.com/mhzeGit/mhzeModularSystems.git?path=/Packages/com.mhze.interact-system
+```
+
+Modular interaction system with raycast-based detection, IInteractable/IInteractor interfaces, instant and hold-to-interact support, events for prompt UI integration.
