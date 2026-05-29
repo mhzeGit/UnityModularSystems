@@ -11,8 +11,5 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 354a0a69f34950d40b7fbb4d6a0624bd, type: 3}
   m_Name: InputBindingIconLibrary
-  m_EditorClassIdentifier: com.mhze.input-prompt-system.Runtime::MHZE.InputPromptSystem.InputBindingIconLibrary
-  entries:
-  - deviceLayout: 
-    controlPath: 
-    icon: {fileID: 0}
+  m_EditorClassIdentifier: 
+  entries: []

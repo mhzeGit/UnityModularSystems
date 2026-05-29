@@ -11,6 +11,5 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5d1975cb62420994aaacebfb835bcca3, type: 3}
   m_Name: InputPromptCollection
-  m_EditorClassIdentifier: com.mhze.input-prompt-system.Runtime::MHZE.InputPromptSystem.InputPromptCollection
-  prompts:
-  - {fileID: 11400000, guid: c172fb7c9b9d03a4fbb10b61cb676408, type: 2}
+  m_EditorClassIdentifier: 
+  prompts: []
