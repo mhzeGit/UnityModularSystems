@@ -11,12 +11,14 @@ namespace MHZE.EventSystem.Editor
     [CustomPropertyDrawer(typeof(EventBinding))]
     public class EventBindingDrawer : PropertyDrawer
     {
-        private const float CardPadding = 8f;
-        private const float CardSpacing = 4f;
-        private const float HeaderHeight = 20f;
-        private const float LineHeight = 18f;
-        private const float CompactLineHeight = 16f;
-        private const float IndentWidth = 12f;
+        private const float BindingHeaderH = 24f;
+        private const float CardHPad = 8f;
+        private const float CardVPad = 6f;
+        private const float HeaderH = 24f;
+        private const float RowH = 18f;
+        private const float RowCompact = 16f;
+        private const float FieldGap = 4f;
+        private const float CardGap = 6f;
 
         private static readonly Dictionary<string, bool> _bindingFoldouts = new Dictionary<string, bool>();
         private static readonly Dictionary<string, bool> _paramFoldouts = new Dictionary<string, bool>();
@@ -55,29 +57,29 @@ namespace MHZE.EventSystem.Editor
             if (!_bindingFoldouts.TryGetValue(pathKey, out var expanded) || !expanded)
                 return EditorGUIUtility.singleLineHeight + 2f;
 
-            float height = EditorGUIUtility.singleLineHeight + 4f;
+            float h = BindingHeaderH + 4f;
 
             var listenersProp = property.FindPropertyRelative("_listeners");
             for (int i = 0; i < listenersProp.arraySize; i++)
             {
-                height += GetListenerHeight(listenersProp.GetArrayElementAtIndex(i), pathKey, i) + CardSpacing;
+                h += GetListenerHeight(listenersProp.GetArrayElementAtIndex(i), pathKey, i);
+                h += CardGap;
             }
 
-            height += LineHeight + 6f;
-
-            return height;
+            h += 28f;
+            return h;
         }
 
         private float GetListenerHeight(SerializedProperty listenerProp, string bindingKey, int index)
         {
             string key = $"{bindingKey}_listener_{index}";
 
-            float h = 4f;
-            h += HeaderHeight + 4f;
-            h += LineHeight + 2f;
-            h += LineHeight + 2f;
-            h += LineHeight + 2f;
-            h += LineHeight + 2f;
+            float h = CardVPad * 2;
+            h += HeaderH + 4f;
+            h += RowH + 2f;
+            h += RowH + 2f;
+            h += RowH + 2f;
+            h += RowH + 4f;
 
             bool paramsExpanded = _paramFoldouts.TryGetValue(key, out var pe) && pe;
             if (paramsExpanded)
@@ -89,22 +91,20 @@ namespace MHZE.EventSystem.Editor
                 }
             }
 
-            h += 4f;
             return h;
         }
 
-        private float GetParamHeight(SerializedProperty paramProp)
+        private static float GetParamHeight(SerializedProperty paramProp)
         {
             var sourceProp = paramProp.FindPropertyRelative("_source");
             bool isScript = (ArgumentSource)sourceProp.enumValueIndex == ArgumentSource.Script;
 
-            float h = 2f;
-            h += LineHeight + 2f;
-            h += CompactLineHeight + 2f;
+            float h = 6f;
+            h += RowH + 2f;
+            h += RowCompact + 2f;
             if (isScript)
-                h += CompactLineHeight;
-            h += 2f;
-
+                h += RowCompact;
+            h += 4f;
             return h;
         }
 
@@ -115,53 +115,70 @@ namespace MHZE.EventSystem.Editor
             var listenersProp = property.FindPropertyRelative("_listeners");
             string pathKey = property.propertyPath;
 
-            position.xMin += 3f;
-            position.width = Mathf.Max(position.width - 3f, 50f);
-
-            Rect headerRect = new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
-
-            DrawHeader(headerRect, property, label, listenersProp, pathKey);
+            Rect headerRect = new Rect(position.x, position.y, position.width, BindingHeaderH);
+            DrawBindingHeader(headerRect, property, label, listenersProp, pathKey);
 
             if (_bindingFoldouts.TryGetValue(pathKey, out var expanded) && expanded)
             {
-                float y = headerRect.yMax + 2f;
+                float y = headerRect.yMax + 4f;
 
                 for (int i = 0; i < listenersProp.arraySize; i++)
                 {
                     var listenerProp = listenersProp.GetArrayElementAtIndex(i);
                     float h = GetListenerHeight(listenerProp, pathKey, i);
                     Rect cardRect = new Rect(position.x + 2f, y, position.width - 4f, h);
-
                     DrawListenerCard(cardRect, listenerProp, pathKey, i, listenersProp);
-
-                    y += h + CardSpacing;
+                    y += h + CardGap;
                 }
 
-                Rect addBtnRect = new Rect(position.x + 2f, y, position.width - 4f, LineHeight + 4f);
+                Rect addBtnRect = new Rect(position.x + 2f, y, position.width - 4f, 26f);
                 DrawAddButton(addBtnRect, listenersProp);
             }
 
             EditorGUI.EndProperty();
         }
 
-        private void DrawHeader(Rect rect, SerializedProperty property, GUIContent label,
+        private void DrawBindingHeader(Rect rect, SerializedProperty property, GUIContent label,
             SerializedProperty listenersProp, string pathKey)
         {
             bool expanded = _bindingFoldouts.TryGetValue(pathKey, out var e) && e;
+            int count = listenersProp.arraySize;
 
-            Rect foldoutRect = new Rect(rect.x, rect.y, rect.width - 100f, rect.height);
+            float iconSize = 18f;
+            Rect iconRect = new Rect(rect.x + 2f, rect.y + (rect.height - iconSize) * 0.5f, iconSize, iconSize);
+            EditorGUI.LabelField(iconRect, Styles.GetIconString("bolt"), new GUIStyle
+            {
+                fontSize = 13,
+                normal = { textColor = Styles.Colors.Purple },
+                alignment = TextAnchor.MiddleCenter,
+                fixedWidth = iconSize,
+                fixedHeight = iconSize
+            });
+
+            float addBtnWidth = 100f;
+            float foldoutAreaWidth = rect.width - iconSize - 6f - addBtnWidth;
+            Rect foldoutRect = new Rect(iconRect.xMax + 4f, rect.y, foldoutAreaWidth, rect.height);
+
+            var foldoutContent = new GUIContent(label.text);
+            float contentWidth = Styles.BindingFoldout.CalcSize(foldoutContent).x;
 
             EditorGUI.BeginChangeCheck();
-            expanded = EditorGUI.Foldout(foldoutRect, expanded, label, true, Styles.Foldout);
+            expanded = EditorGUI.Foldout(foldoutRect, expanded, label.text, true, Styles.BindingFoldout);
             if (EditorGUI.EndChangeCheck())
                 _bindingFoldouts[pathKey] = expanded;
 
-            int count = listenersProp.arraySize;
-            Rect countRect = new Rect(foldoutRect.xMax + 4f, rect.y, 80f, rect.height);
-            EditorGUI.LabelField(countRect, $"({count} listener{(count == 1 ? "" : "s")})", Styles.ListenerLabel);
+            float badgeX = rect.x + 4f + iconSize + 4f + contentWidth + 8f;
+            float maxBadgeX = rect.xMax - addBtnWidth - 8f;
+            badgeX = Mathf.Min(badgeX, maxBadgeX);
 
-            Rect addBtnRect = new Rect(rect.xMax - 88f, rect.y, 88f, rect.height);
-            if (GUI.Button(addBtnRect, "+ Add Listener", Styles.AddButton))
+            if (badgeX + 20f < rect.xMax - addBtnWidth)
+            {
+                Styles.DrawBadge(new Rect(badgeX, rect.y, 80f, rect.height),
+                    $"{count} listener{(count == 1 ? "" : "s")}", Styles.ListenerCountBadge);
+            }
+
+            Rect addBtnRect = new Rect(rect.xMax - addBtnWidth, rect.y, addBtnWidth, rect.height);
+            if (GUI.Button(addBtnRect, Styles.GetIconString("plus") + "  Listener", Styles.AddButtonMain))
             {
                 AddNewListener(listenersProp);
                 _bindingFoldouts[pathKey] = true;
@@ -189,7 +206,8 @@ namespace MHZE.EventSystem.Editor
 
         private void DrawAddButton(Rect rect, SerializedProperty listenersProp)
         {
-            if (GUI.Button(rect, "+ Add Listener", Styles.AddButton))
+            Rect innerRect = new Rect(rect.x + 2f, rect.y + 2f, rect.width - 4f, rect.height - 4f);
+            if (GUI.Button(innerRect, "  +  Add Listener", Styles.AddButtonFooter))
             {
                 AddNewListener(listenersProp);
             }
@@ -206,65 +224,68 @@ namespace MHZE.EventSystem.Editor
             var methodDisplayProp = listenerProp.FindPropertyRelative("_methodDisplayName");
             var paramsProp = listenerProp.FindPropertyRelative("_parameters");
 
-            Styles.DrawCardBackground(rect);
+            bool isEnabled = enabledProp.boolValue;
+            Color accentColor = isEnabled ? Styles.Colors.Green : Styles.Colors.TextMuted;
 
-            Rect innerRect = new Rect(rect.x + 6f, rect.y + 4f, rect.width - 12f, rect.height - 8f);
+            if (Event.current.type == EventType.Repaint)
+            {
+                if (isEnabled)
+                    Styles.DrawCardBackground(rect);
+                else
+                    Styles.DrawCardBackgroundDim(rect);
+            }
 
+            Styles.DrawAccentStrip(rect, accentColor);
+            Rect innerRect = new Rect(rect.x + CardHPad, rect.y + CardVPad, rect.width - CardHPad * 2, rect.height - CardVPad * 2);
             float y = innerRect.y;
 
-            Rect headerBgRect = new Rect(rect.x + 1f, rect.y + 1f, rect.width - 2f, HeaderHeight);
-            EditorGUI.DrawRect(headerBgRect, Styles.DarkHeaderBg);
+            DrawCardHeader(new Rect(innerRect.x, y, innerRect.width, HeaderH),
+                listenerProp, key, index, listenersProp, bindingKey);
+            y += HeaderH + 4f;
 
-            Rect enabledRect = new Rect(innerRect.x, y, 16f, HeaderHeight);
-            enabledProp.boolValue = EditorGUI.Toggle(enabledRect, enabledProp.boolValue, Styles.Toggle);
+            y = DrawTargetFields(new Rect(innerRect.x, y, innerRect.width, 0),
+                enabledProp, targetProp, methodNameProp, methodDisplayProp, paramsProp);
 
-            string displayLabel = GetListenerDisplayName(listenerProp);
-            Rect labelRect = new Rect(enabledRect.xMax + 4f, y, innerRect.width - enabledRect.xMax - 70f, HeaderHeight);
-            EditorGUI.LabelField(labelRect, displayLabel, Styles.CardHeaderLabel);
+            DrawMethodRow(new Rect(innerRect.x, y, innerRect.width, RowH),
+                targetProp, methodNameProp, methodDisplayProp, paramsProp, listenerProp);
+            y += RowH + 2f;
 
-            Rect removeRect = new Rect(innerRect.xMax - 20f, y + 2f, 20f, 16f);
-            if (GUI.Button(removeRect, "\u2715", Styles.RemoveButton))
+            DrawParameterSection(new Rect(innerRect.x, y, innerRect.width, 0),
+                paramsProp, key);
+        }
+
+        private void DrawCardHeader(Rect rect, SerializedProperty listenerProp, string key,
+            int index, SerializedProperty listenersProp, string bindingKey)
+        {
+            var enabledProp = listenerProp.FindPropertyRelative("_enabled");
+            var targetProp = listenerProp.FindPropertyRelative("_target");
+            var methodDisplayProp = listenerProp.FindPropertyRelative("_methodDisplayName");
+
+            GUI.BeginGroup(rect);
+
+            float toggleSize = 18f;
+            Rect toggleRect = new Rect(0, (rect.height - toggleSize) * 0.5f, toggleSize, toggleSize);
+            EditorGUI.BeginChangeCheck();
+            bool newEnabled = EditorGUI.Toggle(toggleRect, enabledProp.boolValue, Styles.ToggleStyle);
+            if (EditorGUI.EndChangeCheck())
+            {
+                enabledProp.boolValue = newEnabled;
+                enabledProp.serializedObject.ApplyModifiedProperties();
+            }
+
+            string displayName = GetListenerDisplayName(listenerProp);
+            var displayStyle = enabledProp.boolValue ? Styles.CardHeaderLabel : Styles.CardHeaderLabelDim;
+            Rect labelRect = new Rect(toggleRect.xMax + 4f, 0, rect.width - toggleRect.xMax - 28f, rect.height);
+            EditorGUI.LabelField(labelRect, "  " + displayName, displayStyle);
+
+            Rect removeRect = new Rect(rect.width - 22f, 0, 22f, rect.height);
+            if (GUI.Button(removeRect, Styles.GetIconString("xmark"), Styles.RemoveButton))
             {
                 RemoveListenerAt(listenersProp, index);
                 GUIUtility.ExitGUI();
-                return;
             }
 
-            y += HeaderHeight + 4f;
-
-            y = DrawTargetSelection(new Rect(innerRect.x, y, innerRect.width, 0),
-                targetProp, methodNameProp, methodDisplayProp, paramsProp);
-
-            Rect methodRect = new Rect(innerRect.x, y, innerRect.width, LineHeight);
-            DrawMethodField(methodRect, targetProp, methodNameProp, methodDisplayProp, paramsProp, listenerProp);
-            y += LineHeight + 2f;
-
-            Rect foldoutRect = new Rect(innerRect.x + 12f, y, innerRect.width - 12f, LineHeight);
-            EditorGUI.BeginChangeCheck();
-            bool paramsExpanded = _paramFoldouts.TryGetValue(key, out var pe) && pe;
-            paramsExpanded = EditorGUI.Foldout(foldoutRect, paramsExpanded, "Parameters", true);
-            if (EditorGUI.EndChangeCheck())
-                _paramFoldouts[key] = paramsExpanded;
-            y += LineHeight + 2f;
-
-            if (paramsExpanded)
-            {
-                for (int p = 0; p < paramsProp.arraySize; p++)
-                {
-                    var paramProp = paramsProp.GetArrayElementAtIndex(p);
-                    float ph = GetParamHeight(paramProp);
-
-                    var typeNameProp = paramProp.FindPropertyRelative("_parameterTypeName");
-                    Type paramType = ResolveType(typeNameProp.stringValue);
-
-                    Rect paramRect = new Rect(innerRect.x + 12f, y, innerRect.width - 12f, ph);
-                    DrawParameterEntry(paramRect, paramProp, paramType);
-                    y += ph + 2f;
-                }
-            }
-
-            if (!_paramFoldouts.ContainsKey(key))
-                _paramFoldouts[key] = false;
+            GUI.EndGroup();
         }
 
         private string GetListenerDisplayName(SerializedProperty listenerProp)
@@ -275,52 +296,50 @@ namespace MHZE.EventSystem.Editor
             Component target = targetProp.objectReferenceValue as Component;
 
             if (target == null)
-                return "No Target";
+                return "No Target Selected";
 
             string scriptName = target.GetType().Name;
             string methodName = !string.IsNullOrEmpty(methodDisplayProp.stringValue)
                 ? methodDisplayProp.stringValue.Split(':')[0].Trim()
-                : "No Method";
+                : "No Method Selected";
 
-            return $"{target.gameObject.name} ({scriptName}).{methodName}";
+            return $"{target.gameObject.name} ({scriptName})";
         }
 
         private void RemoveListenerAt(SerializedProperty listenersProp, int index)
         {
             if (index < 0 || index >= listenersProp.arraySize)
                 return;
-
+            listenersProp.serializedObject.Update();
             int sizeBefore = listenersProp.arraySize;
             listenersProp.DeleteArrayElementAtIndex(index);
             if (listenersProp.arraySize == sizeBefore)
                 listenersProp.DeleteArrayElementAtIndex(index);
-
             listenersProp.serializedObject.ApplyModifiedProperties();
         }
 
-        private float DrawTargetSelection(Rect rect, SerializedProperty targetProp,
-            SerializedProperty methodNameProp, SerializedProperty methodDisplayProp, SerializedProperty paramsProp)
+        private float DrawTargetFields(Rect rect, SerializedProperty enabledProp,
+            SerializedProperty targetProp, SerializedProperty methodNameProp,
+            SerializedProperty methodDisplayProp, SerializedProperty paramsProp)
         {
             float y = rect.y;
             Component currentTarget = targetProp.objectReferenceValue as Component;
             GameObject currentGO = currentTarget != null ? currentTarget.gameObject : null;
 
-            Rect objLabel = new Rect(rect.x, y, 58f, LineHeight);
-            EditorGUI.LabelField(objLabel, "Object", Styles.ParamLabel);
+            Rect labelRect = new Rect(rect.x, y, 56f, RowH);
+            EditorGUI.LabelField(labelRect, "Object", Styles.FieldLabel);
 
-            Rect objField = new Rect(objLabel.xMax + 4f, y, rect.width - objLabel.xMax - 4f, LineHeight);
+            Rect fieldRect = new Rect(labelRect.xMax + FieldGap, y, rect.width - labelRect.width - FieldGap, RowH);
 
             EditorGUI.BeginChangeCheck();
-            Object newObj = EditorGUI.ObjectField(objField, currentGO, typeof(Object), true);
+            Object newObj = EditorGUI.ObjectField(fieldRect, currentGO, typeof(Object), true);
             if (EditorGUI.EndChangeCheck())
             {
                 Component resolvedComp = newObj as Component;
                 GameObject resolvedGO = resolvedComp?.gameObject ?? newObj as GameObject;
 
                 if (resolvedComp != null)
-                {
                     targetProp.objectReferenceValue = resolvedComp;
-                }
                 else if (resolvedGO != null)
                 {
                     targetProp.objectReferenceValue = null;
@@ -332,25 +351,23 @@ namespace MHZE.EventSystem.Editor
                     }
                 }
                 else
-                {
                     targetProp.objectReferenceValue = null;
-                }
 
                 ClearMethod(methodNameProp, methodDisplayProp, paramsProp);
                 targetProp.serializedObject.ApplyModifiedProperties();
             }
 
-            GameObject newGO = newObj as GameObject ?? (newObj as Component)?.gameObject;
+            y += RowH + 2f;
 
-            y += LineHeight + 2f;
+            GameObject goForDropdown = currentTarget != null
+                ? currentTarget.gameObject
+                : (newObj as GameObject ?? (newObj as Component)?.gameObject);
 
             currentTarget = targetProp.objectReferenceValue as Component;
-            GameObject goForDropdown = currentTarget != null ? currentTarget.gameObject : (newGO != null ? newGO : null);
 
-            Rect scriptLabel = new Rect(rect.x, y, 58f, LineHeight);
-            EditorGUI.LabelField(scriptLabel, "Script", Styles.ParamLabel);
+            EditorGUI.LabelField(new Rect(rect.x, y, 56f, RowH), "Script", Styles.FieldLabel);
 
-            Rect scriptField = new Rect(scriptLabel.xMax + 4f, y, rect.width - scriptLabel.xMax - 4f, LineHeight);
+            Rect scriptFieldRect = new Rect(labelRect.xMax + FieldGap, y, rect.width - labelRect.width - FieldGap, RowH);
 
             string displayName = "No Script Selected";
             if (currentTarget != null)
@@ -358,13 +375,13 @@ namespace MHZE.EventSystem.Editor
             else if (goForDropdown != null)
                 displayName = "Select Script...";
 
-            if (GUI.Button(scriptField, displayName, EditorStyles.popup))
+            if (GUI.Button(scriptFieldRect, displayName, Styles.PopupButton))
             {
                 if (goForDropdown != null)
-                    ShowComponentDropdown(scriptField, goForDropdown, targetProp, methodNameProp, methodDisplayProp, paramsProp);
+                    ShowComponentDropdown(scriptFieldRect, goForDropdown, targetProp, methodNameProp, methodDisplayProp, paramsProp);
             }
 
-            y += LineHeight + 2f;
+            y += RowH + 2f;
 
             return y;
         }
@@ -406,9 +423,7 @@ namespace MHZE.EventSystem.Editor
             }
 
             if (components.Length == 0 || components.All(c => c == null))
-            {
                 menu.AddDisabledItem(new GUIContent("No components found"));
-            }
 
             menu.DropDown(rect);
         }
@@ -422,26 +437,24 @@ namespace MHZE.EventSystem.Editor
             paramsProp.arraySize = 0;
         }
 
-        private void DrawMethodField(Rect rect, SerializedProperty targetProp, SerializedProperty methodNameProp,
-            SerializedProperty methodDisplayProp, SerializedProperty paramsProp, SerializedProperty listenerProp)
+        private void DrawMethodRow(Rect rect, SerializedProperty targetProp,
+            SerializedProperty methodNameProp, SerializedProperty methodDisplayProp,
+            SerializedProperty paramsProp, SerializedProperty listenerProp)
         {
-            Rect labelRect = new Rect(rect.x, rect.y, 52f, rect.height);
-            EditorGUI.LabelField(labelRect, "Method", Styles.ParamLabel);
+            EditorGUI.LabelField(new Rect(rect.x, rect.y, 56f, rect.height), "Method", Styles.FieldLabel);
 
-            Rect fieldRect = new Rect(labelRect.xMax + 4f, rect.y, rect.width - labelRect.width - 4f, rect.height);
+            Rect fieldRect = new Rect(rect.x + 60f, rect.y, rect.width - 60f, rect.height);
 
             var target = targetProp.objectReferenceValue as Component;
             string display = !string.IsNullOrEmpty(methodDisplayProp.stringValue)
                 ? methodDisplayProp.stringValue
-                : "No Method";
+                : "No Method Selected";
 
-            if (GUI.Button(fieldRect, display, EditorStyles.popup))
+            if (GUI.Button(fieldRect, display, Styles.PopupButton))
             {
                 if (target != null)
-                {
                     ShowMethodDropdown(fieldRect, target, targetProp, methodNameProp, methodDisplayProp,
                         paramsProp, listenerProp);
-                }
             }
         }
 
@@ -450,14 +463,12 @@ namespace MHZE.EventSystem.Editor
             SerializedProperty paramsProp, SerializedProperty listenerProp)
         {
             var methods = GetBindableMethods(target.GetType());
-
             var menu = new GenericMenu();
 
             foreach (var method in methods)
             {
                 string sig = FormatMethodSignature(method);
                 bool isSelected = method.Name == methodNameProp.stringValue;
-
                 var capturedMethod = method;
                 menu.AddItem(new GUIContent(sig), isSelected, () =>
                 {
@@ -466,9 +477,7 @@ namespace MHZE.EventSystem.Editor
             }
 
             if (methods.Count == 0)
-            {
                 menu.AddDisabledItem(new GUIContent("No bindable methods found"));
-            }
 
             menu.DropDown(rect);
         }
@@ -478,16 +487,11 @@ namespace MHZE.EventSystem.Editor
             return type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy)
                 .Where(m =>
                 {
-                    if (m.IsSpecialName)
-                        return false;
-                    if (m.IsGenericMethod || m.ContainsGenericParameters)
-                        return false;
-                    if (UnitySpecialMethods.Contains(m.Name))
-                        return false;
-                    if (m.GetParameters().Any(p => p.IsOut || p.ParameterType.IsByRef))
-                        return false;
-                    if (m.IsDefined(typeof(ObsoleteAttribute), true))
-                        return false;
+                    if (m.IsSpecialName) return false;
+                    if (m.IsGenericMethod || m.ContainsGenericParameters) return false;
+                    if (UnitySpecialMethods.Contains(m.Name)) return false;
+                    if (m.GetParameters().Any(p => p.IsOut || p.ParameterType.IsByRef)) return false;
+                    if (m.IsDefined(typeof(ObsoleteAttribute), true)) return false;
 
                     Type dt = m.DeclaringType;
                     if (dt == typeof(object) || dt == typeof(UnityEngine.Object) ||
@@ -590,56 +594,95 @@ namespace MHZE.EventSystem.Editor
             paramProp.FindPropertyRelative("_objectValue").objectReferenceValue = null;
         }
 
+        private void DrawParameterSection(Rect rect, SerializedProperty paramsProp, string key)
+        {
+            float y = rect.y;
+
+            bool paramsExpanded = _paramFoldouts.TryGetValue(key, out var pe) && pe;
+
+            Rect foldoutRect = new Rect(rect.x + 2f, y, rect.width - 2f, RowH);
+            EditorGUI.BeginChangeCheck();
+            paramsExpanded = EditorGUI.Foldout(foldoutRect, paramsExpanded,
+                $"  Parameters  ({paramsProp.arraySize})", true, Styles.ParamSectionFoldout);
+            if (EditorGUI.EndChangeCheck())
+                _paramFoldouts[key] = paramsExpanded;
+
+            if (!_paramFoldouts.ContainsKey(key))
+                _paramFoldouts[key] = false;
+
+            y += RowH + 4f;
+
+            if (paramsExpanded)
+            {
+                for (int p = 0; p < paramsProp.arraySize; p++)
+                {
+                    var paramProp = paramsProp.GetArrayElementAtIndex(p);
+                    var typeNameProp = paramProp.FindPropertyRelative("_parameterTypeName");
+                    Type paramType = ResolveType(typeNameProp.stringValue);
+
+                    float ph = GetParamHeight(paramProp);
+                    Rect paramRect = new Rect(rect.x + 4f, y, rect.width - 4f, ph);
+                    DrawParameterEntry(paramRect, paramProp, paramType);
+                    y += ph + 2f;
+                }
+            }
+        }
+
         private void DrawParameterEntry(Rect rect, SerializedProperty paramProp, Type paramType)
         {
             var nameProp = paramProp.FindPropertyRelative("_parameterName");
-            var typeNameProp = paramProp.FindPropertyRelative("_parameterTypeName");
             var sourceProp = paramProp.FindPropertyRelative("_source");
             var sourceComponentProp = paramProp.FindPropertyRelative("_sourceComponent");
             var sourceMemberProp = paramProp.FindPropertyRelative("_sourceMemberName");
 
             var source = (ArgumentSource)sourceProp.enumValueIndex;
-            Color accentColor = source == ArgumentSource.Constant ? Styles.ConstantAccent : Styles.ScriptAccent;
+            Color accentColor = source == ArgumentSource.Constant
+                ? Styles.Colors.BlueDim
+                : Styles.Colors.OrangeDim;
+            Color solidAccent = source == ArgumentSource.Constant
+                ? Styles.Colors.Blue
+                : Styles.Colors.Orange;
 
-            EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, rect.height), Styles.ParamBg);
+            if (Event.current.type == EventType.Repaint)
+                Styles.DrawParamBackground(rect);
 
-            Rect accentStrip = new Rect(rect.x, rect.y, 3f, rect.height);
-            EditorGUI.DrawRect(accentStrip, accentColor);
+            Styles.DrawAccentStrip(rect, solidAccent);
 
-            Rect innerRect = new Rect(rect.x + 8f, rect.y + 2f, rect.width - 12f, rect.height - 4f);
+            Rect innerRect = new Rect(rect.x + 10f, rect.y + 3f, rect.width - 14f, rect.height - 6f);
             float y = innerRect.y;
 
             string typeDisplay = paramType != null ? GetTypeDisplayName(paramType) : "unknown";
-            string headerText = $"{nameProp.stringValue}  ({typeDisplay})";
+            string headerText = $"<color=#{ColorUtility.ToHtmlStringRGB(Styles.Colors.TextPrimary)}>{nameProp.stringValue}</color>  <color=#{ColorUtility.ToHtmlStringRGB(Styles.Colors.TextMuted)}>({typeDisplay})</color>";
 
-            Rect headerRect = new Rect(innerRect.x, y, innerRect.width, LineHeight);
-            EditorGUI.LabelField(headerRect, headerText, Styles.ParamLabel);
-            y += LineHeight + 2f;
+            Rect headerRect = new Rect(innerRect.x, y, innerRect.width, RowH);
+            EditorGUI.LabelField(headerRect, headerText, Styles.ParamHeaderLabel);
+            y += RowH + 2f;
 
-            Rect sourceRect = new Rect(innerRect.x, y, 48f, CompactLineHeight);
-            EditorGUI.LabelField(sourceRect, "Source", Styles.ParamLabel);
+            Rect sourceLabel = new Rect(innerRect.x, y, 44f, RowCompact);
+            EditorGUI.LabelField(sourceLabel, "Source", Styles.FieldLabelCompact);
 
-            Rect sourcePopupRect = new Rect(sourceRect.xMax + 2f, y, 72f, CompactLineHeight);
+            Rect sourcePopupRect = new Rect(sourceLabel.xMax + FieldGap, y, 68f, RowCompact);
             EditorGUI.PropertyField(sourcePopupRect, sourceProp, GUIContent.none);
 
             if (source == ArgumentSource.Constant)
             {
                 Rect valueRect = new Rect(sourcePopupRect.xMax + 8f, y,
-                    innerRect.xMax - sourcePopupRect.xMax - 8f, CompactLineHeight);
+                    innerRect.xMax - sourcePopupRect.xMax - 8f, RowCompact);
                 DrawConstantValueField(valueRect, paramProp, paramType);
             }
             else
             {
                 float remainingWidth = innerRect.xMax - sourcePopupRect.xMax - 8f;
+                float halfWidth = (remainingWidth - FieldGap) * 0.5f;
 
-                Rect compRect = new Rect(sourcePopupRect.xMax + 8f, y, remainingWidth * 0.5f, CompactLineHeight);
+                Rect compRect = new Rect(sourcePopupRect.xMax + 8f, y, halfWidth, RowCompact);
                 EditorGUI.ObjectField(compRect, sourceComponentProp, typeof(Component), GUIContent.none);
 
-                Rect memberRect = new Rect(compRect.xMax + 4f, y, remainingWidth * 0.5f - 4f, CompactLineHeight);
+                Rect memberRect = new Rect(compRect.xMax + FieldGap, y, halfWidth, RowCompact);
                 DrawScriptMemberDropdown(memberRect, sourceComponentProp, sourceMemberProp, paramType);
             }
 
-            y += CompactLineHeight + 2f;
+            y += RowCompact + 2f;
 
             if (source == ArgumentSource.Script && sourceComponentProp.objectReferenceValue != null)
             {
@@ -647,8 +690,15 @@ namespace MHZE.EventSystem.Editor
                 string memberName = !string.IsNullOrEmpty(sourceMemberProp.stringValue)
                     ? sourceMemberProp.stringValue
                     : "?";
-                Rect infoRect = new Rect(innerRect.x, y, innerRect.width, CompactLineHeight);
-                EditorGUI.LabelField(infoRect, $"\u2192 {componentName}.{memberName}", Styles.ParamLabel);
+                Rect infoRect = new Rect(innerRect.x, y, innerRect.width, RowCompact);
+                var infoStyle = new GUIStyle(EditorStyles.miniLabel)
+                {
+                    fontSize = 10,
+                    normal = { textColor = Styles.Colors.TextMuted },
+                    padding = new RectOffset(0, 0, 1, 1)
+                };
+                EditorGUI.LabelField(infoRect,
+                    $"  {Styles.GetIconString("arrow")}  {componentName}.{memberName}", infoStyle);
             }
         }
 
@@ -656,7 +706,7 @@ namespace MHZE.EventSystem.Editor
         {
             if (paramType == null)
             {
-                EditorGUI.LabelField(rect, "Unresolved type", Styles.ParamLabel);
+                EditorGUI.LabelField(rect, "Unresolved type", Styles.ParamHeaderLabel);
                 return;
             }
 
@@ -782,7 +832,7 @@ namespace MHZE.EventSystem.Editor
             else
             {
                 var prop = paramProp.FindPropertyRelative("_stringValue");
-                EditorGUI.LabelField(rect, paramType.Name, prop.stringValue, Styles.ParamLabel);
+                EditorGUI.LabelField(rect, paramType.Name, prop.stringValue, Styles.ParamHeaderLabel);
             }
         }
 
@@ -806,13 +856,11 @@ namespace MHZE.EventSystem.Editor
 
                 int newIndex = EditorGUI.Popup(rect, currentIndex, names);
                 if (newIndex >= 0 && newIndex < values.Length)
-                {
                     intProp.intValue = (int)values.GetValue(newIndex);
-                }
             }
             catch
             {
-                EditorGUI.LabelField(rect, "Invalid enum value", Styles.ParamLabel);
+                EditorGUI.LabelField(rect, "Invalid enum value");
             }
         }
 
@@ -823,14 +871,12 @@ namespace MHZE.EventSystem.Editor
 
             string display = !string.IsNullOrEmpty(sourceMemberProp.stringValue)
                 ? sourceMemberProp.stringValue
-                : "Select Member...";
+                : "Select...";
 
-            if (GUI.Button(rect, display, EditorStyles.popup))
+            if (GUI.Button(rect, display, Styles.PopupButton))
             {
                 if (comp != null)
-                {
                     ShowMemberDropdown(rect, comp, sourceMemberProp, paramType);
-                }
             }
         }
 
@@ -873,9 +919,7 @@ namespace MHZE.EventSystem.Editor
             }
 
             if (fields.Length == 0 && !properties.Any())
-            {
                 menu.AddDisabledItem(new GUIContent("No public fields or properties"));
-            }
 
             menu.DropDown(rect);
         }
