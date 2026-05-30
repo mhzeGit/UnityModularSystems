@@ -4,6 +4,7 @@ using UnityEngine.Events;
 namespace MHZE
 {
     [RequireComponent(typeof(Collider))]
+    [RequireComponent(typeof(Rigidbody))]
     public class UltimateTriggerCollider : MonoBehaviour
     {
         [Header("Tag Filtering")]
@@ -35,20 +36,26 @@ namespace MHZE
 
         private void Reset()
         {
-            if (!TryGetComponent(out Collider _))
-                gameObject.AddComponent<BoxCollider>();
+            if (!TryGetComponent(out Collider hitCollider))
+                hitCollider = gameObject.AddComponent<BoxCollider>();
 
-            if (!TryGetComponent(out Rigidbody _))
-            {
-                Rigidbody rb = gameObject.AddComponent<Rigidbody>();
-                rb.isKinematic = true;
-                rb.useGravity = false;
-            }
+            hitCollider.isTrigger = true;
+
+            if (!TryGetComponent(out Rigidbody rb))
+                rb = gameObject.AddComponent<Rigidbody>();
+
+            rb.isKinematic = true;
+            rb.useGravity = false;
+            rb.hideFlags = HideFlags.NotEditable;
         }
 
         private void Awake()
         {
             CacheComponents();
+
+            _collider.isTrigger = true;
+            _rigidbody.isKinematic = true;
+            _rigidbody.useGravity = false;
         }
 
         private void Start()
