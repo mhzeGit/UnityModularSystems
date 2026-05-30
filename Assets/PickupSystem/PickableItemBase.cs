@@ -9,6 +9,22 @@ public class PickableItemBase : MonoBehaviour, IPickable
     public UnityEvent OnPickedItem;
     public UnityEvent OnDroppedItem;
 
+    Rigidbody cachedRigidbody;
+    MeshRenderer[] cachedRenderers;
+    Collider[] cachedColliders;
+
+    void Awake()
+    {
+        cachedRigidbody = GetComponent<Rigidbody>();
+        cachedRenderers = GetComponentsInChildren<MeshRenderer>(true);
+        cachedColliders = GetComponentsInChildren<Collider>(true);
+    }
+
+    public void Pickup()
+    {
+        if (PickupSystem.Instance != null)
+            PickupSystem.Instance.CheckIfPickable(gameObject);
+    }
 
     public bool GetIsPickable()
     {
@@ -28,31 +44,39 @@ public class PickableItemBase : MonoBehaviour, IPickable
         OnDroppedItem.Invoke();
     }
     
-    /// Forces this item to be dropped from the pickup system and returns the dropped GameObject
-    /// <returns>The GameObject that was dropped, or null if not currently held</returns>
     public GameObject TakeThisPickableItem()
     {
-        // Find the pickup system in the scene
-        PickupSystem pickupSystem = FindAnyObjectByType<PickupSystem>();
-        
+        PickupSystem pickupSystem = PickupSystem.Instance;
+
         if (pickupSystem == null)
         {
             Debug.LogWarning("No PickupSystem found in scene!");
             return null;
         }
-        
-        // Check if this item is currently being held
+
         GameObject currentHeldObject = pickupSystem.GetCurrentObject();
         if (currentHeldObject != this.gameObject)
         {
             return null;
         }
-        
-        // Force drop the item
+
         pickupSystem.DropCurrentHeldItem();
-        
-        // Return reference to this GameObject (now dropped)
+
         return this.gameObject;
+    }
+
+    public void SetPickState(bool enable)
+    {
+        if (cachedRigidbody != null)
+            cachedRigidbody.isKinematic = !enable;
+
+        foreach (MeshRenderer mr in cachedRenderers)
+            mr.shadowCastingMode = enable
+                ? UnityEngine.Rendering.ShadowCastingMode.On
+                : UnityEngine.Rendering.ShadowCastingMode.Off;
+
+        foreach (Collider col in cachedColliders)
+            col.enabled = enable;
     }
 
     public Vector3 GetHandOffsetLocation()

@@ -21,7 +21,5 @@ public interface IPickable
     float GetHandHoldTypeIndex();
     string GetItemName();
 
-
-
-
+    void SetPickState(bool enable);
 }

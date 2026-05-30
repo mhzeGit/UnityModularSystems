@@ -6,21 +6,29 @@ using UnityEngine.InputSystem;
 
 public class PickupSystem : MonoBehaviour
 {
+    public static PickupSystem Instance { get; private set; }
+
     public Transform PlayerArmBase;
     public Transform PickableObjectHolder;
     [Header("Inputs")]
     [SerializeField] InputActionReference DropInputAction;
 
-    public event System.Action<GameObject> OnPickedItemChanged;      // Fires when picked object changes
-    public event System.Action<IPickable> OnItemPicked;             // Fires whenever an item is picked
-    public event System.Action OnAttemptedPickWhileOccupied;        // Fires when trying to pick with item held
+    public event System.Action<GameObject> OnPickedItemChanged;
+    public event System.Action<IPickable> OnItemPicked;
+    public event System.Action OnAttemptedPickWhileOccupied;
 
     IPickable currentPickableItem;
     GameObject currentPickedObject;
 
-    // Stores the item the player tried to pick while already holding one
     IPickable attemptedPickableItem;
     GameObject attemptedPickableObject;
+
+    Coroutine delayedPickCoroutine;
+
+    void Awake()
+    {
+        Instance = this;
+    }
 
     #region Input Setup
     void OnEnable()
@@ -46,17 +54,18 @@ public class PickupSystem : MonoBehaviour
     {
         if (interactedObject == null) return;
 
-        IPickable pickable = interactedObject.GetComponent<IPickable>();
-        if (pickable != null && pickable.GetIsPickable())
+        if (interactedObject.TryGetComponent(out IPickable pickable) && pickable.GetIsPickable())
         {
             if (currentPickableItem != null)
             {
-                // Already holding an item -> fire event and schedule pickup
                 attemptedPickableItem = pickable;
                 attemptedPickableObject = interactedObject;
 
                 OnAttemptedPickWhileOccupied?.Invoke();
-                StartCoroutine(PickAfterDelay(0.2f));
+
+                if (delayedPickCoroutine != null)
+                    StopCoroutine(delayedPickCoroutine);
+                delayedPickCoroutine = StartCoroutine(PickAfterDelay(0.2f));
             }
             else
             {
@@ -68,6 +77,8 @@ public class PickupSystem : MonoBehaviour
     IEnumerator PickAfterDelay(float delay)
     {
         yield return new WaitForSeconds(delay);
+
+        delayedPickCoroutine = null;
 
         if (attemptedPickableObject != null && attemptedPickableItem != null)
         {
@@ -84,7 +95,7 @@ public class PickupSystem : MonoBehaviour
         obj.transform.localPosition = pickable.GetItemOffsetLocation();
         obj.transform.localRotation = pickable.GetItemOffsetRotation();
         PlayerArmBase.localPosition = pickable.GetHandOffsetLocation();
-        SetObjectPickState(obj, false);
+        pickable.SetPickState(false);
         pickable.Picked();
 
         OnItemPicked?.Invoke(pickable);
@@ -102,7 +113,7 @@ public class PickupSystem : MonoBehaviour
     {
         if (obj == null || pickable == null) return;
 
-        SetObjectPickState(obj, true);
+        pickable.SetPickState(true);
         pickable.Dropped();
 
         obj.transform.parent = null;
@@ -111,21 +122,6 @@ public class PickupSystem : MonoBehaviour
         currentPickedObject = null;
 
         OnPickedItemChanged?.Invoke(null);
-    }
-
-    void SetObjectPickState(GameObject obj, bool enable)
-    {
-        Rigidbody rb = obj.GetComponent<Rigidbody>();
-        if (rb != null)
-            rb.isKinematic = !enable;
-
-        foreach (MeshRenderer mr in obj.GetComponentsInChildren<MeshRenderer>(true))
-            mr.shadowCastingMode = enable
-                ? UnityEngine.Rendering.ShadowCastingMode.On
-                : UnityEngine.Rendering.ShadowCastingMode.Off;
-
-        foreach (Collider col in obj.GetComponentsInChildren<Collider>(true))
-            col.enabled = enable;
     }
 
     public void ForceReleaseWithoutCallbacks()
