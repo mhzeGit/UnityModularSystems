@@ -33,7 +33,7 @@ namespace MHZE.PickupSystem
         void Start()
         {
             if (PlayerArmBase == null)
-                Debug.LogWarning("PlayerArmBase is not assigned in the Inspector — hand position will not move on pickup.", this);
+                Debug.LogWarning("PlayerArmBase is not assigned — hand positioning is disabled. This is optional; assign a Transform if you want arm movement on pickup.", this);
 
             if (PickableObjectHolder == null)
                 Debug.LogWarning("PickableObjectHolder is not assigned in the Inspector — picked items will not reparent.", this);
@@ -145,19 +145,16 @@ namespace MHZE.PickupSystem
                 return;
             }
 
-            if (PlayerArmBase == null)
-            {
-                Debug.LogError("PlayerArmBase is not assigned — cannot position hand. Assign a Transform in the Inspector.", this);
-                return;
-            }
-
             currentPickableItem = pickable;
             currentPickedObject = obj;
 
             obj.transform.parent = PickableObjectHolder;
             obj.transform.localPosition = pickable.GetItemOffsetLocation();
             obj.transform.localRotation = pickable.GetItemOffsetRotation();
-            PlayerArmBase.localPosition = pickable.GetHandOffsetLocation();
+
+            if (PlayerArmBase != null)
+                PlayerArmBase.localPosition = pickable.GetHandOffsetLocation();
+
             pickable.SetPickState(false);
             pickable.Picked();
 
