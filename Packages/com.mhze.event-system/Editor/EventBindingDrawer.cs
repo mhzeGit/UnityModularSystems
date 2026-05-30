@@ -143,8 +143,6 @@ namespace MHZE.EventSystem.Editor
                             dragFromIdx = capturedIndex;
                             dragActive = true;
                             capturedCard.AddToClassList("dragging");
-                            root.CapturePointer(evt.pointerId);
-                            evt.StopPropagation();
                         });
                     }
                 }
@@ -167,27 +165,27 @@ namespace MHZE.EventSystem.Editor
             RebuildNow();
 
             // Drag-and-drop event handling
-            float ContentY(float rootY) => rootY - content.layout.y;
 
             root.RegisterCallback<PointerMoveEvent>(evt =>
             {
                 if (!dragActive) return;
-                int targetIdx = ComputeDropIndex(ContentY(evt.position.y));
+                Vector2 localPos = content.WorldToLocal(evt.position);
+                int targetIdx = ComputeDropIndex(localPos.y);
                 if (targetIdx != dragFromIdx)
                     UpdateDropIndicator(targetIdx);
                 else if (dragDropIndicator != null)
                     dragDropIndicator.style.display = DisplayStyle.None;
-                evt.StopPropagation();
-            });
+            }, TrickleDown.TrickleDown);
 
             root.RegisterCallback<PointerUpEvent>(evt =>
             {
                 if (!dragActive) return;
+                if (evt.button != 0) return;
                 dragActive = false;
-                root.ReleasePointer(evt.pointerId);
                 if (dragFromIdx >= 0)
                 {
-                    int targetIdx = ComputeDropIndex(ContentY(evt.position.y));
+                    Vector2 localPos = content.WorldToLocal(evt.position);
+                    int targetIdx = ComputeDropIndex(localPos.y);
                     if (dragFromIdx != targetIdx)
                     {
                         listenersProp.MoveArrayElement(dragFromIdx, targetIdx);
@@ -195,17 +193,14 @@ namespace MHZE.EventSystem.Editor
                     }
                 }
                 RebuildNow();
-                evt.StopPropagation();
-            });
+            }, TrickleDown.TrickleDown);
 
             root.RegisterCallback<PointerCancelEvent>(evt =>
             {
                 if (!dragActive) return;
                 dragActive = false;
-                root.ReleasePointer(evt.pointerId);
                 RebuildNow();
-                evt.StopPropagation();
-            });
+            }, TrickleDown.TrickleDown);
 
             int ComputeDropIndex(float localY)
             {
@@ -232,9 +227,9 @@ namespace MHZE.EventSystem.Editor
                 }
                 dragDropIndicator.style.display = DisplayStyle.Flex;
                 if (targetIdx >= cardCount)
-                    dragDropIndicator.BringToFront();
+                    content.Add(dragDropIndicator);
                 else
-                    dragDropIndicator.PlaceBehind(content[targetIdx]);
+                    content.Insert(targetIdx, dragDropIndicator);
             }
 
             return root;
@@ -286,7 +281,7 @@ namespace MHZE.EventSystem.Editor
             nameField.AddToClassList("card-header-label");
             nameField.AddToClassList("card-header-name-field");
             if (!enabled) nameField.AddToClassList("disabled");
-            Color darkBg = new Color(0.196f, 0.196f, 0.196f, 1f);
+            Color darkBg = new Color(0.149f, 0.149f, 0.157f, 1f);
             var ni = nameField.Q(className: "unity-base-field__input");
             if (ni != null)
             {
