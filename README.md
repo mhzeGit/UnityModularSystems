@@ -65,7 +65,7 @@ Modular throw system with charge-based force, camera-forward direction, configur
 Mediator scripts in `Assets/Scripts/` connect standalone packages together. Attach these to a GameObject in your scene and assign the relevant system references in the Inspector.
 
 | Script | Purpose |
-|---|---|
-| **PickupThrowMediator** | Connects PickupSystem and ThrowingSystem — forwards picked-up items to the throw system and drops items when thrown. |
-| **UseInputPromptMediator** | Connects UseSystem to the InputPromptManager — shows/hides use prompts when a usable target is found or lost. |
-| **InteractInputPromptMediator** | Connects InteractSystem to the InputPromptManager — shows/hides instant and hold-to-interact prompts with dynamic prefixes/suffixes from the interactable. |
+|---|---|---|
+| **[PickupThrowMediator](./Assets/Scripts/PickupThrowMediator.cs)** | Connects PickupSystem and ThrowingSystem — forwards picked-up items to the throw system and drops items when thrown. |
+| **[UseInputPromptMediator](./Assets/Scripts/UseInputPromptMediator.cs)** | Connects UseSystem to the InputPromptManager — shows/hides use prompts when a usable target is found or lost. |
+| **[InteractInputPromptMediator](./Assets/Scripts/InteractInputPromptMediator.cs)** | Connects InteractSystem to the InputPromptManager — shows/hides instant and hold-to-interact prompts with dynamic prefixes/suffixes from the interactable. |
