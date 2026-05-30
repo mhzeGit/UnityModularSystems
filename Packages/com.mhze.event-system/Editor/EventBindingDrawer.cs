@@ -209,7 +209,7 @@ namespace MHZE.EventSystem.Editor
             if (enabled)
             {
                 card.RemoveFromClassList("disabled");
-                accent.style.backgroundColor = new Color(0.188f, 0.820f, 0.345f);
+                accent.style.backgroundColor = new Color(0.3f, 0.3f, 0.3f);
             }
             else
             {
