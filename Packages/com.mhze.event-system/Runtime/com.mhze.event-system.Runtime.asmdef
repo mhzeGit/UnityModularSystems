@@ -1,0 +1,12 @@
+{
+  "name": "com.mhze.event-system.Runtime",
+  "rootNamespace": "MHZE.EventSystem",
+  "references": [],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": []
+}

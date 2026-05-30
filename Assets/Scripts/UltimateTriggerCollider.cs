@@ -1,5 +1,5 @@
 using UnityEngine;
-using UnityEngine.Events;
+using MHZE.EventSystem;
 
 namespace MHZE
 {
@@ -12,9 +12,9 @@ namespace MHZE
         [SerializeField] private bool _useOnEnter = true;
         [SerializeField] private bool _useOnStay = true;
         [SerializeField] private bool _useOnExit = true;
-        public ColliderUnityEvent OnEnter;
-        public ColliderUnityEvent OnStay;
-        public ColliderUnityEvent OnExit;
+        public EventBinding OnEnter;
+        public EventBinding OnStay;
+        public EventBinding OnExit;
 
         public event System.Action<Collider> OnTriggerEntered;
         public event System.Action<Collider> OnTriggerStayed;
@@ -73,7 +73,7 @@ namespace MHZE
             if (!_useOnEnter) return;
             if (!IsTagValid(other)) return;
             OnTriggerEntered?.Invoke(other);
-            OnEnter?.Invoke(other);
+            OnEnter?.Invoke();
         }
 
         private void OnTriggerStay(Collider other)
@@ -81,7 +81,7 @@ namespace MHZE
             if (!_useOnStay) return;
             if (!IsTagValid(other)) return;
             OnTriggerStayed?.Invoke(other);
-            OnStay?.Invoke(other);
+            OnStay?.Invoke();
         }
 
         private void OnTriggerExit(Collider other)
@@ -89,7 +89,7 @@ namespace MHZE
             if (!_useOnExit) return;
             if (!IsTagValid(other)) return;
             OnTriggerExited?.Invoke(other);
-            OnExit?.Invoke(other);
+            OnExit?.Invoke();
         }
 
         private bool IsTagValid(Collider other)
@@ -376,7 +376,4 @@ namespace MHZE
             return mat;
         }
     }
-
-    [System.Serializable]
-    public class ColliderUnityEvent : UnityEvent<Collider> { }
 }

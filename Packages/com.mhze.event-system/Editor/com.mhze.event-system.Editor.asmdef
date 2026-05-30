@@ -1,0 +1,14 @@
+{
+  "name": "com.mhze.event-system.Editor",
+  "rootNamespace": "MHZE.EventSystem.Editor",
+  "references": [
+    "com.mhze.event-system.Runtime"
+  ],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": []
+}
