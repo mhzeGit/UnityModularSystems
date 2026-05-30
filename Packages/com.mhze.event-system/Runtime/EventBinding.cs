@@ -41,6 +41,16 @@ namespace MHZE.EventSystem
                 _listeners.RemoveAt(index);
         }
 
+        public void MoveListener(int fromIndex, int toIndex)
+        {
+            if (fromIndex < 0 || fromIndex >= _listeners.Count) return;
+            if (toIndex < 0 || toIndex >= _listeners.Count) return;
+            if (fromIndex == toIndex) return;
+            var listener = _listeners[fromIndex];
+            _listeners.RemoveAt(fromIndex);
+            _listeners.Insert(toIndex, listener);
+        }
+
         public void Clear()
         {
             _listeners.Clear();

@@ -99,6 +99,11 @@ namespace MHZE.EventSystem.Editor
 
             bool expanded = false;
 
+            // Drag state
+            VisualElement dragDropIndicator = null;
+            int dragFromIdx = -1;
+            bool dragActive = false;
+
             void SetExpanded(bool val)
             {
                 expanded = val;
@@ -126,7 +131,28 @@ namespace MHZE.EventSystem.Editor
                     var lp = listeners.GetArrayElementAtIndex(index);
                     var card = BuildListenerCard(lp, index, listeners, () => root.schedule.Execute((TimerState _) => RebuildNow()));
                     content.Add(card);
+
+                    var dragHandle = card.Q("drag-handle");
+                    if (dragHandle != null)
+                    {
+                        int capturedIndex = index;
+                        VisualElement capturedCard = card;
+                        dragHandle.RegisterCallback<PointerDownEvent>(evt =>
+                        {
+                            if (evt.button != 0) return;
+                            dragFromIdx = capturedIndex;
+                            dragActive = true;
+                            capturedCard.AddToClassList("dragging");
+                            root.CapturePointer(evt.pointerId);
+                            evt.StopPropagation();
+                        });
+                    }
                 }
+
+                dragDropIndicator = new VisualElement();
+                dragDropIndicator.AddToClassList("drop-indicator");
+                dragDropIndicator.style.display = DisplayStyle.None;
+                content.Add(dragDropIndicator);
             }
 
             void AddNewAndRebuild()
@@ -139,6 +165,78 @@ namespace MHZE.EventSystem.Editor
             footerBtn.clicked += AddNewAndRebuild;
 
             RebuildNow();
+
+            // Drag-and-drop event handling
+            float ContentY(float rootY) => rootY - content.layout.y;
+
+            root.RegisterCallback<PointerMoveEvent>(evt =>
+            {
+                if (!dragActive) return;
+                int targetIdx = ComputeDropIndex(ContentY(evt.position.y));
+                if (targetIdx != dragFromIdx)
+                    UpdateDropIndicator(targetIdx);
+                else if (dragDropIndicator != null)
+                    dragDropIndicator.style.display = DisplayStyle.None;
+                evt.StopPropagation();
+            });
+
+            root.RegisterCallback<PointerUpEvent>(evt =>
+            {
+                if (!dragActive) return;
+                dragActive = false;
+                root.ReleasePointer(evt.pointerId);
+                if (dragFromIdx >= 0)
+                {
+                    int targetIdx = ComputeDropIndex(ContentY(evt.position.y));
+                    if (dragFromIdx != targetIdx)
+                    {
+                        listenersProp.MoveArrayElement(dragFromIdx, targetIdx);
+                        listenersProp.serializedObject.ApplyModifiedProperties();
+                    }
+                }
+                RebuildNow();
+                evt.StopPropagation();
+            });
+
+            root.RegisterCallback<PointerCancelEvent>(evt =>
+            {
+                if (!dragActive) return;
+                dragActive = false;
+                root.ReleasePointer(evt.pointerId);
+                RebuildNow();
+                evt.StopPropagation();
+            });
+
+            int ComputeDropIndex(float localY)
+            {
+                int idx = 0;
+                foreach (var child in content.Children())
+                {
+                    if (child == dragDropIndicator) continue;
+                    float midY = child.layout.y + child.layout.height * 0.5f;
+                    if (localY < midY)
+                        return idx;
+                    idx++;
+                }
+                return idx;
+            }
+
+            void UpdateDropIndicator(int targetIdx)
+            {
+                if (dragDropIndicator == null) return;
+                int cardCount = content.childCount - 1;
+                if (targetIdx < 0 || targetIdx == dragFromIdx || targetIdx > cardCount)
+                {
+                    dragDropIndicator.style.display = DisplayStyle.None;
+                    return;
+                }
+                dragDropIndicator.style.display = DisplayStyle.Flex;
+                if (targetIdx >= cardCount)
+                    dragDropIndicator.BringToFront();
+                else
+                    dragDropIndicator.PlaceBehind(content[targetIdx]);
+            }
+
             return root;
         }
 
@@ -164,6 +262,11 @@ namespace MHZE.EventSystem.Editor
 
             var hdr = new VisualElement();
             hdr.AddToClassList("card-header");
+
+            var dragHandle = new Label("\u2261");
+            dragHandle.name = "drag-handle";
+            dragHandle.AddToClassList("drag-handle");
+            hdr.Add(dragHandle);
 
             var toggle = new Toggle();
             toggle.value = enabled;

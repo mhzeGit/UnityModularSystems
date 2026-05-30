@@ -12,9 +12,9 @@ namespace MHZE
         [SerializeField] private bool _useOnEnter = true;
         [SerializeField] private bool _useOnStay = true;
         [SerializeField] private bool _useOnExit = true;
-        public EventBinding OnEnter;
-        public EventBinding OnStay;
-        public EventBinding OnExit;
+        public EventBinding OnEnter= new EventBinding();
+        public EventBinding OnStay= new EventBinding();
+        public EventBinding OnExit= new EventBinding();
 
         public event System.Action<Collider> OnTriggerEntered;
         public event System.Action<Collider> OnTriggerStayed;

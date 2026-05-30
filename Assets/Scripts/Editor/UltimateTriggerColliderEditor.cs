@@ -1,98 +1,78 @@
 using UnityEditor;
-using UnityEditorInternal;
+using UnityEditor.UIElements;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace MHZE.Editor
 {
     [CustomEditor(typeof(UltimateTriggerCollider))]
     public class UltimateTriggerColliderEditor : UnityEditor.Editor
     {
-        private SerializedProperty _targetTags;
-        private SerializedProperty _useOnEnter;
-        private SerializedProperty _useOnStay;
-        private SerializedProperty _useOnExit;
-        private SerializedProperty _onEnter;
-        private SerializedProperty _onStay;
-        private SerializedProperty _onExit;
-        private SerializedProperty _showDebugPreview;
-        private ReorderableList _tagList;
-
-        private void OnEnable()
+        public override VisualElement CreateInspectorGUI()
         {
-            _targetTags = serializedObject.FindProperty("_targetTags");
-            _useOnEnter = serializedObject.FindProperty("_useOnEnter");
-            _useOnStay = serializedObject.FindProperty("_useOnStay");
-            _useOnExit = serializedObject.FindProperty("_useOnExit");
-            _onEnter = serializedObject.FindProperty("OnEnter");
-            _onStay = serializedObject.FindProperty("OnStay");
-            _onExit = serializedObject.FindProperty("OnExit");
-            _showDebugPreview = serializedObject.FindProperty("_showDebugPreview");
+            var root = new VisualElement();
+            root.style.paddingLeft = 4;
+            root.style.paddingRight = 4;
+            root.style.paddingTop = 4;
 
-            _tagList = new ReorderableList(serializedObject, _targetTags, true, false, true, true)
+            var so = serializedObject;
+
+            AddSectionHeader(root, "Tag Filtering");
+            root.Add(new PropertyField(so.FindProperty("_targetTags"), "Target Tags"));
+
+            AddSectionHeader(root, "Trigger Events");
+            AddToggleGroup(root, so.FindProperty("_useOnEnter"), so.FindProperty("OnEnter"), "On Enter");
+            AddToggleGroup(root, so.FindProperty("_useOnStay"), so.FindProperty("OnStay"), "On Stay");
+            AddToggleGroup(root, so.FindProperty("_useOnExit"), so.FindProperty("OnExit"), "On Exit");
+
+            AddSectionHeader(root, "Debug");
+            root.Add(new PropertyField(so.FindProperty("_showDebugPreview")));
+
+            root.Bind(so);
+            return root;
+        }
+
+        private static void AddSectionHeader(VisualElement root, string label)
+        {
+            root.Add(new VisualElement { style = { height = 6 } });
+
+            var line = new VisualElement();
+            line.style.height = 1;
+            line.style.marginLeft = 4;
+            line.style.marginRight = 4;
+            line.style.backgroundColor = new Color(0.35f, 0.35f, 0.35f, 0.3f);
+            root.Add(line);
+
+            var header = new Label(label);
+            header.style.fontSize = 12;
+            header.style.unityFontStyleAndWeight = FontStyle.Bold;
+            header.style.marginTop = 3;
+            header.style.marginBottom = 3;
+            root.Add(header);
+        }
+
+        private static void AddToggleGroup(VisualElement root, SerializedProperty toggleProp, SerializedProperty eventProp, string label)
+        {
+            var container = new VisualElement();
+
+            var toggle = new Toggle(label);
+            toggle.value = toggleProp.boolValue;
+            toggle.style.unityFontStyleAndWeight = FontStyle.Bold;
+            container.Add(toggle);
+
+            var eventField = new PropertyField(eventProp);
+            eventField.style.paddingLeft = 24;
+            eventField.style.display = toggleProp.boolValue ? DisplayStyle.Flex : DisplayStyle.None;
+            container.Add(eventField);
+
+            root.Add(container);
+
+            toggle.RegisterValueChangedCallback(evt =>
             {
-                drawElementCallback = DrawTagElement,
-                onAddCallback = OnAddTag,
-                elementHeight = EditorGUIUtility.singleLineHeight + 2,
-                footerHeight = 0,
-            };
-        }
-
-        public override void OnInspectorGUI()
-        {
-            serializedObject.Update();
-
-            DrawSectionHeader("Tag Filtering");
-            EditorGUI.indentLevel++;
-            _tagList.DoLayoutList();
-            EditorGUI.indentLevel--;
-            EditorGUILayout.Space(20);
-
-            DrawSectionHeader("Trigger Events");
-            DrawEventToggle(_useOnEnter, _onEnter, "On Enter");
-            DrawEventToggle(_useOnStay, _onStay, "On Stay");
-            DrawEventToggle(_useOnExit, _onExit, "On Exit");
-
-            DrawSectionHeader("Debug");
-            EditorGUILayout.PropertyField(_showDebugPreview);
-
-            serializedObject.ApplyModifiedProperties();
-        }
-
-        private static void DrawSectionHeader(string label)
-        {
-            EditorGUILayout.Space(6);
-            Rect r = EditorGUILayout.GetControlRect(false, 2);
-            r.height = 1;
-            r.x += 4;
-            r.width -= 8;
-            EditorGUI.DrawRect(r, new Color(0.35f, 0.35f, 0.35f, 0.3f));
-            EditorGUILayout.Space(6);
-            EditorGUILayout.LabelField(label, EditorStyles.boldLabel);
-        }
-
-        private void DrawTagElement(Rect rect, int index, bool isActive, bool isFocused)
-        {
-            SerializedProperty element = _targetTags.GetArrayElementAtIndex(index);
-            rect.y += 1;
-            rect.height = EditorGUIUtility.singleLineHeight;
-            element.stringValue = EditorGUI.TagField(rect, element.stringValue);
-        }
-
-        private void OnAddTag(ReorderableList list)
-        {
-            _targetTags.InsertArrayElementAtIndex(_targetTags.arraySize);
-            _targetTags.GetArrayElementAtIndex(_targetTags.arraySize - 1).stringValue = "Untagged";
-        }
-
-        private static void DrawEventToggle(SerializedProperty toggle, SerializedProperty eventProp, string label)
-        {
-            toggle.boolValue = EditorGUILayout.ToggleLeft(label, toggle.boolValue, EditorStyles.boldLabel);
-            if (toggle.boolValue)
-            {
-                EditorGUI.indentLevel += 2;
-                EditorGUILayout.PropertyField(eventProp);
-                EditorGUI.indentLevel -= 2;
-            }
+                toggleProp.boolValue = evt.newValue;
+                toggleProp.serializedObject.ApplyModifiedProperties();
+                eventField.style.display = evt.newValue ? DisplayStyle.Flex : DisplayStyle.None;
+            });
         }
     }
 }
