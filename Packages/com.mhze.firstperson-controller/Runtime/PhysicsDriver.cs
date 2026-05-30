@@ -36,7 +36,7 @@ namespace ModularSystems.FirstPersonController
         {
             get
             {
-                float radius = capsule.radius;
+                float radius = Mathf.Max(capsule.radius, 0.15f);
                 Vector3 origin = rb.position + Vector3.up * (radius + 0.05f);
                 float castDist = radius + settings.groundCheckDepth;
                 return Physics.SphereCast(origin, radius * settings.groundCheckRadiusScale,
