@@ -16,3 +16,6 @@ MonoBehaviour:
   - deviceLayout: Keyboard
     controlPath: e
     icon: {fileID: 86901044, guid: e93d1fa8702671340999d3e0692de4f3, type: 3}
+  - deviceLayout: Mouse
+    controlPath: leftButton
+    icon: {fileID: 960443384, guid: e93d1fa8702671340999d3e0692de4f3, type: 3}

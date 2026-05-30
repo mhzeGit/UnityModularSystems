@@ -14,3 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   prompts:
   - {fileID: 11400000, guid: 5d2b40aa332c65443b4a7ef44612a77f, type: 2}
+  - {fileID: 11400000, guid: fde2394a5c1964f45ab211ee46300b85, type: 2}

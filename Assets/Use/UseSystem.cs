@@ -14,7 +14,7 @@ public class UseSystem : MonoBehaviour
     [SerializeField] LayerMask useableLayers = -1;
 
     [Header("References")]
-    public GameObject playerHand; // Object that holds the item (It will be assigned by CentralMediator)
+    public GameObject playerHand;
     [HideInInspector] public IUsableTarget currentUsableTarget;
     [HideInInspector] public IUsable currentHeldItem;
     [HideInInspector] public GameObject currentTargetObject;
@@ -45,7 +45,8 @@ public class UseSystem : MonoBehaviour
 
     private void Update()
     {
-        if (playerHand == null || !canUse) return;
+        if (playerHand == null) return;
+        if (!canUse) return;
         PerformTargetDetection();
     }
 
@@ -86,20 +87,21 @@ public class UseSystem : MonoBehaviour
 
     void PerformUse()
     {
-        if (playerHand == null || !canUse) return;
+        if (playerHand == null) return;
+        if (!canUse) return;
 
         currentHeldItem = playerHand.GetComponentInChildren<IUsable>();
-        if (currentHeldItem != null)
-        {
-            foundedUseTargetName = currentUsableTarget?.GetUseTargetName() ?? UseTargetsName.Default;
-            currentHeldItem.OnUsed(currentTargetObject, foundedUseTargetName);
+        if (currentHeldItem == null) return;
 
-            // Start optimized delayed call
-            StartCoroutine(DelayedUseOnTarget(currentHeldItem.GetUseImpactDelay()));
+        if (!currentHeldItem.GetIsUsable()) return;
 
-            OnUseItem.Invoke(currentHeldItem);
-            nextUseTime = Time.time + currentHeldItem.GetUseCooldown();
-        }
+        foundedUseTargetName = currentUsableTarget?.GetUseTargetName() ?? UseTargetsName.Default;
+        currentHeldItem.OnUsed(currentTargetObject, foundedUseTargetName);
+
+        StartCoroutine(DelayedUseOnTarget(currentHeldItem.GetUseImpactDelay()));
+
+        OnUseItem?.Invoke(currentHeldItem);
+        nextUseTime = Time.time + currentHeldItem.GetUseCooldown();
     }
 
     private System.Collections.IEnumerator DelayedUseOnTarget(float delay)
@@ -121,35 +123,38 @@ public class UseSystem : MonoBehaviour
     }
     public void CheckTargetObjectCanBeUsedOn(GameObject objectFound)
     {
-        // Check if the detected object has a usable target component
         IUsableTarget usableTarget = objectFound?.GetComponent<IUsableTarget>();
 
-
-        // Check if the player is holding a usable item
-        currentHeldItem = playerHand != null ? playerHand.GetComponentInChildren<IUsable>() : null;
-
-        toolNameToCheck = currentHeldItem != null ? currentHeldItem.GetToolName() : ToolsName.Hand; // get the name of the tool that player is holding, if player is not holding anyhting then give "Hand" as the name of the tool
-
-        ///Here we check validation if player can use an item on the target.
-        ///First it check if the target that player is trying to use on is exist or not?
-        ///Then it checks if the target is new or not?
-        ///Lastly checks if the target contains tool  (that could be used on it) names, for example the target can only be used truly if player has a hammer in the hand.
-        ///This validation does not stop the player from using the tool they have in the hand but rather does 2 things:
-        ///1. make sures the prompt to use the item on does not show
-        ///2. make sures later on when player performs use, it would avoid trying to send used function to the target
-
-
-        if (usableTarget != null && usableTarget != currentUsableTarget && usableTarget.GetTargetAcceptedToolNames().Contains(toolNameToCheck) && usableTarget.GetCanUseAtTaget())
-        {
-
-            currentUsableTarget = usableTarget;
-            currentTargetObject = objectFound;
-            OnUsableTargetFound?.Invoke(currentUsableTarget); // Invoking this will create a prompt "Press 'LMB' To Use".
-        }
-        else
+        if (usableTarget == null)
         {
             OnLostObjectPerformed();
+            return;
         }
+
+        currentHeldItem = playerHand != null ? playerHand.GetComponentInChildren<IUsable>() : null;
+
+        toolNameToCheck = currentHeldItem != null ? currentHeldItem.GetToolName() : ToolsName.Hand;
+
+        if (usableTarget == currentUsableTarget)
+        {
+            return;
+        }
+
+        if (!usableTarget.GetCanUseAtTaget())
+        {
+            OnLostObjectPerformed();
+            return;
+        }
+
+        if (!usableTarget.GetTargetAcceptedToolNames().Contains(toolNameToCheck))
+        {
+            OnLostObjectPerformed();
+            return;
+        }
+
+        currentUsableTarget = usableTarget;
+        currentTargetObject = objectFound;
+        OnUsableTargetFound?.Invoke(currentUsableTarget);
     }
 
     public void OnLostObjectPerformed()
@@ -164,16 +169,13 @@ public class UseSystem : MonoBehaviour
 
     void UseTheToolOnTarget()
     {
-        // when tried using (aka presssing LMB) check if there is any target to use it on, if there is nothing.. then dont do anyhting and ignore calling the target being used
-        if (currentUsableTarget != null &&
-            currentTargetObject != null && currentUsableTarget.GetCanUseAtTaget() &&
-            currentUsableTarget.GetTargetAcceptedToolNames().Contains(toolNameToCheck))
+        if (currentUsableTarget == null) return;
+        if (currentTargetObject == null) return;
+        if (!currentUsableTarget.GetCanUseAtTaget()) return;
+        if (!currentUsableTarget.GetTargetAcceptedToolNames().Contains(toolNameToCheck)) return;
 
-        {
-            currentHeldItem.OnUsedOnTarget(currentTargetObject, foundedUseTargetName);
-            currentUsableTarget.Used((currentHeldItem as MonoBehaviour)?.gameObject, toolNameToCheck, lastHitTargetResults);
-            OnUseItemAtTarget.Invoke(currentHeldItem, currentUsableTarget);
-            
-        }
+        currentHeldItem.OnUsedOnTarget(currentTargetObject, foundedUseTargetName);
+        currentUsableTarget.Used((currentHeldItem as MonoBehaviour)?.gameObject, toolNameToCheck, lastHitTargetResults);
+        OnUseItemAtTarget?.Invoke(currentHeldItem, currentUsableTarget);
     }
 }
