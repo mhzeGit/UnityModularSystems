@@ -27,8 +27,8 @@
     min-width: 16px;
     height: 22px;
     color: rgba(152, 152, 157, 255);
-    cursor: pointer;
-    unity-text-align: middle-center;
+    cursor: link;
+    -unity-text-align: middle-center;
 }
 
 .foldout-arrow:hover {
@@ -37,10 +37,10 @@
 
 .foldout-label {
     font-size: 12px;
-    font-style: bold;
+    -unity-font-style: bold;
     color: rgba(245, 245, 247, 255);
     height: 22px;
-    cursor: pointer;
+    cursor: link;
     -unity-text-align: middle-left;
 }
 
@@ -60,7 +60,7 @@
 
 /* ── Listener Card ─────────────────────────── */
 .listener-card {
-    background-color: rgba(28, 28, 30, 255);
+    background-color: rgba(35, 35, 35, 255);
     border-color: rgba(44, 44, 46, 255);
     border-width: 1px;
     border-radius: 4px;
@@ -117,18 +117,19 @@
 
 .remove-button {
     font-size: 12px;
-    color: rgba(99, 99, 102, 255);
+    color: rgba(200, 50, 40, 255);
     background-color: transparent;
     border-width: 0;
     width: 22px;
     min-width: 22px;
     height: 22px;
     -unity-text-align: middle-center;
-    cursor: pointer;
+    cursor: link;
 }
 
 .remove-button:hover {
-    color: rgba(255, 69, 58, 255);
+    color: rgba(255, 90, 80, 255);
+    font-size: 14px;
 }
 
 /* ── Field Rows ────────────────────────────── */
@@ -199,7 +200,7 @@
 
 .param-section-foldout {
     font-size: 11px;
-    font-style: bold;
+    -unity-font-style: bold;
     color: rgba(152, 152, 157, 255);
     height: 18px;
 }
@@ -234,7 +235,7 @@
 
 .param-header-name {
     font-size: 10px;
-    font-style: bold;
+    -unity-font-style: bold;
     color: rgba(245, 245, 247, 255);
     height: 18px;
     -unity-text-align: middle-left;
