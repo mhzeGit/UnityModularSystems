@@ -5,10 +5,11 @@ using UnityEngine;
 
 public interface IUsableTarget
 {
-    bool GetCanUseAtTaget();
+    bool GetCanUseAtTarget();
     void SetCanUseAtTarget(bool Bool);
     void Used(GameObject usedBy, ToolsName usedToolName, RaycastHit HitResults);
-    List<ToolsName> GetTargetAcceptedToolNames();
+    IReadOnlyList<ToolsName> GetTargetAcceptedToolNames();
     UseTargetsName GetUseTargetName();
-    string GetUsePrompt(ToolsName toolname, int PromptIndex);
+    string GetUsePromptPrefix(ToolsName toolname);
+    string GetUsePromptSuffix(ToolsName toolname);
 }

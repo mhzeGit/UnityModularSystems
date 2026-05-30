@@ -1,6 +1,7 @@
 // Made By MHZE
 
 using System;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -11,14 +12,14 @@ public class UseSystem : MonoBehaviour
 
     [Header("Raycast Settings")]
     [SerializeField] float maxUseDistance = 3f;
-    [SerializeField] LayerMask useableLayers = -1;
+    [SerializeField] LayerMask usableLayers = -1;
 
     [Header("References")]
     public GameObject playerHand;
     [HideInInspector] public IUsableTarget currentUsableTarget;
     [HideInInspector] public IUsable currentHeldItem;
     [HideInInspector] public GameObject currentTargetObject;
-    UseTargetsName foundedUseTargetName;
+    UseTargetsName foundUseTargetName;
     RaycastHit lastHitTargetResults;
     float nextUseTime = 0f;
 
@@ -32,6 +33,7 @@ public class UseSystem : MonoBehaviour
     private bool canUse = true;
 
     ToolsName toolNameToCheck;
+    Coroutine delayedUseCoroutine;
 
     private void Awake()
     {
@@ -41,12 +43,19 @@ public class UseSystem : MonoBehaviour
     private void Start()
     {
         SetUseEnable(true);
+        RefreshHeldItem();
+    }
+
+    void RefreshHeldItem()
+    {
+        currentHeldItem = playerHand != null ? playerHand.GetComponentInChildren<IUsable>() : null;
     }
 
     private void Update()
     {
         if (playerHand == null) return;
         if (!canUse) return;
+        RefreshHeldItem();
         PerformTargetDetection();
     }
 
@@ -56,7 +65,7 @@ public class UseSystem : MonoBehaviour
 
         Ray ray = new Ray(mainCamera.transform.position, mainCamera.transform.forward);
 
-        if (Physics.Raycast(ray, out RaycastHit hit, maxUseDistance, useableLayers))
+        if (Physics.Raycast(ray, out RaycastHit hit, maxUseDistance, usableLayers))
         {
             OnDetectedObjectPerformed(hit);
         }
@@ -74,6 +83,7 @@ public class UseSystem : MonoBehaviour
 
     void OnDisable()
     {
+        CancelDelayedUse();
         UseInputAction.action.performed -= UseInputPerformed;
         UseInputAction.action.Disable();
     }
@@ -90,15 +100,16 @@ public class UseSystem : MonoBehaviour
         if (playerHand == null) return;
         if (!canUse) return;
 
-        currentHeldItem = playerHand.GetComponentInChildren<IUsable>();
+        RefreshHeldItem();
         if (currentHeldItem == null) return;
 
         if (!currentHeldItem.GetIsUsable()) return;
 
-        foundedUseTargetName = currentUsableTarget?.GetUseTargetName() ?? UseTargetsName.Default;
-        currentHeldItem.OnUsed(currentTargetObject, foundedUseTargetName);
+        foundUseTargetName = currentUsableTarget?.GetUseTargetName() ?? UseTargetsName.Default;
+        currentHeldItem.OnUsed(currentTargetObject, foundUseTargetName);
 
-        StartCoroutine(DelayedUseOnTarget(currentHeldItem.GetUseImpactDelay()));
+        CancelDelayedUse();
+        delayedUseCoroutine = StartCoroutine(DelayedUseOnTarget(currentHeldItem.GetUseImpactDelay()));
 
         OnUseItem?.Invoke(currentHeldItem);
         nextUseTime = Time.time + currentHeldItem.GetUseCooldown();
@@ -131,8 +142,6 @@ public class UseSystem : MonoBehaviour
             return;
         }
 
-        currentHeldItem = playerHand != null ? playerHand.GetComponentInChildren<IUsable>() : null;
-
         toolNameToCheck = currentHeldItem != null ? currentHeldItem.GetToolName() : ToolsName.Hand;
 
         if (usableTarget == currentUsableTarget)
@@ -140,7 +149,7 @@ public class UseSystem : MonoBehaviour
             return;
         }
 
-        if (!usableTarget.GetCanUseAtTaget())
+        if (!usableTarget.GetCanUseAtTarget())
         {
             OnLostObjectPerformed();
             return;
@@ -157,10 +166,20 @@ public class UseSystem : MonoBehaviour
         OnUsableTargetFound?.Invoke(currentUsableTarget);
     }
 
+    void CancelDelayedUse()
+    {
+        if (delayedUseCoroutine != null)
+        {
+            StopCoroutine(delayedUseCoroutine);
+            delayedUseCoroutine = null;
+        }
+    }
+
     public void OnLostObjectPerformed()
     {
         if (currentUsableTarget != null)
         {
+            CancelDelayedUse();
             currentUsableTarget = null;
             currentTargetObject = null;
             OnUsableTargetLost?.Invoke();
@@ -171,10 +190,10 @@ public class UseSystem : MonoBehaviour
     {
         if (currentUsableTarget == null) return;
         if (currentTargetObject == null) return;
-        if (!currentUsableTarget.GetCanUseAtTaget()) return;
+        if (!currentUsableTarget.GetCanUseAtTarget()) return;
         if (!currentUsableTarget.GetTargetAcceptedToolNames().Contains(toolNameToCheck)) return;
 
-        currentHeldItem.OnUsedOnTarget(currentTargetObject, foundedUseTargetName);
+        currentHeldItem.OnUsedOnTarget(currentTargetObject, foundUseTargetName);
         currentUsableTarget.Used((currentHeldItem as MonoBehaviour)?.gameObject, toolNameToCheck, lastHitTargetResults);
         OnUseItemAtTarget?.Invoke(currentHeldItem, currentUsableTarget);
     }

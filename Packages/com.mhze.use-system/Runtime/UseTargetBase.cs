@@ -26,42 +26,61 @@ public class UseTargetBase : MonoBehaviour, IUsableTarget
 
 
 
-    public bool GetCanUseAtTaget() => canUseAtTarget;
+    List<ToolsName> cachedAcceptedToolNames;
+    bool isDirty = true;
+
+    void OnValidate()
+    {
+        isDirty = true;
+    }
+
+    void OnEnable()
+    {
+        isDirty = true;
+    }
+
+    public bool GetCanUseAtTarget() => canUseAtTarget;
 
     public void SetCanUseAtTarget(bool Bool)
     {
         canUseAtTarget = Bool;
     }
 
-    public List<ToolsName> GetTargetAcceptedToolNames()
+    public IReadOnlyList<ToolsName> GetTargetAcceptedToolNames()
     {
-        List<ToolsName> result = new List<ToolsName>();
-        foreach (ToolData data in toolData)
+        if (isDirty)
         {
-            result.Add(data.acceptedToolName);
+            cachedAcceptedToolNames ??= new List<ToolsName>();
+            cachedAcceptedToolNames.Clear();
+            foreach (ToolData data in toolData)
+            {
+                cachedAcceptedToolNames.Add(data.acceptedToolName);
+            }
+            isDirty = false;
         }
-        return result;
+        return cachedAcceptedToolNames;
     }
 
-    public string GetUsePrompt(ToolsName toolname, int PromptIndex)
+    public string GetUsePromptPrefix(ToolsName toolname)
     {
         foreach (var data in toolData)
         {
             if (data.acceptedToolName == toolname)
-                if(PromptIndex == 0)
-                {
-                    return data.usePromptPrefix;
+            {
+                return data.usePromptPrefix;
+            }
+        }
+        return string.Empty;
+    }
 
-                }
-                else if (PromptIndex == 1)
-                {
-                    return data.usePromptSuffix;
-
-                }
-                else
-                {
-                    return "ERROR: Invalid Prompt Index";
-                }
+    public string GetUsePromptSuffix(ToolsName toolname)
+    {
+        foreach (var data in toolData)
+        {
+            if (data.acceptedToolName == toolname)
+            {
+                return data.usePromptSuffix;
+            }
         }
         return string.Empty;
     }

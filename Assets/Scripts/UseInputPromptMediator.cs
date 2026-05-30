@@ -95,7 +95,7 @@ public class UseInputPromptMediator : MonoBehaviour
 
     private static string ResolvePrefix(IUsableTarget target, ToolsName toolName, InputPromptDefinition definition)
     {
-        var prompt = target.GetUsePrompt(toolName, 0);
+        var prompt = target.GetUsePromptPrefix(toolName);
         if (string.IsNullOrEmpty(prompt))
             return definition.PrefixText;
         return prompt;
@@ -103,7 +103,7 @@ public class UseInputPromptMediator : MonoBehaviour
 
     private static string ResolveSuffix(IUsableTarget target, ToolsName toolName, InputPromptDefinition definition)
     {
-        var prompt = target.GetUsePrompt(toolName, 1);
+        var prompt = target.GetUsePromptSuffix(toolName);
         if (string.IsNullOrEmpty(prompt))
             return definition.SuffixText;
         return prompt;
