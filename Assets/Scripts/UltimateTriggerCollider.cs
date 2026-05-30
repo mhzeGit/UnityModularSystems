@@ -3,8 +3,6 @@ using UnityEngine.Events;
 
 namespace MHZE
 {
-    [RequireComponent(typeof(Collider))]
-    [RequireComponent(typeof(Rigidbody))]
     public class UltimateTriggerCollider : MonoBehaviour
     {
         [Header("Tag Filtering")]
@@ -26,13 +24,15 @@ namespace MHZE
         [SerializeField] private bool _showDebugPreview;
 
         private Collider _collider;
-        private Rigidbody _rigidbody;
         private Mesh _fillMesh;
         private Mesh _wireframeMesh;
         private Material _fillMaterial;
         private Material _wireframeMaterial;
         private Vector3 _debugScale;
         private Vector3 _debugPosition;
+        private System.Type _prevColliderType;
+        private Vector3 _prevCenter;
+        private Vector3 _prevScale;
 
         private void Reset()
         {
@@ -40,22 +40,16 @@ namespace MHZE
                 hitCollider = gameObject.AddComponent<BoxCollider>();
 
             hitCollider.isTrigger = true;
-
-            if (!TryGetComponent(out Rigidbody rb))
-                rb = gameObject.AddComponent<Rigidbody>();
-
-            rb.isKinematic = true;
-            rb.useGravity = false;
-            rb.hideFlags = HideFlags.NotEditable;
         }
 
         private void Awake()
         {
             CacheComponents();
 
+            if (_collider == null)
+                _collider = gameObject.AddComponent<BoxCollider>();
+
             _collider.isTrigger = true;
-            _rigidbody.isKinematic = true;
-            _rigidbody.useGravity = false;
         }
 
         private void Start()
@@ -72,7 +66,6 @@ namespace MHZE
         private void CacheComponents()
         {
             _collider = GetComponent<Collider>();
-            _rigidbody = GetComponent<Rigidbody>();
         }
 
         private void OnTriggerEnter(Collider other)
@@ -111,7 +104,12 @@ namespace MHZE
 
         private void LateUpdate()
         {
-            if (!_showDebugPreview || _fillMesh == null) return;
+            if (!_showDebugPreview) return;
+
+            if (_fillMesh == null || ColliderStateChanged())
+                GenerateDebugVisuals();
+
+            if (_fillMesh == null) return;
 
             Vector3 position = transform.TransformPoint(_debugPosition);
             Quaternion rotation = transform.rotation;
@@ -128,7 +126,7 @@ namespace MHZE
         {
             if (!_showDebugPreview) return;
 
-            if (_fillMesh == null)
+            if (_fillMesh == null || ColliderStateChanged())
                 GenerateDebugVisuals();
 
             if (_fillMesh == null) return;
@@ -188,9 +186,13 @@ namespace MHZE
             }
 
             ComputeColliderData(out _debugPosition, out _debugScale);
+            _prevColliderType = _collider.GetType();
+            _prevCenter = _debugPosition;
+            _prevScale = _debugScale;
 
             _fillMesh = CreateFillMesh();
-            _wireframeMesh = CreateWireframeMesh();
+            if (_fillMesh != null)
+                _wireframeMesh = CreateWireframeFromMesh(_fillMesh);
 
             if (_fillMaterial == null)
                 _fillMaterial = CreateMaterial(URPShaderMode.Lit, new Color(0, 1, 0, 0.35f));
@@ -228,6 +230,14 @@ namespace MHZE
                 else DestroyImmediate(_wireframeMaterial);
                 _wireframeMaterial = null;
             }
+        }
+
+        private bool ColliderStateChanged()
+        {
+            if (_collider == null) return true;
+            if (_collider.GetType() != _prevColliderType) return true;
+            ComputeColliderData(out Vector3 center, out Vector3 scale);
+            return center != _prevCenter || scale != _prevScale;
         }
 
         private void ComputeColliderData(out Vector3 center, out Vector3 scale)
@@ -283,194 +293,6 @@ namespace MHZE
                 return Instantiate(meshCol.sharedMesh);
 
             return null;
-        }
-
-        private Mesh CreateWireframeMesh()
-        {
-            if (_collider is BoxCollider box)
-                return CreateWireframeBox(box.size);
-
-            if (_collider is SphereCollider sphere)
-                return CreateWireframeSphere(sphere.radius, 16);
-
-            if (_collider is CapsuleCollider capsule)
-                return CreateWireframeCapsule(capsule.radius, capsule.height, capsule.direction, 12);
-
-            if (_collider is MeshCollider meshCol && meshCol.sharedMesh != null)
-                return CreateWireframeFromMesh(meshCol.sharedMesh);
-
-            return null;
-        }
-
-        private static Mesh CreateWireframeBox(Vector3 size)
-        {
-            Vector3 h = size * 0.5f;
-            Vector3[] verts = new Vector3[8]
-            {
-                new Vector3(-h.x, -h.y, -h.z),
-                new Vector3( h.x, -h.y, -h.z),
-                new Vector3( h.x, -h.y,  h.z),
-                new Vector3(-h.x, -h.y,  h.z),
-                new Vector3(-h.x,  h.y, -h.z),
-                new Vector3( h.x,  h.y, -h.z),
-                new Vector3( h.x,  h.y,  h.z),
-                new Vector3(-h.x,  h.y,  h.z),
-            };
-
-            int[] lines = new int[]
-            {
-                0, 1, 1, 2, 2, 3, 3, 0,
-                4, 5, 5, 6, 6, 7, 7, 4,
-                0, 4, 1, 5, 2, 6, 3, 7,
-            };
-
-            Mesh mesh = new Mesh();
-            mesh.vertices = verts;
-            mesh.SetIndices(lines, MeshTopology.Lines, 0);
-            return mesh;
-        }
-
-        private static Mesh CreateWireframeSphere(float radius, int segments)
-        {
-            var verts = new System.Collections.Generic.List<Vector3>();
-            var indices = new System.Collections.Generic.List<int>();
-
-            for (int i = 0; i < segments; i++)
-            {
-                float theta = i * Mathf.PI * 2f / segments;
-                int baseIndex = verts.Count;
-                int steps = segments / 2;
-                for (int j = 0; j <= steps; j++)
-                {
-                    float phi = j * Mathf.PI / steps - Mathf.PI / 2f;
-                    float x = radius * Mathf.Cos(phi) * Mathf.Cos(theta);
-                    float y = radius * Mathf.Sin(phi);
-                    float z = radius * Mathf.Cos(phi) * Mathf.Sin(theta);
-                    verts.Add(new Vector3(x, y, z));
-                }
-                for (int j = 0; j < steps; j++)
-                {
-                    indices.Add(baseIndex + j);
-                    indices.Add(baseIndex + j + 1);
-                }
-            }
-
-            for (int j = 1; j < segments / 2; j++)
-            {
-                float phi = j * Mathf.PI / (segments / 2) - Mathf.PI / 2f;
-                int baseIndex = verts.Count;
-                for (int i = 0; i <= segments; i++)
-                {
-                    float theta = i * Mathf.PI * 2f / segments;
-                    float x = radius * Mathf.Cos(phi) * Mathf.Cos(theta);
-                    float y = radius * Mathf.Sin(phi);
-                    float z = radius * Mathf.Cos(phi) * Mathf.Sin(theta);
-                    verts.Add(new Vector3(x, y, z));
-                }
-                for (int i = 0; i < segments; i++)
-                {
-                    indices.Add(baseIndex + i);
-                    indices.Add(baseIndex + i + 1);
-                }
-            }
-
-            Mesh mesh = new Mesh();
-            mesh.vertices = verts.ToArray();
-            mesh.SetIndices(indices.ToArray(), MeshTopology.Lines, 0);
-            return mesh;
-        }
-
-        private static Mesh CreateWireframeCapsule(float radius, float height, int direction, int segments)
-        {
-            float cylinderHeight = Mathf.Max(0, height - radius * 2f);
-            float halfCylinder = cylinderHeight * 0.5f;
-
-            var verts = new System.Collections.Generic.List<Vector3>();
-            var indices = new System.Collections.Generic.List<int>();
-
-            int arcSteps = segments / 2;
-
-            for (int side = 0; side < 2; side++)
-            {
-                float yOffset = side == 0 ? halfCylinder : -halfCylinder;
-                float hemisphereSign = side == 0 ? 1f : -1f;
-
-                int baseIndex = verts.Count;
-                for (int i = 0; i <= segments; i++)
-                {
-                    float theta = i * Mathf.PI * 2f / segments;
-                    float x = radius * Mathf.Cos(theta);
-                    float z = radius * Mathf.Sin(theta);
-                    float y = yOffset;
-                    verts.Add(ApplyCapsuleDirection(new Vector3(x, y, z), direction));
-                }
-                for (int i = 0; i < segments; i++)
-                {
-                    indices.Add(baseIndex + i);
-                    indices.Add(baseIndex + i + 1);
-                }
-
-                for (int j = 0; j < arcSteps; j++)
-                {
-                    float phi = (j + 1) * (Mathf.PI * 0.5f / arcSteps) * hemisphereSign;
-                    baseIndex = verts.Count;
-                    for (int i = 0; i <= segments; i++)
-                    {
-                        float theta = i * Mathf.PI * 2f / segments;
-                        float r = radius * Mathf.Cos(phi);
-                        float y = yOffset + radius * Mathf.Sin(phi);
-                        float x = r * Mathf.Cos(theta);
-                        float z = r * Mathf.Sin(theta);
-                        verts.Add(ApplyCapsuleDirection(new Vector3(x, y, z), direction));
-                    }
-                    for (int i = 0; i < segments; i++)
-                    {
-                        indices.Add(baseIndex + i);
-                        indices.Add(baseIndex + i + 1);
-                    }
-                }
-            }
-
-            int verticalLines = segments / 2;
-            for (int i = 0; i <= verticalLines; i++)
-            {
-                float theta = i * Mathf.PI * 2f / segments;
-                int stepsPerSide = 1 + arcSteps;
-                int prevOffset = -1;
-                for (int side = 0; side < 2; side++)
-                {
-                    for (int j = 0; j < stepsPerSide; j++)
-                    {
-                        float phi = j * (Mathf.PI * 0.5f / arcSteps) * (side == 0 ? 1f : -1f);
-                        float y = (side == 0 ? halfCylinder : -halfCylinder) + radius * Mathf.Sin(phi);
-                        float r = radius * Mathf.Cos(phi);
-                        float x = r * Mathf.Cos(theta);
-                        float z = r * Mathf.Sin(theta);
-                        verts.Add(ApplyCapsuleDirection(new Vector3(x, y, z), direction));
-                        int idx = verts.Count - 1;
-                        if (prevOffset >= 0)
-                        {
-                            indices.Add(prevOffset);
-                            indices.Add(idx);
-                        }
-                        prevOffset = idx;
-                    }
-                }
-            }
-
-            Mesh mesh = new Mesh();
-            mesh.vertices = verts.ToArray();
-            mesh.SetIndices(indices.ToArray(), MeshTopology.Lines, 0);
-            return mesh;
-        }
-
-        private static Vector3 ApplyCapsuleDirection(Vector3 localPoint, int direction)
-        {
-            if (direction == 0)
-                return new Vector3(localPoint.y, localPoint.z, localPoint.x);
-            if (direction == 2)
-                return new Vector3(localPoint.x, localPoint.z, localPoint.y);
-            return localPoint;
         }
 
         private static Mesh CreateWireframeFromMesh(Mesh source)
