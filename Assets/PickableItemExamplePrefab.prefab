@@ -13,9 +13,9 @@ GameObject:
   - component: {fileID: 825130141500496800}
   - component: {fileID: 5933281306241190791}
   - component: {fileID: 1297221679967118853}
-  - component: {fileID: 6819557282859426711}
   - component: {fileID: 3760515552732813173}
   - component: {fileID: 1409888696198255049}
+  - component: {fileID: 3585882969646142804}
   m_Layer: 0
   m_Name: PickableItemExamplePrefab
   m_TagString: Untagged
@@ -136,8 +136,8 @@ MonoBehaviour:
   OnInteractedWithEvent:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 6819557282859426711}
-        m_TargetAssemblyTypeName: PickableItemBase, Assembly-CSharp
+      - m_Target: {fileID: 3585882969646142804}
+        m_TargetAssemblyTypeName: MHZE.PickupSystem.PickableItemBase, com.mhze.pickup-system.Runtime
         m_MethodName: Pickup
         m_Mode: 1
         m_Arguments:
@@ -148,25 +148,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
---- !u!114 &6819557282859426711
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5803936567173087936}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ac2864935651feb449f92fbeec42268d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PickableItemBase
-  pickableItemData: {fileID: 11400000, guid: 519c3329f6f32a04eb9988b84f047cbd, type: 2}
-  OnPickedItem:
-    m_PersistentCalls:
-      m_Calls: []
-  OnDroppedItem:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!54 &3760515552732813173
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -215,3 +196,22 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &3585882969646142804
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5803936567173087936}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1f0e1e1ff545ea244b10fdbc5bc2813b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.mhze.pickup-system.Runtime::MHZE.PickupSystem.PickableItemBase
+  pickableItemData: {fileID: 11400000, guid: 519c3329f6f32a04eb9988b84f047cbd, type: 2}
+  OnPickedItem:
+    m_PersistentCalls:
+      m_Calls: []
+  OnDroppedItem:
+    m_PersistentCalls:
+      m_Calls: []

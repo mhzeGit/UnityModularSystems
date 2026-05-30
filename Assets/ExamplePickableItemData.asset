@@ -9,15 +9,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 12eed68559a3c5b459c9568310f8c340, type: 3}
+  m_Script: {fileID: 11500000, guid: 11783a03f2a02f8428e4f63461ea8966, type: 3}
   m_Name: ExamplePickableItemData
   m_EditorClassIdentifier: Assembly-CSharp::PickableItemData
-  ItemName: Example Item Name
+  ItemName: 
   ItemDescription: This is an Item!
   ItemCost: 100
   ItemIcon: {fileID: 0}
-  ItemPrefab: {fileID: 5803936567173087936, guid: 6032907c50ac0954f97b3693d74dee3f, type: 3}
-  IsPickable: 1
+  ItemPrefab: {fileID: 0}
+  IsPickable: 0
   ItemLocationOffset: {x: 0, y: 0, z: 0}
   ItemRotationOffset: {x: 0, y: 0, z: 0}
   HandLocationOffset: {x: 0, y: 0, z: 0}

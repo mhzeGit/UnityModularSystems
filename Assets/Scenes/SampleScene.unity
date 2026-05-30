@@ -1054,9 +1054,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 608417356}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 733a713f2a961f6459f347fbaed925e3, type: 3}
+  m_Script: {fileID: 11500000, guid: 4ceb81ec8fdf364418c5c977f952a183, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PickupSystem
+  m_EditorClassIdentifier: com.mhze.pickup-system.Runtime::MHZE.PickupSystem.PickupSystem
   PlayerArmBase: {fileID: 0}
   PickableObjectHolder: {fileID: 1364816171}
   DropInputAction: {fileID: 7727032971491509709, guid: 052faaac586de48259a63d0c4782560b, type: 3}
@@ -1459,7 +1459,7 @@ Transform:
   m_GameObject: {fileID: 1364816170}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.48, y: -0.83, z: 1.12}
+  m_LocalPosition: {x: 0.353, y: -0.594, z: 0.754}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1840,6 +1840,18 @@ PrefabInstance:
       value: PickableItemExamplePrefab
       objectReference: {fileID: 0}
     - target: {fileID: 8431694060813017753, guid: 6032907c50ac0954f97b3693d74dee3f, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 8431694060813017753, guid: 6032907c50ac0954f97b3693d74dee3f, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 8431694060813017753, guid: 6032907c50ac0954f97b3693d74dee3f, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 8431694060813017753, guid: 6032907c50ac0954f97b3693d74dee3f, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
@@ -1878,6 +1890,10 @@ PrefabInstance:
     - target: {fileID: 8431694060813017753, guid: 6032907c50ac0954f97b3693d74dee3f, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8431694060813017753, guid: 6032907c50ac0954f97b3693d74dee3f, type: 3}
+      propertyPath: m_ConstrainProportionsScale
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
