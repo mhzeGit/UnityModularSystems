@@ -9,5 +9,6 @@
   <Project Path="com.modular.freeform-camera.Runtime.csproj" />
   <Project Path="com.mhze.use-system.Runtime.csproj" />
   <Project Path="com.modular.freeform-camera.Editor.csproj" />
+  <Project Path="Assembly-CSharp-Editor.csproj" />
   <Project Path="com.modular.firstperson-controller.Editor.csproj" />
 </Solution>
