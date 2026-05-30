@@ -43,3 +43,11 @@ https://github.com/mhzeGit/mhzeModularSystems.git?path=/Packages/com.mhze.pickup
 ```
 
 Modular pickup system for picking up, holding, and dropping objects with configurable hand/item offsets, physics management, singleton access, and input-driven drop support.
+
+### Use System
+
+```
+https://github.com/mhzeGit/mhzeModularSystems.git?path=/Packages/com.mhze.use-system
+```
+
+Modular use system with raycast-based target detection, IUsable/IUsableTarget interfaces, configurable tools and targets, cooldown and impact delay support, and event-driven prompt integration.

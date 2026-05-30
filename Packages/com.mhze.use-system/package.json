@@ -1,0 +1,14 @@
+{
+  "name": "com.mhze.use-system",
+  "version": "1.0.0",
+  "displayName": "Use System",
+  "description": "Modular use system with raycast-based target detection, IUsable/IUsableTarget interfaces, configurable tools and targets, and event-driven prompt integration.",
+  "unity": "2021.3",
+  "author": {
+    "name": "MHZE",
+    "url": "https://github.com/mhze"
+  },
+  "dependencies": {
+    "com.unity.inputsystem": "1.4.0"
+  }
+}

@@ -85,6 +85,14 @@
       "dependencies": {},
       "hash": "8c15433a87e71811c878be2490360a84aed5fa26"
     },
+    "com.mhze.use-system": {
+      "version": "file:com.mhze.use-system",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.unity.inputsystem": "1.4.0"
+      }
+    },
     "com.unity.ai.navigation": {
       "version": "2.0.12",
       "depth": 0,
