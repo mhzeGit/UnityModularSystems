@@ -868,6 +868,11 @@ Transform:
   - {fileID: 1005234716}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &515654364 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5803936567173087936, guid: 6032907c50ac0954f97b3693d74dee3f, type: 3}
+  m_PrefabInstance: {fileID: 4788414468706829591}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &553967128
 GameObject:
   m_ObjectHideFlags: 0
@@ -1057,7 +1062,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4ceb81ec8fdf364418c5c977f952a183, type: 3}
   m_Name: 
   m_EditorClassIdentifier: com.mhze.pickup-system.Runtime::MHZE.PickupSystem.PickupSystem
-  PlayerArmBase: {fileID: 0}
+  PlayerArmBase: {fileID: 1364816171}
   PickableObjectHolder: {fileID: 1364816171}
   DropInputAction: {fileID: 7727032971491509709, guid: 052faaac586de48259a63d0c4782560b, type: 3}
 --- !u!1 &832575517
@@ -1835,21 +1840,37 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1297221679967118853, guid: 6032907c50ac0954f97b3693d74dee3f, type: 3}
+      propertyPath: OnInteractedWithEvent.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1297221679967118853, guid: 6032907c50ac0954f97b3693d74dee3f, type: 3}
+      propertyPath: OnInteractedWithEvent.m_PersistentCalls.m_Calls.Array.data[1].m_Mode
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 1297221679967118853, guid: 6032907c50ac0954f97b3693d74dee3f, type: 3}
+      propertyPath: OnInteractedWithEvent.m_PersistentCalls.m_Calls.Array.data[1].m_Target
+      value: 
+      objectReference: {fileID: 515654364}
+    - target: {fileID: 1297221679967118853, guid: 6032907c50ac0954f97b3693d74dee3f, type: 3}
+      propertyPath: OnInteractedWithEvent.m_PersistentCalls.m_Calls.Array.data[1].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1297221679967118853, guid: 6032907c50ac0954f97b3693d74dee3f, type: 3}
+      propertyPath: OnInteractedWithEvent.m_PersistentCalls.m_Calls.Array.data[1].m_MethodName
+      value: SetActive
+      objectReference: {fileID: 0}
+    - target: {fileID: 1297221679967118853, guid: 6032907c50ac0954f97b3693d74dee3f, type: 3}
+      propertyPath: OnInteractedWithEvent.m_PersistentCalls.m_Calls.Array.data[1].m_TargetAssemblyTypeName
+      value: UnityEngine.GameObject, UnityEngine
+      objectReference: {fileID: 0}
+    - target: {fileID: 1297221679967118853, guid: 6032907c50ac0954f97b3693d74dee3f, type: 3}
+      propertyPath: OnInteractedWithEvent.m_PersistentCalls.m_Calls.Array.data[1].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
     - target: {fileID: 5803936567173087936, guid: 6032907c50ac0954f97b3693d74dee3f, type: 3}
       propertyPath: m_Name
       value: PickableItemExamplePrefab
-      objectReference: {fileID: 0}
-    - target: {fileID: 8431694060813017753, guid: 6032907c50ac0954f97b3693d74dee3f, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 8431694060813017753, guid: 6032907c50ac0954f97b3693d74dee3f, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 8431694060813017753, guid: 6032907c50ac0954f97b3693d74dee3f, type: 3}
-      propertyPath: m_LocalScale.z
-      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 8431694060813017753, guid: 6032907c50ac0954f97b3693d74dee3f, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1890,10 +1911,6 @@ PrefabInstance:
     - target: {fileID: 8431694060813017753, guid: 6032907c50ac0954f97b3693d74dee3f, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8431694060813017753, guid: 6032907c50ac0954f97b3693d74dee3f, type: 3}
-      propertyPath: m_ConstrainProportionsScale
-      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

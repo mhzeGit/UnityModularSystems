@@ -16,8 +16,8 @@ MonoBehaviour:
   ItemDescription: This is an Item!
   ItemCost: 100
   ItemIcon: {fileID: 0}
-  ItemPrefab: {fileID: 0}
-  IsPickable: 0
+  ItemPrefab: {fileID: 5803936567173087936, guid: 6032907c50ac0954f97b3693d74dee3f, type: 3}
+  IsPickable: 1
   ItemLocationOffset: {x: 0, y: 0, z: 0}
   ItemRotationOffset: {x: 0, y: 0, z: 0}
   HandLocationOffset: {x: 0, y: 0, z: 0}

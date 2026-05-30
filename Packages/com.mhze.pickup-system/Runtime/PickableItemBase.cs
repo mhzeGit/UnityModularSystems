@@ -18,12 +18,27 @@ namespace MHZE.PickupSystem
             cachedRigidbody = GetComponent<Rigidbody>();
             cachedRenderers = GetComponentsInChildren<MeshRenderer>(true);
             cachedColliders = GetComponentsInChildren<Collider>(true);
+
+            if (cachedRigidbody == null)
+                Debug.LogWarning($"No Rigidbody found on {gameObject.name}. Pickable items require a Rigidbody.", this);
         }
 
         public void Pickup()
         {
-            if (PickupSystem.Instance != null)
-                PickupSystem.Instance.CheckIfPickable(gameObject);
+            if (PickupSystem.Instance == null)
+            {
+                Debug.LogWarning($"PickupSystem.Instance is null — no PickupSystem found in the scene. Cannot pick up {gameObject.name}.");
+                return;
+            }
+
+            if (pickableItemData == null)
+            {
+                Debug.LogWarning($"PickableItemData is not assigned on {gameObject.name}. Assign a PickableItemData ScriptableObject and ensure IsPickable is true.", this);
+                return;
+            }
+
+
+            PickupSystem.Instance.CheckIfPickable(gameObject);
         }
 
         public bool GetIsPickable()
@@ -32,7 +47,9 @@ namespace MHZE.PickupSystem
             {
                 return pickableItemData.IsPickable;
             }
-            else { return false; }
+
+            Debug.LogWarning($"PickableItemData is not assigned on {gameObject.name}. Cannot determine if pickable.", this);
+            return false;
         }
 
         public void Picked()
@@ -126,7 +143,11 @@ namespace MHZE.PickupSystem
 
         public string GetItemName()
         {
-            return pickableItemData.ItemName;
+            if (pickableItemData != null)
+                return pickableItemData.ItemName;
+
+            Debug.LogWarning($"PickableItemData is not assigned on {gameObject.name}. Returning empty name.", this);
+            return string.Empty;
         }
 
 
