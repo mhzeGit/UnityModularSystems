@@ -21,6 +21,10 @@ namespace MHZE.ThrowSystem
         [SerializeField] float upwardForceRatio = 0.25f;
         [SerializeField] float tumbleTorque = 5f;
 
+        [Header("Aim")]
+        [SerializeField] float aimRaycastRange = 50f;
+        [SerializeField] LayerMask aimLayerMask = ~0;
+
         [HideInInspector] public Transform ThrowOrigin;
 
         public event System.Action OnThrowChargeStarted;
@@ -114,21 +118,30 @@ namespace MHZE.ThrowSystem
             Rigidbody rb = obj.GetComponent<Rigidbody>();
             if (rb == null) return;
 
-            Vector3 direction;
-
-            if (mainCamera != null)
-                direction = mainCamera.transform.forward;
-            else if (ThrowOrigin != null)
-                direction = ThrowOrigin.forward;
-            else
-                direction = transform.forward;
-
+            Vector3 direction = ComputeAimDirection();
             direction = (direction + Vector3.up * upwardForceRatio).normalized;
 
             rb.AddForce(direction * force, ForceMode.Impulse);
 
             if (tumbleTorque > 0f)
                 rb.AddTorque(Random.insideUnitSphere * tumbleTorque, ForceMode.Impulse);
+        }
+
+        Vector3 ComputeAimDirection()
+        {
+            if (mainCamera != null)
+            {
+                RaycastHit hit;
+                if (Physics.Raycast(mainCamera.transform.position, mainCamera.transform.forward, out hit, aimRaycastRange, aimLayerMask))
+                    return (hit.point - mainCamera.transform.position).normalized;
+
+                return mainCamera.transform.forward;
+            }
+
+            if (ThrowOrigin != null)
+                return ThrowOrigin.forward;
+
+            return transform.forward;
         }
 
         public void SetCurrentHeldObject(GameObject obj)
