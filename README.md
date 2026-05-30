@@ -59,3 +59,13 @@ https://github.com/mhzeGit/mhzeModularSystems.git?path=/Packages/com.mhze.throw-
 ```
 
 Modular throw system with charge-based force, camera-forward direction, configurable exponential charge curve, input-driven throw and cancel, and event-driven integration.
+
+## Mediator Scripts
+
+Mediator scripts in `Assets/Scripts/` connect standalone packages together. Attach these to a GameObject in your scene and assign the relevant system references in the Inspector.
+
+| Script | Purpose |
+|---|---|
+| **PickupThrowMediator** | Connects PickupSystem and ThrowingSystem — forwards picked-up items to the throw system and drops items when thrown. |
+| **UseInputPromptMediator** | Connects UseSystem to the InputPromptManager — shows/hides use prompts when a usable target is found or lost. |
+| **InteractInputPromptMediator** | Connects InteractSystem to the InputPromptManager — shows/hides instant and hold-to-interact prompts with dynamic prefixes/suffixes from the interactable. |
