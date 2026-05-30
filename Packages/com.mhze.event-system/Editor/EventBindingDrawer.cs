@@ -87,14 +87,6 @@ namespace MHZE.EventSystem.Editor
 
             header.Add(new VisualElement { style = { flexGrow = 1 } });
 
-            var badge = new Label();
-            badge.AddToClassList("listener-count-badge");
-            header.Add(badge);
-
-            var addBtn = new Button { text = "+  Listener" };
-            addBtn.AddToClassList("add-listener-header-button");
-            header.Add(addBtn);
-
             root.Add(header);
 
             var content = new VisualElement();
@@ -126,7 +118,7 @@ namespace MHZE.EventSystem.Editor
 
                 var listeners = property.FindPropertyRelative("_listeners");
                 int count = listeners.arraySize;
-                badge.text = $"{count} listener{(count == 1 ? "" : "s")}";
+                title.text = count > 0 ? $"{property.displayName}  ({count})" : property.displayName;
 
                 for (int i = 0; i < count; i++)
                 {
@@ -144,7 +136,6 @@ namespace MHZE.EventSystem.Editor
                 RebuildNow();
             }
 
-            addBtn.clicked += AddNewAndRebuild;
             footerBtn.clicked += AddNewAndRebuild;
 
             RebuildNow();
