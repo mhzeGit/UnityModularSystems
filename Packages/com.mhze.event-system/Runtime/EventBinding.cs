@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace MHZE.EventSystem
@@ -13,20 +14,13 @@ namespace MHZE.EventSystem
 
         public IReadOnlyList<Listener> Listeners => _listeners;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke()
         {
-            int count = _listeners.Count;
+            List<Listener> listeners = _listeners;
+            int count = listeners.Count;
             for (int i = 0; i < count; i++)
-            {
-                try
-                {
-                    _listeners[i]?.Invoke();
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogException(ex);
-                }
-            }
+                listeners[i].Invoke();
         }
 
         public Listener AddListener()

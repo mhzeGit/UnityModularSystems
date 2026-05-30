@@ -1,5 +1,6 @@
 using System;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace MHZE.EventSystem
@@ -9,6 +10,7 @@ namespace MHZE.EventSystem
     {
         [SerializeField] private bool _enabled = true;
         [SerializeField] private Component _target;
+        [SerializeField] internal GameObject _gameObject;
         [SerializeField] private string _methodName;
         [SerializeField] private string _methodDisplayName;
         [SerializeField] private ParameterEntry[] _parameters = Array.Empty<ParameterEntry>();
@@ -17,6 +19,8 @@ namespace MHZE.EventSystem
         [NonSerialized] private ParameterInfo[] _cachedParamInfo;
         [NonSerialized] private object[] _cachedArgs;
         [NonSerialized] private bool _initialized;
+
+        [NonSerialized] private Action _cachedAction;
 
         public bool Enabled
         {
@@ -63,6 +67,7 @@ namespace MHZE.EventSystem
             _cachedMethod = null;
             _cachedParamInfo = null;
             _cachedArgs = null;
+            _cachedAction = null;
             _initialized = false;
 
             for (int i = 0; i < _parameters.Length; i++)
@@ -75,6 +80,7 @@ namespace MHZE.EventSystem
                 return;
 
             _initialized = true;
+            _cachedAction = null;
             _cachedArgs = null;
 
             if (_target == null || string.IsNullOrEmpty(_methodName))
@@ -88,10 +94,23 @@ namespace MHZE.EventSystem
             _cachedMethod = type.GetMethod(_methodName,
                 BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
 
-            if (_cachedMethod != null)
-                _cachedParamInfo = _cachedMethod.GetParameters();
+            if (_cachedMethod == null)
+                return;
+
+            _cachedParamInfo = _cachedMethod.GetParameters();
+
+            if (_cachedParamInfo.Length == 0)
+            {
+                _cachedArgs = null;
+                _cachedAction = (Action)Delegate.CreateDelegate(typeof(Action), _target, _cachedMethod, false);
+            }
+            else
+            {
+                _cachedArgs = new object[_cachedParamInfo.Length];
+            }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke()
         {
             if (!_enabled)
@@ -100,14 +119,17 @@ namespace MHZE.EventSystem
             if (!_initialized)
                 Initialize();
 
+            Action action = _cachedAction;
+            if (action != null)
+            {
+                action();
+                return;
+            }
+
             if (_cachedMethod == null)
                 return;
 
-            int paramCount = _cachedParamInfo?.Length ?? 0;
-
-            if (_cachedArgs == null || _cachedArgs.Length != paramCount)
-                _cachedArgs = new object[paramCount];
-
+            int paramCount = _cachedParamInfo.Length;
             for (int i = 0; i < paramCount; i++)
             {
                 if (i < _parameters.Length && _parameters[i] != null)

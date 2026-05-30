@@ -192,6 +192,7 @@ namespace MHZE.EventSystem.Editor
             var newListener = listenersProp.GetArrayElementAtIndex(index);
 
             newListener.FindPropertyRelative("_enabled").boolValue = true;
+            newListener.FindPropertyRelative("_gameObject").objectReferenceValue = null;
             newListener.FindPropertyRelative("_methodName").stringValue = "";
             newListener.FindPropertyRelative("_methodDisplayName").stringValue = "";
             newListener.FindPropertyRelative("_target").objectReferenceValue = null;
@@ -243,8 +244,10 @@ namespace MHZE.EventSystem.Editor
                 listenerProp, key, index, listenersProp, bindingKey);
             y += HeaderH + 4f;
 
+            var gameObjectProp = listenerProp.FindPropertyRelative("_gameObject");
+
             y = DrawTargetFields(new Rect(innerRect.x, y, innerRect.width, 0),
-                enabledProp, targetProp, methodNameProp, methodDisplayProp, paramsProp);
+                enabledProp, targetProp, gameObjectProp, methodNameProp, methodDisplayProp, paramsProp);
 
             DrawMethodRow(new Rect(innerRect.x, y, innerRect.width, RowH),
                 targetProp, methodNameProp, methodDisplayProp, paramsProp, listenerProp);
@@ -291,19 +294,25 @@ namespace MHZE.EventSystem.Editor
         private string GetListenerDisplayName(SerializedProperty listenerProp)
         {
             var targetProp = listenerProp.FindPropertyRelative("_target");
+            var gameObjectProp = listenerProp.FindPropertyRelative("_gameObject");
             var methodDisplayProp = listenerProp.FindPropertyRelative("_methodDisplayName");
 
             Component target = targetProp.objectReferenceValue as Component;
+            GameObject go = gameObjectProp.objectReferenceValue as GameObject;
 
-            if (target == null)
-                return "No Target Selected";
+            if (target != null)
+            {
+                string scriptName = target.GetType().Name;
+                string methodName = !string.IsNullOrEmpty(methodDisplayProp.stringValue)
+                    ? methodDisplayProp.stringValue.Split(':')[0].Trim()
+                    : "No Method Selected";
+                return $"{target.gameObject.name} ({scriptName})";
+            }
 
-            string scriptName = target.GetType().Name;
-            string methodName = !string.IsNullOrEmpty(methodDisplayProp.stringValue)
-                ? methodDisplayProp.stringValue.Split(':')[0].Trim()
-                : "No Method Selected";
+            if (go != null)
+                return $"{go.name} (No Script)";
 
-            return $"{target.gameObject.name} ({scriptName})";
+            return "No Target Selected";
         }
 
         private void RemoveListenerAt(SerializedProperty listenersProp, int index)
@@ -319,12 +328,15 @@ namespace MHZE.EventSystem.Editor
         }
 
         private float DrawTargetFields(Rect rect, SerializedProperty enabledProp,
-            SerializedProperty targetProp, SerializedProperty methodNameProp,
-            SerializedProperty methodDisplayProp, SerializedProperty paramsProp)
+            SerializedProperty targetProp, SerializedProperty gameObjectProp,
+            SerializedProperty methodNameProp, SerializedProperty methodDisplayProp,
+            SerializedProperty paramsProp)
         {
             float y = rect.y;
             Component currentTarget = targetProp.objectReferenceValue as Component;
-            GameObject currentGO = currentTarget != null ? currentTarget.gameObject : null;
+            GameObject displayGO = currentTarget != null
+                ? currentTarget.gameObject
+                : gameObjectProp.objectReferenceValue as GameObject;
 
             Rect labelRect = new Rect(rect.x, y, 56f, RowH);
             EditorGUI.LabelField(labelRect, "Object", Styles.FieldLabel);
@@ -332,26 +344,17 @@ namespace MHZE.EventSystem.Editor
             Rect fieldRect = new Rect(labelRect.xMax + FieldGap, y, rect.width - labelRect.width - FieldGap, RowH);
 
             EditorGUI.BeginChangeCheck();
-            Object newObj = EditorGUI.ObjectField(fieldRect, currentGO, typeof(Object), true);
+            GameObject newGO = EditorGUI.ObjectField(fieldRect, displayGO, typeof(GameObject), true) as GameObject;
             if (EditorGUI.EndChangeCheck())
             {
-                Component resolvedComp = newObj as Component;
-                GameObject resolvedGO = resolvedComp?.gameObject ?? newObj as GameObject;
-
-                if (resolvedComp != null)
-                    targetProp.objectReferenceValue = resolvedComp;
-                else if (resolvedGO != null)
+                gameObjectProp.objectReferenceValue = newGO;
+                targetProp.objectReferenceValue = null;
+                if (newGO != null && currentTarget != null)
                 {
-                    targetProp.objectReferenceValue = null;
-                    if (currentTarget != null)
-                    {
-                        Component same = resolvedGO.GetComponent(currentTarget.GetType());
-                        if (same != null)
-                            targetProp.objectReferenceValue = same;
-                    }
+                    Component same = newGO.GetComponent(currentTarget.GetType());
+                    if (same != null)
+                        targetProp.objectReferenceValue = same;
                 }
-                else
-                    targetProp.objectReferenceValue = null;
 
                 ClearMethod(methodNameProp, methodDisplayProp, paramsProp);
                 targetProp.serializedObject.ApplyModifiedProperties();
@@ -359,11 +362,10 @@ namespace MHZE.EventSystem.Editor
 
             y += RowH + 2f;
 
+            currentTarget = targetProp.objectReferenceValue as Component;
             GameObject goForDropdown = currentTarget != null
                 ? currentTarget.gameObject
-                : (newObj as GameObject ?? (newObj as Component)?.gameObject);
-
-            currentTarget = targetProp.objectReferenceValue as Component;
+                : gameObjectProp.objectReferenceValue as GameObject;
 
             EditorGUI.LabelField(new Rect(rect.x, y, 56f, RowH), "Script", Styles.FieldLabel);
 
@@ -378,7 +380,8 @@ namespace MHZE.EventSystem.Editor
             if (GUI.Button(scriptFieldRect, displayName, Styles.PopupButton))
             {
                 if (goForDropdown != null)
-                    ShowComponentDropdown(scriptFieldRect, goForDropdown, targetProp, methodNameProp, methodDisplayProp, paramsProp);
+                    ShowComponentDropdown(scriptFieldRect, goForDropdown, targetProp, gameObjectProp,
+                        methodNameProp, methodDisplayProp, paramsProp);
             }
 
             y += RowH + 2f;
@@ -387,7 +390,8 @@ namespace MHZE.EventSystem.Editor
         }
 
         private void ShowComponentDropdown(Rect rect, GameObject go, SerializedProperty targetProp,
-            SerializedProperty methodNameProp, SerializedProperty methodDisplayProp, SerializedProperty paramsProp)
+            SerializedProperty gameObjectProp, SerializedProperty methodNameProp,
+            SerializedProperty methodDisplayProp, SerializedProperty paramsProp)
         {
             var components = go.GetComponents<Component>();
             var grouped = components
@@ -416,6 +420,7 @@ namespace MHZE.EventSystem.Editor
                     menu.AddItem(new GUIContent(label), isSelected, () =>
                     {
                         targetProp.objectReferenceValue = capturedComp;
+                        gameObjectProp.objectReferenceValue = null;
                         ClearMethod(methodNameProp, methodDisplayProp, paramsProp);
                         targetProp.serializedObject.ApplyModifiedProperties();
                     });
