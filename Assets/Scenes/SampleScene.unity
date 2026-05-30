@@ -1062,7 +1062,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4ceb81ec8fdf364418c5c977f952a183, type: 3}
   m_Name: 
   m_EditorClassIdentifier: com.mhze.pickup-system.Runtime::MHZE.PickupSystem.PickupSystem
-  PlayerArmBase: {fileID: 1364816171}
+  PlayerArmBase: {fileID: 0}
   PickableObjectHolder: {fileID: 1364816171}
   DropInputAction: {fileID: 7727032971491509709, guid: 052faaac586de48259a63d0c4782560b, type: 3}
 --- !u!1 &832575517

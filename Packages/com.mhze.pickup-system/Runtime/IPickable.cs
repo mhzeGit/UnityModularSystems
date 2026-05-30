@@ -7,8 +7,6 @@ namespace MHZE.PickupSystem
         void Picked();
         void Dropped();
 
-        GameObject TakeThisPickableItem();
-
         bool GetIsPickable();
 
         Vector3 GetHandOffsetLocation();

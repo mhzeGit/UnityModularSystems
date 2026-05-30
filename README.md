@@ -35,3 +35,11 @@ https://github.com/mhzeGit/mhzeModularSystems.git?path=/Packages/com.mhze.intera
 ```
 
 Modular interaction system with raycast-based detection, IInteractable/IInteractor interfaces, instant and hold-to-interact support, events for prompt UI integration.
+
+### Pickup System
+
+```
+https://github.com/mhzeGit/mhzeModularSystems.git?path=/Packages/com.mhze.pickup-system
+```
+
+Modular pickup system for picking up, holding, and dropping objects with configurable hand/item offsets, physics management, singleton access, and input-driven drop support.

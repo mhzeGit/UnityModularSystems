@@ -61,7 +61,7 @@ namespace MHZE.PickupSystem
             OnDroppedItem.Invoke();
         }
 
-        public GameObject TakeThisPickableItem()
+        public GameObject DropSelfIfHeld()
         {
             PickupSystem pickupSystem = PickupSystem.Instance;
 
@@ -71,15 +71,11 @@ namespace MHZE.PickupSystem
                 return null;
             }
 
-            GameObject currentHeldObject = pickupSystem.GetCurrentObject();
-            if (currentHeldObject != this.gameObject)
-            {
+            if (pickupSystem.GetCurrentObject() != gameObject)
                 return null;
-            }
 
             pickupSystem.DropCurrentHeldItem();
-
-            return this.gameObject;
+            return gameObject;
         }
 
         public void SetPickState(bool enable)

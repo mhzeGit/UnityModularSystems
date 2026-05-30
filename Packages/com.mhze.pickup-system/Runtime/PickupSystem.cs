@@ -24,22 +24,47 @@ namespace MHZE.PickupSystem
         GameObject attemptedPickableObject;
 
         Coroutine delayedPickCoroutine;
+        static readonly WaitForSeconds s_pickDelay = new WaitForSeconds(0.2f);
+
+        Vector3 neutralArmBaseLocalPosition;
 
         void Awake()
         {
+            if (Instance != null && Instance != this)
+            {
+                Debug.LogError($"Duplicate PickupSystem detected on '{gameObject.name}'. Destroying the newer instance.", this);
+                Destroy(this);
+                return;
+            }
+
             Instance = this;
         }
 
         void Start()
         {
-            if (PlayerArmBase == null)
+            if (PlayerArmBase != null)
+            {
+                neutralArmBaseLocalPosition = PlayerArmBase.localPosition;
+            }
+            else
+            {
                 Debug.LogWarning("PlayerArmBase is not assigned — hand positioning is disabled. This is optional; assign a Transform if you want arm movement on pickup.", this);
+            }
 
             if (PickableObjectHolder == null)
                 Debug.LogWarning("PickableObjectHolder is not assigned in the Inspector — picked items will not reparent.", this);
 
             if (DropInputAction == null)
                 Debug.LogWarning("DropInputAction is not assigned in the Inspector — drop input will not work.", this);
+        }
+
+        void OnDestroy()
+        {
+            if (currentPickedObject != null)
+            {
+                Debug.LogWarning($"PickupSystem on '{gameObject.name}' destroyed while holding '{currentPickedObject.name}'. Forcing release without callbacks.", this);
+                ForceReleaseWithoutCallbacks();
+            }
         }
 
         #region Input Setup
@@ -105,7 +130,7 @@ namespace MHZE.PickupSystem
 
                 if (delayedPickCoroutine != null)
                     StopCoroutine(delayedPickCoroutine);
-                delayedPickCoroutine = StartCoroutine(PickAfterDelay(0.2f));
+                delayedPickCoroutine = StartCoroutine(PickAfterDelay());
             }
             else
             {
@@ -113,9 +138,9 @@ namespace MHZE.PickupSystem
             }
         }
 
-        IEnumerator PickAfterDelay(float delay)
+        IEnumerator PickAfterDelay()
         {
-            yield return new WaitForSeconds(delay);
+            yield return s_pickDelay;
 
             delayedPickCoroutine = null;
 
@@ -178,6 +203,18 @@ namespace MHZE.PickupSystem
                 Debug.LogWarning("currentPickableItem is set but currentPickedObject is null. Forcing cleanup.", this);
                 currentPickableItem = null;
                 OnPickedItemChanged?.Invoke(null);
+
+                if (PlayerArmBase != null)
+                    PlayerArmBase.localPosition = neutralArmBaseLocalPosition;
+
+                if (delayedPickCoroutine != null)
+                {
+                    StopCoroutine(delayedPickCoroutine);
+                    delayedPickCoroutine = null;
+                }
+
+                attemptedPickableItem = null;
+                attemptedPickableObject = null;
                 return;
             }
 
@@ -202,17 +239,48 @@ namespace MHZE.PickupSystem
 
             obj.transform.parent = null;
 
+            if (PlayerArmBase != null)
+                PlayerArmBase.localPosition = neutralArmBaseLocalPosition;
+
             currentPickableItem = null;
             currentPickedObject = null;
+
+            if (delayedPickCoroutine != null)
+            {
+                StopCoroutine(delayedPickCoroutine);
+                delayedPickCoroutine = null;
+            }
+
+            attemptedPickableItem = null;
+            attemptedPickableObject = null;
 
             OnPickedItemChanged?.Invoke(null);
         }
 
         public void ForceReleaseWithoutCallbacks()
         {
+            if (currentPickedObject != null)
+            {
+                if (currentPickableItem != null)
+                    currentPickableItem.SetPickState(true);
+
+                currentPickedObject.transform.parent = null;
+            }
+
+            if (PlayerArmBase != null)
+                PlayerArmBase.localPosition = neutralArmBaseLocalPosition;
+
             currentPickableItem = null;
             currentPickedObject = null;
-            OnPickedItemChanged?.Invoke(null);
+
+            if (delayedPickCoroutine != null)
+            {
+                StopCoroutine(delayedPickCoroutine);
+                delayedPickCoroutine = null;
+            }
+
+            attemptedPickableItem = null;
+            attemptedPickableObject = null;
         }
 
         public bool IsHoldingItem() => currentPickedObject != null;
