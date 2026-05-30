@@ -11,6 +11,7 @@ namespace ModularSystems.FirstPersonController
 
         private float jumpTimer;
         private float landingTimer;
+        private float landingMultiplier = 1f;
 
         public FPCCameraEffects(Transform cameraTransform, FPCSettings settings)
         {
@@ -23,9 +24,13 @@ namespace ModularSystems.FirstPersonController
             jumpTimer = settings.jumpEffectDuration;
         }
 
-        public void TriggerLanding()
+        public void TriggerLanding(float verticalVelocity)
         {
             landingTimer = settings.landingEffectDuration;
+            landingMultiplier = Mathf.Clamp(
+                Mathf.Abs(verticalVelocity) * settings.landingVelocityMultiplier,
+                0f,
+                settings.landingVelocityMaxMultiplier);
         }
 
         public void Apply(float deltaTime)
@@ -47,8 +52,8 @@ namespace ModularSystems.FirstPersonController
             if (landingTimer > 0f)
             {
                 float t = Mathf.Clamp01(1f - (landingTimer / settings.landingEffectDuration));
-                rotOffset.x += settings.landingPitchCurve.Evaluate(t);
-                posOffset.y = settings.landingPositionCurve.Evaluate(t);
+                rotOffset.x += settings.landingPitchCurve.Evaluate(t) * landingMultiplier;
+                posOffset.y = settings.landingPositionCurve.Evaluate(t) * landingMultiplier;
                 landingTimer -= deltaTime;
                 if (landingTimer <= 0f)
                     landingTimer = 0f;

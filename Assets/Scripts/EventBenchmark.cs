@@ -154,8 +154,8 @@ public class EventBenchmark : MonoBehaviour
 
     private void UpdateOverlay()
     {
-        if (Time.frameCount % 60 == 0)
-            UnityEngine.Debug.Log("[EventBenchmark] " + BuildOverlayString().Replace('\n', ' '));
+        //if (Time.frameCount % 60 == 0)
+            //UnityEngine.Debug.Log("[EventBenchmark] " + BuildOverlayString().Replace('\n', ' '));
     }
 
     private string BuildOverlayString()

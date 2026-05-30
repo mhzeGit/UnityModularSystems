@@ -26,7 +26,7 @@ MonoBehaviour:
   toggleCrouch: 0
   groundCheckRadiusScale: 0.378
   groundCheckDepth: 0
-  jumpForce: 1
+  jumpForce: 1.5
   gravity: -15
   coyoteTime: 0.15
   jumpBufferTime: 0.1
@@ -42,6 +42,7 @@ MonoBehaviour:
   arriveDistance: 0.05
   stoppingDistance: 0.01
   forceAcceleration: 15
+  cameraSmoothTime: 0.08
   enableFovSpeedEffect: 1
   fovBaseValue: 80
   fovMaxValue: 120
@@ -150,5 +151,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  landingVelocityMultiplier: 0.1
+  landingVelocityMaxMultiplier: 10
   headbobSettings: {fileID: 11400000, guid: e32c2c92d2f4c3d4b93dd90d03e3edbd, type: 2}
   debugLogging: 0

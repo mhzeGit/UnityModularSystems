@@ -39,6 +39,7 @@ namespace ModularSystems.FirstPersonController
         public FPCGroundState GroundState { get; private set; }
         public bool IsCrouching => isCrouching;
         public Vector3 Velocity => moveVelocity + Vector3.up * verticalVelocity;
+        public float VerticalVelocity => verticalVelocity;
         public bool IsMoving => moveVelocity.sqrMagnitude > 0.01f;
 
         // --- Events ----------------------------------------------

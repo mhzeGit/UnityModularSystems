@@ -102,6 +102,11 @@ namespace ModularSystems.FirstPersonController
             new Keyframe(0.3f, 0f)
         );
 
+        [Header("Landing Velocity Multiplier")]
+        [Tooltip("Directly multiplies landing velocity with the curve values. Higher = stronger effect for any given fall speed. Curve values × |velocity| × this multiplier.")]
+        public float landingVelocityMultiplier = 0.2f;
+        [Tooltip("Maximum clamp for the velocity-based multiplier.")]
+        public float landingVelocityMaxMultiplier = 3f;
 
         [Header("Headbob")]
         [Tooltip("Headbob settings asset. Controls per-state position/rotation oscillation.")]

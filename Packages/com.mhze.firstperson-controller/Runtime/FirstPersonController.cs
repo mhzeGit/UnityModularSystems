@@ -468,7 +468,7 @@ namespace ModularSystems.FirstPersonController
             movement.OnCrouchStarted += () => OnCrouchStarted?.Invoke();
             movement.OnCrouchEnded   += () => OnCrouchEnded?.Invoke();
             movement.OnJumped        += () => { OnJumped?.Invoke(); cameraEffects?.TriggerJump(); };
-            movement.OnGrounded      += () => { OnGrounded?.Invoke(); cameraEffects?.TriggerLanding(); };
+            movement.OnGrounded      += () => { OnGrounded?.Invoke(); cameraEffects?.TriggerLanding(movement.VerticalVelocity); };
             movement.OnAirborne      += () => OnAirborne?.Invoke();
         }
 
