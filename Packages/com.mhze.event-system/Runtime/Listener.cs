@@ -13,6 +13,7 @@ namespace MHZE.EventSystem
         [SerializeField] internal GameObject _gameObject;
         [SerializeField] private string _methodName;
         [SerializeField] private string _methodDisplayName;
+        [SerializeField] private string _customLabel;
         [SerializeField] private ParameterEntry[] _parameters = Array.Empty<ParameterEntry>();
 
         [NonSerialized] private MethodInfo _cachedMethod;

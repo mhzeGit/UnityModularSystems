@@ -278,10 +278,28 @@ namespace MHZE.EventSystem.Editor
             });
             hdr.Add(toggle);
 
-            var nameLabel = new Label(GetListenerDisplayName(lp));
-            nameLabel.AddToClassList("card-header-label");
-            if (!enabled) nameLabel.AddToClassList("disabled");
-            hdr.Add(nameLabel);
+            var customLabelProp = lp.FindPropertyRelative("_customLabel");
+            string displayName = !string.IsNullOrEmpty(customLabelProp.stringValue)
+                ? customLabelProp.stringValue
+                : GetListenerDisplayName(lp);
+            var nameField = new TextField { value = displayName };
+            nameField.AddToClassList("card-header-label");
+            nameField.AddToClassList("card-header-name-field");
+            if (!enabled) nameField.AddToClassList("disabled");
+            Color darkBg = new Color(0.196f, 0.196f, 0.196f, 1f);
+            var ni = nameField.Q(className: "unity-base-field__input");
+            if (ni != null)
+            {
+                ni.style.backgroundColor = darkBg;
+                ni.RegisterCallback<FocusEvent>(_ => ni.style.backgroundColor = darkBg);
+                ni.RegisterCallback<BlurEvent>(_ => ni.style.backgroundColor = darkBg);
+            }
+            nameField.RegisterValueChangedCallback(evt =>
+            {
+                customLabelProp.stringValue = evt.newValue;
+                customLabelProp.serializedObject.ApplyModifiedProperties();
+            });
+            hdr.Add(nameField);
 
             var rmBtn = new Button(() =>
             {
@@ -947,6 +965,7 @@ namespace MHZE.EventSystem.Editor
             lp.FindPropertyRelative("_gameObject").objectReferenceValue = null;
             lp.FindPropertyRelative("_methodName").stringValue = "";
             lp.FindPropertyRelative("_methodDisplayName").stringValue = "";
+            lp.FindPropertyRelative("_customLabel").stringValue = "";
             lp.FindPropertyRelative("_target").objectReferenceValue = null;
             var pp = lp.FindPropertyRelative("_parameters");
             pp.ClearArray();
