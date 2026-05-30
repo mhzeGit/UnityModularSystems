@@ -12,7 +12,7 @@ namespace MHZE.EventSystem.Editor
     public class EventBindingDrawer : PropertyDrawer
     {
         private const float BindingHeaderH = 24f;
-        private const float CardHPad = 8f;
+        private const float CardHPad = 30f;
         private const float CardVPad = 6f;
         private const float HeaderH = 24f;
         private const float RowH = 18f;
@@ -126,12 +126,12 @@ namespace MHZE.EventSystem.Editor
                 {
                     var listenerProp = listenersProp.GetArrayElementAtIndex(i);
                     float h = GetListenerHeight(listenerProp, pathKey, i);
-                    Rect cardRect = new Rect(position.x + 2f, y, position.width - 4f, h);
+                    Rect cardRect = new Rect(position.x + 6f, y, position.width - 12f, h);
                     DrawListenerCard(cardRect, listenerProp, pathKey, i, listenersProp);
                     y += h + CardGap;
                 }
 
-                Rect addBtnRect = new Rect(position.x + 2f, y, position.width - 4f, 26f);
+                Rect addBtnRect = new Rect(position.x + 6f, y, position.width - 12f, 26f);
                 DrawAddButton(addBtnRect, listenersProp);
             }
 
@@ -144,20 +144,9 @@ namespace MHZE.EventSystem.Editor
             bool expanded = _bindingFoldouts.TryGetValue(pathKey, out var e) && e;
             int count = listenersProp.arraySize;
 
-            float iconSize = 18f;
-            Rect iconRect = new Rect(rect.x + 2f, rect.y + (rect.height - iconSize) * 0.5f, iconSize, iconSize);
-            EditorGUI.LabelField(iconRect, Styles.GetIconString("bolt"), new GUIStyle
-            {
-                fontSize = 13,
-                normal = { textColor = Styles.Colors.Purple },
-                alignment = TextAnchor.MiddleCenter,
-                fixedWidth = iconSize,
-                fixedHeight = iconSize
-            });
-
             float addBtnWidth = 100f;
-            float foldoutAreaWidth = rect.width - iconSize - 6f - addBtnWidth;
-            Rect foldoutRect = new Rect(iconRect.xMax + 4f, rect.y, foldoutAreaWidth, rect.height);
+            float foldoutAreaWidth = rect.width - 10f - addBtnWidth;
+            Rect foldoutRect = new Rect(rect.x + 8f, rect.y, foldoutAreaWidth, rect.height);
 
             var foldoutContent = new GUIContent(label.text);
             float contentWidth = Styles.BindingFoldout.CalcSize(foldoutContent).x;
@@ -167,7 +156,7 @@ namespace MHZE.EventSystem.Editor
             if (EditorGUI.EndChangeCheck())
                 _bindingFoldouts[pathKey] = expanded;
 
-            float badgeX = rect.x + 4f + iconSize + 4f + contentWidth + 8f;
+            float badgeX = rect.x + 4f + contentWidth + 8f;
             float maxBadgeX = rect.xMax - addBtnWidth - 8f;
             badgeX = Mathf.Min(badgeX, maxBadgeX);
 
@@ -810,17 +799,29 @@ namespace MHZE.EventSystem.Editor
             else if (paramType == typeof(GameObject))
             {
                 var prop = paramProp.FindPropertyRelative("_objectValue");
-                EditorGUI.ObjectField(rect, prop, typeof(GameObject), GUIContent.none);
+                GameObject current = prop.objectReferenceValue as GameObject;
+                EditorGUI.BeginChangeCheck();
+                GameObject value = (GameObject)EditorGUI.ObjectField(rect, current, typeof(GameObject), true);
+                if (EditorGUI.EndChangeCheck())
+                    prop.objectReferenceValue = value;
             }
             else if (typeof(Component).IsAssignableFrom(paramType))
             {
                 var prop = paramProp.FindPropertyRelative("_objectValue");
-                EditorGUI.ObjectField(rect, prop, paramType, GUIContent.none);
+                Component current = prop.objectReferenceValue as Component;
+                EditorGUI.BeginChangeCheck();
+                Component value = (Component)EditorGUI.ObjectField(rect, current, paramType, true);
+                if (EditorGUI.EndChangeCheck())
+                    prop.objectReferenceValue = value;
             }
             else if (typeof(Object).IsAssignableFrom(paramType))
             {
                 var prop = paramProp.FindPropertyRelative("_objectValue");
-                EditorGUI.ObjectField(rect, prop, paramType, GUIContent.none);
+                Object current = prop.objectReferenceValue;
+                EditorGUI.BeginChangeCheck();
+                Object value = EditorGUI.ObjectField(rect, current, paramType, true);
+                if (EditorGUI.EndChangeCheck())
+                    prop.objectReferenceValue = value;
             }
             else if (paramType == typeof(short))
             {
