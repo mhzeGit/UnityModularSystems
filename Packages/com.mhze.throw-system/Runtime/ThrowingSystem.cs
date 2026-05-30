@@ -39,11 +39,6 @@ namespace MHZE.ThrowSystem
             mainCamera = Camera.main;
         }
 
-        void Start()
-        {
-            enabled = false;
-        }
-
         void OnEnable()
         {
             ThrowInputAction.action.started += OnThrowInputStarted;
@@ -64,7 +59,6 @@ namespace MHZE.ThrowSystem
 
             isCharging = true;
             chargeTimer = 0f;
-            enabled = true;
             OnThrowChargeStarted?.Invoke();
         }
 
@@ -83,6 +77,8 @@ namespace MHZE.ThrowSystem
 
         void Update()
         {
+            if (!isCharging) return;
+
             chargeTimer += Time.deltaTime;
             currentChargePercent = GetChargePercent();
             OnThrowChargeProgress?.Invoke(currentChargePercent);
@@ -100,7 +96,6 @@ namespace MHZE.ThrowSystem
 
             isCharging = false;
             chargeTimer = 0f;
-            enabled = false;
 
             float force = Mathf.Lerp(minThrowForce, maxThrowForce, currentChargePercent);
             OnItemThrown?.Invoke(thrownObject);
@@ -111,7 +106,6 @@ namespace MHZE.ThrowSystem
         {
             isCharging = false;
             chargeTimer = 0f;
-            enabled = false;
             OnThrowChargeCanceled?.Invoke();
         }
 
