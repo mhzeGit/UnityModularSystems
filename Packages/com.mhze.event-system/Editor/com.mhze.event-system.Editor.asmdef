@@ -2,7 +2,9 @@
   "name": "com.mhze.event-system.Editor",
   "rootNamespace": "MHZE.EventSystem.Editor",
   "references": [
-    "com.mhze.event-system.Runtime"
+    "com.mhze.event-system.Runtime",
+    "UnityEngine.UIElementsModule",
+    "UnityEditor.UIElementsModule"
   ],
   "includePlatforms": ["Editor"],
   "excludePlatforms": [],

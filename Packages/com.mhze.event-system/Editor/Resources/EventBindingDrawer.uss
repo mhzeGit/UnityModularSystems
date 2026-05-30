@@ -1,0 +1,328 @@
+/* ═══════════════════════════════════════════════
+   MHZE Event System — UI Toolkit Styles
+   ═══════════════════════════════════════════════ */
+
+/* ── Root ──────────────────────────────────── */
+.event-binding-root {
+    background-color: rgba(24, 24, 26, 255);
+    padding: 6px;
+    margin-top: 8px;
+    border-radius: 6px;
+}
+
+/* ── Custom Binding Header ─────────────────── */
+.binding-header-row {
+    flex-direction: row;
+    align-items: center;
+    height: 24px;
+    min-height: 24px;
+    padding-left: 4px;
+    padding-right: 4px;
+    margin-bottom: 4px;
+}
+
+.foldout-arrow {
+    font-size: 9px;
+    width: 16px;
+    min-width: 16px;
+    height: 22px;
+    color: rgba(152, 152, 157, 255);
+    cursor: pointer;
+    unity-text-align: middle-center;
+}
+
+.foldout-arrow:hover {
+    color: rgba(245, 245, 247, 255);
+}
+
+.foldout-label {
+    font-size: 12px;
+    font-style: bold;
+    color: rgba(245, 245, 247, 255);
+    height: 22px;
+    cursor: pointer;
+    -unity-text-align: middle-left;
+}
+
+.foldout-label:hover {
+    color: rgba(245, 245, 247, 255);
+}
+
+.binding-header-spacer {
+    flex-grow: 1;
+}
+
+.listener-count-badge {
+    background-color: rgba(191, 90, 242, 51);
+    color: rgba(191, 90, 242, 255);
+    font-size: 10px;
+    font-style: bold;
+    padding-left: 6px;
+    padding-right: 6px;
+    border-radius: 4px;
+    height: 18px;
+    min-width: 60px;
+    margin-left: 8px;
+    -unity-text-align: middle-center;
+}
+
+.add-listener-header-button {
+    font-size: 11px;
+    font-style: bold;
+    color: rgba(10, 132, 255, 255);
+    background-color: transparent;
+    border-width: 0;
+    height: 22px;
+    min-width: 100px;
+    margin-left: 8px;
+    padding-left: 4px;
+    padding-right: 4px;
+    -unity-text-align: middle-center;
+}
+
+.add-listener-header-button:hover {
+    color: rgba(76, 163, 255, 255);
+}
+
+/* ── Content Area ──────────────────────────── */
+.bindings-content-area {
+    padding-left: 6px;
+    padding-right: 6px;
+}
+
+/* ── Listener Card ─────────────────────────── */
+.listener-card {
+    background-color: rgba(28, 28, 30, 255);
+    border-color: rgba(44, 44, 46, 255);
+    border-width: 1px;
+    border-radius: 4px;
+    margin-bottom: 6px;
+    padding: 6px 10px;
+    overflow: hidden;
+    position: relative;
+}
+
+.listener-card.disabled {
+    background-color: rgba(28, 28, 30, 128);
+    border-color: rgba(44, 44, 46, 128);
+}
+
+.accent-strip {
+    position: absolute;
+    left: 0;
+    top: 1px;
+    bottom: 1px;
+    width: 3px;
+    border-radius: 1px;
+}
+
+/* ── Card Header ───────────────────────────── */
+.card-header {
+    flex-direction: row;
+    align-items: center;
+    height: 24px;
+    min-height: 24px;
+    margin-bottom: 4px;
+}
+
+.listener-toggle {
+    width: 18px;
+    min-width: 18px;
+    height: 18px;
+}
+
+.card-header-label {
+    font-size: 11px;
+    color: rgba(245, 245, 247, 255);
+    margin-left: 4px;
+    flex-grow: 1;
+    height: 18px;
+    -unity-text-align: middle-left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.card-header-label.disabled {
+    color: rgba(152, 152, 157, 255);
+}
+
+.remove-button {
+    font-size: 12px;
+    color: rgba(99, 99, 102, 255);
+    background-color: transparent;
+    border-width: 0;
+    width: 22px;
+    min-width: 22px;
+    height: 22px;
+    -unity-text-align: middle-center;
+    cursor: pointer;
+}
+
+.remove-button:hover {
+    color: rgba(255, 69, 58, 255);
+}
+
+/* ── Field Rows ────────────────────────────── */
+.field-row {
+    flex-direction: row;
+    align-items: center;
+    min-height: 18px;
+    margin-bottom: 2px;
+}
+
+.field-row > Label {
+    font-size: 10px;
+    color: rgba(99, 99, 102, 255);
+    width: 56px;
+    min-width: 56px;
+    height: 18px;
+    -unity-text-align: middle-left;
+}
+
+.field-label {
+    font-size: 10px;
+    color: rgba(99, 99, 102, 255);
+    width: 56px;
+    min-width: 56px;
+    height: 18px;
+    -unity-text-align: middle-left;
+}
+
+.field-label-compact {
+    font-size: 10px;
+    color: rgba(99, 99, 102, 255);
+    width: 44px;
+    min-width: 44px;
+    height: 16px;
+    -unity-text-align: middle-left;
+}
+
+.field-value {
+    flex-grow: 1;
+    min-height: 18px;
+}
+
+.field-row > DropdownField {
+    flex-grow: 1;
+    min-height: 18px;
+}
+
+/* ── Script Source Container ───────────────── */
+.script-source-container {
+    flex-grow: 1;
+    min-height: 16px;
+}
+
+.script-source-container > VisualElement {
+    flex-direction: row;
+}
+
+.script-source-container > VisualElement > DropdownField {
+    width: 100px;
+    min-width: 100px;
+}
+
+/* ── Parameter Section ─────────────────────── */
+.param-section {
+    margin-top: 4px;
+    margin-left: 2px;
+}
+
+.param-section-foldout {
+    font-size: 11px;
+    font-style: bold;
+    color: rgba(152, 152, 157, 255);
+    height: 18px;
+}
+
+/* ── Parameter Entry ───────────────────────── */
+.param-entry {
+    background-color: rgba(35, 35, 37, 255);
+    border-color: rgba(44, 44, 46, 255);
+    border-width: 1px;
+    border-radius: 3px;
+    margin-bottom: 2px;
+    padding: 3px 8px;
+    position: relative;
+    overflow: hidden;
+}
+
+.param-accent-strip {
+    position: absolute;
+    left: 0;
+    top: 1px;
+    bottom: 1px;
+    width: 3px;
+    border-radius: 1px;
+}
+
+.param-header-row {
+    flex-direction: row;
+    align-items: center;
+    min-height: 18px;
+    margin-bottom: 2px;
+}
+
+.param-header-name {
+    font-size: 10px;
+    font-style: bold;
+    color: rgba(245, 245, 247, 255);
+    height: 18px;
+    -unity-text-align: middle-left;
+    margin-right: 4px;
+}
+
+.param-header-type {
+    font-size: 10px;
+    color: rgba(99, 99, 102, 255);
+    height: 18px;
+    -unity-text-align: middle-left;
+}
+
+/* ── Source Row ────────────────────────────── */
+.source-row {
+    flex-direction: row;
+    align-items: center;
+    min-height: 16px;
+}
+
+.source-field {
+    width: 72px;
+    min-width: 72px;
+    height: 16px;
+    margin-right: 8px;
+}
+
+.value-container {
+    flex-grow: 1;
+    min-height: 16px;
+}
+
+.script-info {
+    font-size: 10px;
+    color: rgba(99, 99, 102, 255);
+    height: 16px;
+    min-height: 16px;
+    -unity-text-align: middle-left;
+    margin-top: 1px;
+}
+
+/* ── Footer Add Button ─────────────────────── */
+.add-listener-footer {
+    background-color: rgba(24, 24, 26, 255);
+    color: rgba(99, 99, 102, 255);
+    font-size: 11px;
+    border-color: rgba(44, 44, 46, 255);
+    border-width: 1px;
+    border-radius: 4px;
+    height: 26px;
+    min-height: 26px;
+    margin-top: 2px;
+    -unity-text-align: middle-center;
+}
+
+.add-listener-footer:hover {
+    color: rgba(10, 132, 255, 255);
+    border-color: rgba(10, 132, 255, 128);
+}

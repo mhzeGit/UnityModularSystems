@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using UnityEditor;
+
+using UnityEditor.UIElements;
 using UnityEngine;
+using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
 
 namespace MHZE.EventSystem.Editor
@@ -11,18 +14,6 @@ namespace MHZE.EventSystem.Editor
     [CustomPropertyDrawer(typeof(EventBinding))]
     public class EventBindingDrawer : PropertyDrawer
     {
-        private const float BindingHeaderH = 24f;
-        private const float CardHPad = 30f;
-        private const float CardVPad = 6f;
-        private const float HeaderH = 24f;
-        private const float RowH = 18f;
-        private const float RowCompact = 16f;
-        private const float FieldGap = 4f;
-        private const float CardGap = 6f;
-
-        private static readonly Dictionary<string, bool> _bindingFoldouts = new Dictionary<string, bool>();
-        private static readonly Dictionary<string, bool> _paramFoldouts = new Dictionary<string, bool>();
-
         private static readonly string[] UnitySpecialMethods =
         {
             "Awake", "Start", "Update", "LateUpdate", "FixedUpdate",
@@ -51,378 +42,836 @@ namespace MHZE.EventSystem.Editor
             "Main", "AwakeFromLoad"
         };
 
-        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        private static StyleSheet _cachedStyleSheet;
+
+        private static StyleSheet GetStyleSheet()
         {
-            string pathKey = property.propertyPath;
-            if (!_bindingFoldouts.TryGetValue(pathKey, out var expanded) || !expanded)
-                return EditorGUIUtility.singleLineHeight + 2f;
-
-            float h = BindingHeaderH + 4f;
-
-            var listenersProp = property.FindPropertyRelative("_listeners");
-            for (int i = 0; i < listenersProp.arraySize; i++)
+            if (_cachedStyleSheet == null)
             {
-                h += GetListenerHeight(listenersProp.GetArrayElementAtIndex(i), pathKey, i);
-                h += CardGap;
+                var guids = AssetDatabase.FindAssets("EventBindingDrawer t:StyleSheet");
+                for (int i = 0; i < guids.Length; i++)
+                {
+                    var path = AssetDatabase.GUIDToAssetPath(guids[i]);
+                    if (path.Contains("com.mhze.event-system"))
+                    {
+                        _cachedStyleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(path);
+                        break;
+                    }
+                }
             }
-
-            h += 28f;
-            return h;
+            return _cachedStyleSheet;
         }
 
-        private float GetListenerHeight(SerializedProperty listenerProp, string bindingKey, int index)
+        public override VisualElement CreatePropertyGUI(SerializedProperty property)
         {
-            string key = $"{bindingKey}_listener_{index}";
+            var root = new VisualElement();
+            root.AddToClassList("event-binding-root");
 
-            float h = CardVPad * 2;
-            h += HeaderH + 4f;
-            h += RowH + 2f;
-            h += RowH + 2f;
-            h += RowH + 2f;
-            h += RowH + 4f;
+            var styleSheet = GetStyleSheet();
+            if (styleSheet != null)
+                root.styleSheets.Add(styleSheet);
 
-            bool paramsExpanded = _paramFoldouts.TryGetValue(key, out var pe) && pe;
-            if (paramsExpanded)
+            var listenersProp = property.FindPropertyRelative("_listeners");
+            var so = property.serializedObject;
+
+            var header = new VisualElement();
+            header.AddToClassList("binding-header-row");
+
+            var arrow = new Label("\u25B6");
+            arrow.AddToClassList("foldout-arrow");
+            header.Add(arrow);
+
+            var title = new Label(property.displayName);
+            title.AddToClassList("foldout-label");
+            header.Add(title);
+
+            header.Add(new VisualElement { style = { flexGrow = 1 } });
+
+            var badge = new Label();
+            badge.AddToClassList("listener-count-badge");
+            header.Add(badge);
+
+            var addBtn = new Button { text = "+  Listener" };
+            addBtn.AddToClassList("add-listener-header-button");
+            header.Add(addBtn);
+
+            root.Add(header);
+
+            var content = new VisualElement();
+            content.AddToClassList("bindings-content-area");
+            root.Add(content);
+
+            var footerBtn = new Button { text = "+  Add Listener" };
+            footerBtn.AddToClassList("add-listener-footer");
+            root.Add(footerBtn);
+
+            bool expanded = false;
+
+            void SetExpanded(bool val)
             {
-                var paramsProp = listenerProp.FindPropertyRelative("_parameters");
-                for (int p = 0; p < paramsProp.arraySize; p++)
+                expanded = val;
+                arrow.text = expanded ? "\u25BC" : "\u25B6";
+                content.style.display = expanded ? DisplayStyle.Flex : DisplayStyle.None;
+                footerBtn.style.display = expanded ? DisplayStyle.Flex : DisplayStyle.None;
+            }
+
+            arrow.RegisterCallback<PointerDownEvent>(_ => SetExpanded(!expanded));
+            title.RegisterCallback<PointerDownEvent>(_ => SetExpanded(!expanded));
+            SetExpanded(false);
+
+            void RebuildNow()
+            {
+                so.Update();
+                content.Clear();
+
+                var listeners = property.FindPropertyRelative("_listeners");
+                int count = listeners.arraySize;
+                badge.text = $"{count} listener{(count == 1 ? "" : "s")}";
+
+                for (int i = 0; i < count; i++)
                 {
-                    h += GetParamHeight(paramsProp.GetArrayElementAtIndex(p)) + 2f;
+                    int index = i;
+                    var lp = listeners.GetArrayElementAtIndex(index);
+                    var card = BuildListenerCard(lp, index, listeners, () => root.schedule.Execute((TimerState _) => RebuildNow()));
+                    content.Add(card);
                 }
             }
 
-            return h;
-        }
-
-        private static float GetParamHeight(SerializedProperty paramProp)
-        {
-            var sourceProp = paramProp.FindPropertyRelative("_source");
-            bool isScript = (ArgumentSource)sourceProp.enumValueIndex == ArgumentSource.Script;
-
-            float h = 6f;
-            h += RowH + 2f;
-            h += RowCompact + 2f;
-            if (isScript)
-                h += RowCompact;
-            h += 4f;
-            return h;
-        }
-
-        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
-        {
-            EditorGUI.BeginProperty(position, label, property);
-
-            var listenersProp = property.FindPropertyRelative("_listeners");
-            string pathKey = property.propertyPath;
-
-            Rect headerRect = new Rect(position.x, position.y, position.width, BindingHeaderH);
-            DrawBindingHeader(headerRect, property, label, listenersProp, pathKey);
-
-            if (_bindingFoldouts.TryGetValue(pathKey, out var expanded) && expanded)
-            {
-                float y = headerRect.yMax + 4f;
-
-                for (int i = 0; i < listenersProp.arraySize; i++)
-                {
-                    var listenerProp = listenersProp.GetArrayElementAtIndex(i);
-                    float h = GetListenerHeight(listenerProp, pathKey, i);
-                    Rect cardRect = new Rect(position.x + 6f, y, position.width - 12f, h);
-                    DrawListenerCard(cardRect, listenerProp, pathKey, i, listenersProp);
-                    y += h + CardGap;
-                }
-
-                Rect addBtnRect = new Rect(position.x + 6f, y, position.width - 12f, 26f);
-                DrawAddButton(addBtnRect, listenersProp);
-            }
-
-            EditorGUI.EndProperty();
-        }
-
-        private void DrawBindingHeader(Rect rect, SerializedProperty property, GUIContent label,
-            SerializedProperty listenersProp, string pathKey)
-        {
-            bool expanded = _bindingFoldouts.TryGetValue(pathKey, out var e) && e;
-            int count = listenersProp.arraySize;
-
-            float addBtnWidth = 100f;
-            float foldoutAreaWidth = rect.width - 10f - addBtnWidth;
-            Rect foldoutRect = new Rect(rect.x + 8f, rect.y, foldoutAreaWidth, rect.height);
-
-            var foldoutContent = new GUIContent(label.text);
-            float contentWidth = Styles.BindingFoldout.CalcSize(foldoutContent).x;
-
-            EditorGUI.BeginChangeCheck();
-            expanded = EditorGUI.Foldout(foldoutRect, expanded, label.text, true, Styles.BindingFoldout);
-            if (EditorGUI.EndChangeCheck())
-                _bindingFoldouts[pathKey] = expanded;
-
-            float badgeX = rect.x + 4f + contentWidth + 8f;
-            float maxBadgeX = rect.xMax - addBtnWidth - 8f;
-            badgeX = Mathf.Min(badgeX, maxBadgeX);
-
-            if (badgeX + 20f < rect.xMax - addBtnWidth)
-            {
-                Styles.DrawBadge(new Rect(badgeX, rect.y, 80f, rect.height),
-                    $"{count} listener{(count == 1 ? "" : "s")}", Styles.ListenerCountBadge);
-            }
-
-            Rect addBtnRect = new Rect(rect.xMax - addBtnWidth, rect.y, addBtnWidth, rect.height);
-            if (GUI.Button(addBtnRect, Styles.GetIconString("plus") + "  Listener", Styles.AddButtonMain))
+            void AddNewAndRebuild()
             {
                 AddNewListener(listenersProp);
-                _bindingFoldouts[pathKey] = true;
-            }
-        }
-
-        private void AddNewListener(SerializedProperty listenersProp)
-        {
-            int index = listenersProp.arraySize;
-            listenersProp.arraySize++;
-            var newListener = listenersProp.GetArrayElementAtIndex(index);
-
-            newListener.FindPropertyRelative("_enabled").boolValue = true;
-            newListener.FindPropertyRelative("_gameObject").objectReferenceValue = null;
-            newListener.FindPropertyRelative("_methodName").stringValue = "";
-            newListener.FindPropertyRelative("_methodDisplayName").stringValue = "";
-            newListener.FindPropertyRelative("_target").objectReferenceValue = null;
-
-            var paramsProp = newListener.FindPropertyRelative("_parameters");
-            paramsProp.ClearArray();
-            paramsProp.arraySize = 0;
-
-            listenersProp.serializedObject.ApplyModifiedProperties();
-            GUI.FocusControl(null);
-        }
-
-        private void DrawAddButton(Rect rect, SerializedProperty listenersProp)
-        {
-            Rect innerRect = new Rect(rect.x + 2f, rect.y + 2f, rect.width - 4f, rect.height - 4f);
-            if (GUI.Button(innerRect, "  +  Add Listener", Styles.AddButtonFooter))
-            {
-                AddNewListener(listenersProp);
-            }
-        }
-
-        private void DrawListenerCard(Rect rect, SerializedProperty listenerProp, string bindingKey,
-            int index, SerializedProperty listenersProp)
-        {
-            string key = $"{bindingKey}_listener_{index}";
-
-            var enabledProp = listenerProp.FindPropertyRelative("_enabled");
-            var targetProp = listenerProp.FindPropertyRelative("_target");
-            var methodNameProp = listenerProp.FindPropertyRelative("_methodName");
-            var methodDisplayProp = listenerProp.FindPropertyRelative("_methodDisplayName");
-            var paramsProp = listenerProp.FindPropertyRelative("_parameters");
-
-            bool isEnabled = enabledProp.boolValue;
-            Color accentColor = isEnabled ? Styles.Colors.Green : Styles.Colors.TextMuted;
-
-            if (Event.current.type == EventType.Repaint)
-            {
-                if (isEnabled)
-                    Styles.DrawCardBackground(rect);
-                else
-                    Styles.DrawCardBackgroundDim(rect);
+                if (!expanded) SetExpanded(true);
+                RebuildNow();
             }
 
-            Styles.DrawAccentStrip(rect, accentColor);
-            Rect innerRect = new Rect(rect.x + CardHPad, rect.y + CardVPad, rect.width - CardHPad * 2, rect.height - CardVPad * 2);
-            float y = innerRect.y;
+            addBtn.clicked += AddNewAndRebuild;
+            footerBtn.clicked += AddNewAndRebuild;
 
-            DrawCardHeader(new Rect(innerRect.x, y, innerRect.width, HeaderH),
-                listenerProp, key, index, listenersProp, bindingKey);
-            y += HeaderH + 4f;
-
-            var gameObjectProp = listenerProp.FindPropertyRelative("_gameObject");
-
-            y = DrawTargetFields(new Rect(innerRect.x, y, innerRect.width, 0),
-                enabledProp, targetProp, gameObjectProp, methodNameProp, methodDisplayProp, paramsProp);
-
-            DrawMethodRow(new Rect(innerRect.x, y, innerRect.width, RowH),
-                targetProp, methodNameProp, methodDisplayProp, paramsProp, listenerProp);
-            y += RowH + 2f;
-
-            DrawParameterSection(new Rect(innerRect.x, y, innerRect.width, 0),
-                paramsProp, key);
+            RebuildNow();
+            return root;
         }
 
-        private void DrawCardHeader(Rect rect, SerializedProperty listenerProp, string key,
-            int index, SerializedProperty listenersProp, string bindingKey)
+        private VisualElement BuildListenerCard(SerializedProperty lp, int index,
+            SerializedProperty listenersProp, Action rebuild)
         {
-            var enabledProp = listenerProp.FindPropertyRelative("_enabled");
-            var targetProp = listenerProp.FindPropertyRelative("_target");
-            var methodDisplayProp = listenerProp.FindPropertyRelative("_methodDisplayName");
+            var card = new VisualElement();
+            card.AddToClassList("listener-card");
 
-            GUI.BeginGroup(rect);
+            var accent = new VisualElement();
+            accent.AddToClassList("accent-strip");
+            card.Add(accent);
 
-            float toggleSize = 18f;
-            Rect toggleRect = new Rect(0, (rect.height - toggleSize) * 0.5f, toggleSize, toggleSize);
-            EditorGUI.BeginChangeCheck();
-            bool newEnabled = EditorGUI.Toggle(toggleRect, enabledProp.boolValue, Styles.ToggleStyle);
-            if (EditorGUI.EndChangeCheck())
+            var enabledProp = lp.FindPropertyRelative("_enabled");
+            var targetProp = lp.FindPropertyRelative("_target");
+            var goProp = lp.FindPropertyRelative("_gameObject");
+            var methodNameProp = lp.FindPropertyRelative("_methodName");
+            var methodDisplayProp = lp.FindPropertyRelative("_methodDisplayName");
+            var paramsProp = lp.FindPropertyRelative("_parameters");
+
+            bool enabled = enabledProp.boolValue;
+            SetCardAccent(card, accent, enabled);
+
+            var hdr = new VisualElement();
+            hdr.AddToClassList("card-header");
+
+            var toggle = new Toggle();
+            toggle.value = enabled;
+            toggle.RegisterValueChangedCallback(evt =>
             {
-                enabledProp.boolValue = newEnabled;
+                enabledProp.boolValue = evt.newValue;
                 enabledProp.serializedObject.ApplyModifiedProperties();
-            }
+                SetCardAccent(card, accent, evt.newValue);
+            });
+            hdr.Add(toggle);
 
-            string displayName = GetListenerDisplayName(listenerProp);
-            var displayStyle = enabledProp.boolValue ? Styles.CardHeaderLabel : Styles.CardHeaderLabelDim;
-            Rect labelRect = new Rect(toggleRect.xMax + 4f, 0, rect.width - toggleRect.xMax - 28f, rect.height);
-            EditorGUI.LabelField(labelRect, "  " + displayName, displayStyle);
+            var nameLabel = new Label(GetListenerDisplayName(lp));
+            nameLabel.AddToClassList("card-header-label");
+            if (!enabled) nameLabel.AddToClassList("disabled");
+            hdr.Add(nameLabel);
 
-            Rect removeRect = new Rect(rect.width - 22f, 0, 22f, rect.height);
-            if (GUI.Button(removeRect, Styles.GetIconString("xmark"), Styles.RemoveButton))
+            var rmBtn = new Button(() =>
             {
                 RemoveListenerAt(listenersProp, index);
-                GUIUtility.ExitGUI();
+                rebuild();
+            });
+            rmBtn.text = "\u2715";
+            rmBtn.AddToClassList("remove-button");
+            hdr.Add(rmBtn);
+
+            card.Add(hdr);
+
+            card.Add(BuildGameObjectRow(goProp, targetProp, methodNameProp, methodDisplayProp, paramsProp, rebuild));
+            card.Add(BuildComponentRow(targetProp, goProp, methodNameProp, methodDisplayProp, paramsProp, rebuild));
+            card.Add(BuildMethodRow(targetProp, methodNameProp, methodDisplayProp, paramsProp, rebuild));
+
+            if (paramsProp.arraySize > 0)
+            {
+                var paramSection = BuildParameterSection(lp, paramsProp, rebuild);
+                card.Add(paramSection);
             }
 
-            GUI.EndGroup();
+            return card;
         }
 
-        private string GetListenerDisplayName(SerializedProperty listenerProp)
+        private static void SetCardAccent(VisualElement card, VisualElement accent, bool enabled)
         {
-            var targetProp = listenerProp.FindPropertyRelative("_target");
-            var gameObjectProp = listenerProp.FindPropertyRelative("_gameObject");
-            var methodDisplayProp = listenerProp.FindPropertyRelative("_methodDisplayName");
-
-            Component target = targetProp.objectReferenceValue as Component;
-            GameObject go = gameObjectProp.objectReferenceValue as GameObject;
-
-            if (target != null)
+            if (enabled)
             {
-                string scriptName = target.GetType().Name;
-                string methodName = !string.IsNullOrEmpty(methodDisplayProp.stringValue)
-                    ? methodDisplayProp.stringValue.Split(':')[0].Trim()
-                    : "No Method Selected";
-                return $"{target.gameObject.name} ({scriptName})";
+                card.RemoveFromClassList("disabled");
+                accent.style.backgroundColor = new Color(0.188f, 0.820f, 0.345f);
+            }
+            else
+            {
+                card.AddToClassList("disabled");
+                accent.style.backgroundColor = new Color(0.388f, 0.388f, 0.400f);
+            }
+        }
+
+        private static VisualElement BuildGameObjectRow(SerializedProperty goProp, SerializedProperty targetProp,
+            SerializedProperty methodNameProp, SerializedProperty methodDisplayProp,
+            SerializedProperty paramsProp, Action rebuild)
+        {
+            var row = new VisualElement();
+            row.AddToClassList("field-row");
+            row.Add(new Label("Object") { style = { width = 56, minWidth = 56 } });
+
+            Component ct = targetProp.objectReferenceValue as Component;
+            var go = ct != null ? ct.gameObject : goProp.objectReferenceValue as GameObject;
+
+            var goField = new ObjectField { objectType = typeof(GameObject), value = go };
+            goField.RegisterValueChangedCallback(evt =>
+            {
+                var newGO = evt.newValue as GameObject;
+                goProp.objectReferenceValue = newGO;
+                targetProp.objectReferenceValue = null;
+                if (newGO != null && ct != null)
+                {
+                    var same = newGO.GetComponent(ct.GetType());
+                    if (same != null)
+                        targetProp.objectReferenceValue = same;
+                }
+                ClearMethod(methodNameProp, methodDisplayProp, paramsProp);
+                targetProp.serializedObject.ApplyModifiedProperties();
+                rebuild();
+            });
+            row.Add(goField);
+            return row;
+        }
+
+        private static GameObject GetActiveGameObject(SerializedProperty targetProp, SerializedProperty goProp)
+        {
+            var ct = targetProp.objectReferenceValue as Component;
+            return ct != null ? ct.gameObject : goProp.objectReferenceValue as GameObject;
+        }
+
+        private static VisualElement BuildFieldRow(string label, VisualElement field)
+        {
+            var row = new VisualElement();
+            row.AddToClassList("field-row");
+            row.Add(new Label(label) { style = { width = 56, minWidth = 56 } });
+            row.Add(field);
+            return row;
+        }
+
+        private static VisualElement BuildComponentRow(SerializedProperty targetProp, SerializedProperty goProp,
+            SerializedProperty methodNameProp, SerializedProperty methodDisplayProp,
+            SerializedProperty paramsProp, Action rebuild)
+        {
+            var go = GetActiveGameObject(targetProp, goProp);
+            var currentTarget = targetProp.objectReferenceValue as Component;
+
+            var comps = go != null
+                ? go.GetComponents<Component>().Where(c => c != null).ToList()
+                : new List<Component>();
+
+            var choices = new List<string>();
+            int idx = 0;
+
+            if (go == null || comps.Count == 0)
+            {
+                choices.Add(go != null ? "Select Script..." : "No Script Selected");
+            }
+            else
+            {
+                for (int i = 0; i < comps.Count; i++)
+                {
+                    choices.Add(comps[i].GetType().Name);
+                    if (comps[i] == currentTarget)
+                        idx = i;
+                }
             }
 
+            var dropdown = new DropdownField();
+            dropdown.choices = choices;
+            dropdown.index = idx;
+            dropdown.RegisterValueChangedCallback(evt =>
+            {
+                int i = dropdown.index;
+                if (i >= 0 && i < comps.Count && comps[i] != null)
+                {
+                    targetProp.objectReferenceValue = comps[i];
+                    goProp.objectReferenceValue = null;
+                    ClearMethod(methodNameProp, methodDisplayProp, paramsProp);
+                    targetProp.serializedObject.ApplyModifiedProperties();
+                    rebuild();
+                }
+            });
+
+            return BuildFieldRow("Script", dropdown);
+        }
+
+        private static VisualElement BuildMethodRow(SerializedProperty targetProp,
+            SerializedProperty methodNameProp, SerializedProperty methodDisplayProp,
+            SerializedProperty paramsProp, Action rebuild)
+        {
+            var target = targetProp.objectReferenceValue as Component;
+            var methods = target != null ? GetBindableMethods(target.GetType()) : new List<MethodInfo>();
+
+            var choices = new List<string>();
+            var methodItems = new List<MethodInfo>();
+            int idx = 0;
+            string currentName = methodNameProp.stringValue;
+
+            foreach (var m in methods)
+            {
+                choices.Add(FormatMethodSignature(m));
+                methodItems.Add(m);
+                if (m.Name == currentName)
+                    idx = choices.Count - 1;
+            }
+
+            if (choices.Count == 0)
+            {
+                choices.Add(target != null ? "No Method Selected" : "No Script Selected");
+                methodItems.Add(null);
+            }
+
+            var dropdown = new DropdownField();
+            dropdown.choices = choices;
+            dropdown.index = idx;
+            dropdown.RegisterValueChangedCallback(evt =>
+            {
+                int i = dropdown.index;
+                if (i >= 0 && i < methodItems.Count && methodItems[i] != null)
+                {
+                    SelectMethod(methodItems[i], methodNameProp, methodDisplayProp, paramsProp);
+                    targetProp.serializedObject.ApplyModifiedProperties();
+                    rebuild();
+                }
+            });
+
+            return BuildFieldRow("Method", dropdown);
+        }
+
+        private VisualElement BuildParameterSection(SerializedProperty listenerProp,
+            SerializedProperty paramsProp, Action rebuild)
+        {
+            var section = new VisualElement();
+            section.AddToClassList("param-section");
+
+            var key = $"{listenerProp.propertyPath}_params";
+
+            var foldout = new Foldout
+            {
+                text = $"  Parameters  ({paramsProp.arraySize})",
+                value = _paramFoldouts.TryGetValue(key, out var pe) && pe
+            };
+            foldout.AddToClassList("param-section-foldout");
+            foldout.RegisterValueChangedCallback(evt => { _paramFoldouts[key] = evt.newValue; });
+
+            for (int p = 0; p < paramsProp.arraySize; p++)
+            {
+                var pp = paramsProp.GetArrayElementAtIndex(p);
+                var typeNameProp = pp.FindPropertyRelative("_parameterTypeName");
+                var paramType = ResolveType(typeNameProp.stringValue);
+                foldout.Add(BuildParameterEntry(pp, paramType, rebuild));
+            }
+
+            section.Add(foldout);
+            return section;
+        }
+
+        private static readonly Dictionary<string, bool> _paramFoldouts = new Dictionary<string, bool>();
+
+        private VisualElement BuildParameterEntry(SerializedProperty pp, Type paramType, Action rebuild)
+        {
+            var entry = new VisualElement();
+            entry.AddToClassList("param-entry");
+
+            var nameProp = pp.FindPropertyRelative("_parameterName");
+            var sourceProp = pp.FindPropertyRelative("_source");
+            var sourceComponentProp = pp.FindPropertyRelative("_sourceComponent");
+            var sourceMemberProp = pp.FindPropertyRelative("_sourceMemberName");
+
+            var accent = new VisualElement();
+            accent.AddToClassList("param-accent-strip");
+            entry.Add(accent);
+
+            var headerRow = new VisualElement();
+            headerRow.AddToClassList("param-header-row");
+
+            var paramNameLabel = new Label(nameProp.stringValue);
+            paramNameLabel.AddToClassList("param-header-name");
+            headerRow.Add(paramNameLabel);
+
+            string typeDisplay = paramType != null ? GetTypeDisplayName(paramType) : "unknown";
+            var paramTypeLabel = new Label($"({typeDisplay})");
+            paramTypeLabel.AddToClassList("param-header-type");
+            headerRow.Add(paramTypeLabel);
+
+            entry.Add(headerRow);
+
+            var sourceRow = new VisualElement();
+            sourceRow.AddToClassList("source-row");
+
+            sourceRow.Add(new Label("Source") { style = { width = 44, minWidth = 44 } });
+
+            var sourceField = new EnumField((ArgumentSource)sourceProp.enumValueIndex);
+            sourceField.style.width = 72;
+            sourceField.RegisterValueChangedCallback(evt =>
+            {
+                sourceProp.enumValueIndex = (int)(ArgumentSource)evt.newValue;
+                sourceProp.serializedObject.ApplyModifiedProperties();
+                RebuildParamValue(sourceRow, pp, sourceProp, paramType, sourceComponentProp, sourceMemberProp, rebuild);
+                SetParamAccent(accent, (ArgumentSource)evt.newValue);
+            });
+            sourceRow.Add(sourceField);
+
+            var valueContainer = new VisualElement { name = "param-value" };
+            valueContainer.AddToClassList("value-container");
+            sourceRow.Add(valueContainer);
+
+            entry.Add(sourceRow);
+            RebuildParamValue(sourceRow, pp, sourceProp, paramType, sourceComponentProp, sourceMemberProp, rebuild);
+            SetParamAccent(accent, (ArgumentSource)sourceProp.enumValueIndex);
+
+            return entry;
+        }
+
+        private void RebuildParamValue(VisualElement sourceRow, SerializedProperty pp, SerializedProperty sourceProp,
+            Type paramType, SerializedProperty sourceComponentProp, SerializedProperty sourceMemberProp, Action rebuild)
+        {
+            var container = sourceRow.Q<VisualElement>("param-value");
+            if (container == null) return;
+            container.Clear();
+
+            var source = (ArgumentSource)sourceProp.enumValueIndex;
+
+            if (source == ArgumentSource.Constant)
+            {
+                container.Add(BuildConstantValueField(pp, paramType));
+            }
+            else
+            {
+                container.Add(BuildScriptSourceField(sourceComponentProp, sourceMemberProp, paramType, rebuild));
+            }
+        }
+
+        private static void SetParamAccent(VisualElement accent, ArgumentSource source)
+        {
+            accent.style.backgroundColor = source == ArgumentSource.Constant
+                ? new Color(0.039f, 0.518f, 1.000f, 0.6f)
+                : new Color(1.000f, 0.624f, 0.039f, 0.6f);
+        }
+
+        private static VisualElement BuildConstantValueField(SerializedProperty pp, Type paramType)
+        {
+            if (paramType == null)
+                return new Label("Unresolved type") { style = { color = new Color(0.6f, 0.1f, 0.1f) } };
+
+            if (paramType == typeof(int))
+            {
+                var f = new IntegerField { value = pp.FindPropertyRelative("_intValue").intValue };
+                f.RegisterValueChangedCallback(evt =>
+                {
+                    pp.FindPropertyRelative("_intValue").intValue = evt.newValue;
+                    pp.serializedObject.ApplyModifiedProperties();
+                });
+                return f;
+            }
+            if (paramType == typeof(float))
+            {
+                var f = new FloatField { value = pp.FindPropertyRelative("_floatValue").floatValue };
+                f.RegisterValueChangedCallback(evt =>
+                {
+                    pp.FindPropertyRelative("_floatValue").floatValue = evt.newValue;
+                    pp.serializedObject.ApplyModifiedProperties();
+                });
+                return f;
+            }
+            if (paramType == typeof(double))
+            {
+                var f = new DoubleField { value = pp.FindPropertyRelative("_doubleValue").doubleValue };
+                f.RegisterValueChangedCallback(evt =>
+                {
+                    pp.FindPropertyRelative("_doubleValue").doubleValue = evt.newValue;
+                    pp.serializedObject.ApplyModifiedProperties();
+                });
+                return f;
+            }
+            if (paramType == typeof(long))
+            {
+                var f = new LongField { value = pp.FindPropertyRelative("_longValue").longValue };
+                f.RegisterValueChangedCallback(evt =>
+                {
+                    pp.FindPropertyRelative("_longValue").longValue = evt.newValue;
+                    pp.serializedObject.ApplyModifiedProperties();
+                });
+                return f;
+            }
+            if (paramType == typeof(bool))
+            {
+                var f = new Toggle { value = pp.FindPropertyRelative("_boolValue").boolValue };
+                f.RegisterValueChangedCallback(evt =>
+                {
+                    pp.FindPropertyRelative("_boolValue").boolValue = evt.newValue;
+                    pp.serializedObject.ApplyModifiedProperties();
+                });
+                return f;
+            }
+            if (paramType == typeof(string))
+            {
+                var f = new TextField { value = pp.FindPropertyRelative("_stringValue").stringValue ?? "" };
+                f.RegisterValueChangedCallback(evt =>
+                {
+                    pp.FindPropertyRelative("_stringValue").stringValue = evt.newValue;
+                    pp.serializedObject.ApplyModifiedProperties();
+                });
+                return f;
+            }
+            if (paramType == typeof(char))
+            {
+                var f = new TextField { value = pp.FindPropertyRelative("_stringValue").stringValue ?? "" };
+                f.RegisterValueChangedCallback(evt =>
+                {
+                    string v = evt.newValue;
+                    pp.FindPropertyRelative("_stringValue").stringValue = v.Length > 0 ? v[0].ToString() : "";
+                    pp.serializedObject.ApplyModifiedProperties();
+                });
+                return f;
+            }
+            if (paramType == typeof(Vector2))
+            {
+                var f = new Vector2Field { value = pp.FindPropertyRelative("_vector2Value").vector2Value };
+                f.RegisterValueChangedCallback(evt =>
+                {
+                    pp.FindPropertyRelative("_vector2Value").vector2Value = evt.newValue;
+                    pp.serializedObject.ApplyModifiedProperties();
+                });
+                return f;
+            }
+            if (paramType == typeof(Vector3))
+            {
+                var f = new Vector3Field { value = pp.FindPropertyRelative("_vector3Value").vector3Value };
+                f.RegisterValueChangedCallback(evt =>
+                {
+                    pp.FindPropertyRelative("_vector3Value").vector3Value = evt.newValue;
+                    pp.serializedObject.ApplyModifiedProperties();
+                });
+                return f;
+            }
+            if (paramType == typeof(Vector4))
+            {
+                var f = new Vector4Field { value = pp.FindPropertyRelative("_vector4Value").vector4Value };
+                f.RegisterValueChangedCallback(evt =>
+                {
+                    pp.FindPropertyRelative("_vector4Value").vector4Value = evt.newValue;
+                    pp.serializedObject.ApplyModifiedProperties();
+                });
+                return f;
+            }
+            if (paramType == typeof(Quaternion))
+            {
+                var f = new Vector3Field { value = pp.FindPropertyRelative("_vector3Value").vector3Value };
+                f.label = "Euler";
+                f.RegisterValueChangedCallback(evt =>
+                {
+                    pp.FindPropertyRelative("_vector3Value").vector3Value = evt.newValue;
+                    pp.serializedObject.ApplyModifiedProperties();
+                });
+                return f;
+            }
+            if (paramType == typeof(Color))
+            {
+                var f = new ColorField { value = pp.FindPropertyRelative("_colorValue").colorValue };
+                f.RegisterValueChangedCallback(evt =>
+                {
+                    pp.FindPropertyRelative("_colorValue").colorValue = evt.newValue;
+                    pp.serializedObject.ApplyModifiedProperties();
+                });
+                return f;
+            }
+            if (paramType == typeof(Rect))
+            {
+                var f = new RectField { value = pp.FindPropertyRelative("_rectValue").rectValue };
+                f.RegisterValueChangedCallback(evt =>
+                {
+                    pp.FindPropertyRelative("_rectValue").rectValue = evt.newValue;
+                    pp.serializedObject.ApplyModifiedProperties();
+                });
+                return f;
+            }
+            if (paramType == typeof(Bounds))
+            {
+                var f = new BoundsField { value = pp.FindPropertyRelative("_boundsValue").boundsValue };
+                f.RegisterValueChangedCallback(evt =>
+                {
+                    pp.FindPropertyRelative("_boundsValue").boundsValue = evt.newValue;
+                    pp.serializedObject.ApplyModifiedProperties();
+                });
+                return f;
+            }
+            if (paramType == typeof(AnimationCurve))
+            {
+                var f = new CurveField { value = pp.FindPropertyRelative("_curveValue").animationCurveValue };
+                f.RegisterValueChangedCallback(evt =>
+                {
+                    pp.FindPropertyRelative("_curveValue").animationCurveValue = evt.newValue;
+                    pp.serializedObject.ApplyModifiedProperties();
+                });
+                return f;
+            }
+            if (paramType == typeof(Gradient))
+            {
+                var f = new GradientField { value = pp.FindPropertyRelative("_gradientValue").gradientValue };
+                f.RegisterValueChangedCallback(evt =>
+                {
+                    pp.FindPropertyRelative("_gradientValue").gradientValue = evt.newValue;
+                    pp.serializedObject.ApplyModifiedProperties();
+                });
+                return f;
+            }
+            if (paramType == typeof(LayerMask))
+            {
+                var f = new LayerMaskField { value = (LayerMask)pp.FindPropertyRelative("_layerMaskValue").intValue };
+                f.RegisterValueChangedCallback(evt =>
+                {
+                    pp.FindPropertyRelative("_layerMaskValue").intValue = evt.newValue;
+                    pp.serializedObject.ApplyModifiedProperties();
+                });
+                return f;
+            }
+            if (paramType.IsEnum)
+            {
+                var intProp = pp.FindPropertyRelative("_intValue");
+                var names = Enum.GetNames(paramType);
+                var vals = Enum.GetValues(paramType);
+                int idx = -1;
+                for (int i = 0; i < vals.Length; i++)
+                    if (Equals(vals.GetValue(i), Enum.ToObject(paramType, intProp.intValue))) { idx = i; break; }
+                var f = new DropdownField();
+                f.choices = new List<string>(names);
+                f.index = idx >= 0 ? idx : 0;
+                f.RegisterValueChangedCallback(evt =>
+                {
+                    int newIdx = f.index;
+                    if (newIdx >= 0 && newIdx < vals.Length)
+                        intProp.intValue = (int)vals.GetValue(newIdx);
+                    intProp.serializedObject.ApplyModifiedProperties();
+                });
+                return f;
+            }
+            if (paramType == typeof(GameObject))
+            {
+                var prop = pp.FindPropertyRelative("_objectValue");
+                var f = new ObjectField { objectType = typeof(GameObject), value = prop.objectReferenceValue as GameObject };
+                f.RegisterValueChangedCallback(evt =>
+                {
+                    prop.objectReferenceValue = evt.newValue;
+                    prop.serializedObject.ApplyModifiedProperties();
+                });
+                return f;
+            }
+            if (typeof(Component).IsAssignableFrom(paramType))
+            {
+                var prop = pp.FindPropertyRelative("_objectValue");
+                var f = new ObjectField { objectType = paramType, value = prop.objectReferenceValue as Component };
+                f.RegisterValueChangedCallback(evt =>
+                {
+                    prop.objectReferenceValue = evt.newValue;
+                    prop.serializedObject.ApplyModifiedProperties();
+                });
+                return f;
+            }
+            if (typeof(Object).IsAssignableFrom(paramType))
+            {
+                var prop = pp.FindPropertyRelative("_objectValue");
+                var f = new ObjectField { objectType = paramType, value = prop.objectReferenceValue };
+                f.RegisterValueChangedCallback(evt =>
+                {
+                    prop.objectReferenceValue = evt.newValue;
+                    prop.serializedObject.ApplyModifiedProperties();
+                });
+                return f;
+            }
+            if (paramType == typeof(short))
+            {
+                var fp = pp.FindPropertyRelative("_intValue");
+                var f = new IntegerField { value = fp.intValue };
+                f.RegisterValueChangedCallback(evt =>
+                {
+                    fp.intValue = Mathf.Clamp(evt.newValue, short.MinValue, short.MaxValue);
+                    fp.serializedObject.ApplyModifiedProperties();
+                });
+                return f;
+            }
+            if (paramType == typeof(byte))
+            {
+                var fp = pp.FindPropertyRelative("_intValue");
+                var f = new IntegerField { value = fp.intValue };
+                f.RegisterValueChangedCallback(evt =>
+                {
+                    fp.intValue = Mathf.Clamp(evt.newValue, byte.MinValue, byte.MaxValue);
+                    fp.serializedObject.ApplyModifiedProperties();
+                });
+                return f;
+            }
+
+            var fp2 = pp.FindPropertyRelative("_stringValue");
+            var ff = new TextField { value = fp2.stringValue, label = paramType.Name };
+            ff.RegisterValueChangedCallback(evt =>
+            {
+                fp2.stringValue = evt.newValue;
+                fp2.serializedObject.ApplyModifiedProperties();
+            });
+            return ff;
+        }
+
+        private static VisualElement BuildScriptSourceField(SerializedProperty sourceComponentProp,
+            SerializedProperty sourceMemberProp, Type paramType, Action rebuild)
+        {
+            var container = new VisualElement();
+            container.AddToClassList("script-source-container");
+
+            var innerRow = new VisualElement();
+            innerRow.style.flexDirection = FlexDirection.Row;
+
+            var compField = new ObjectField
+            {
+                objectType = typeof(Component),
+                value = sourceComponentProp.objectReferenceValue as Component
+            };
+            compField.style.flexGrow = 1;
+            compField.RegisterValueChangedCallback(evt =>
+            {
+                sourceComponentProp.objectReferenceValue = evt.newValue;
+                sourceMemberProp.stringValue = "";
+                sourceComponentProp.serializedObject.ApplyModifiedProperties();
+                rebuild();
+            });
+            innerRow.Add(compField);
+
+            var comp = sourceComponentProp.objectReferenceValue as Component;
+            var members = new List<string> { "Select..." };
+            var memberNames = new List<string> { null };
+            int memberIdx = 0;
+
+            if (comp != null)
+            {
+                members.Clear();
+                memberNames.Clear();
+                var type = comp.GetType();
+                var fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
+                var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy)
+                    .Where(p => p.CanRead && p.GetIndexParameters().Length == 0)
+                    .Where(p => p.Name != "enabled" && p.Name != "name" && p.Name != "tag"
+                        && p.Name != "gameObject" && p.Name != "transform" && p.Name != "hideFlags")
+                    .ToList();
+
+                foreach (var f in fields)
+                {
+                    members.Add($"{f.Name} : {GetTypeDisplayName(f.FieldType)}");
+                    memberNames.Add(f.Name);
+                }
+                foreach (var p in props)
+                {
+                    members.Add($"{p.Name} : {GetTypeDisplayName(p.PropertyType)}");
+                    memberNames.Add(p.Name);
+                }
+
+                string currentMember = sourceMemberProp.stringValue;
+                for (int i = 0; i < memberNames.Count; i++)
+                {
+                    if (memberNames[i] == currentMember)
+                    {
+                        memberIdx = i;
+                        break;
+                    }
+                }
+            }
+
+            var memberDropdown = new DropdownField();
+            memberDropdown.choices = members;
+            memberDropdown.index = memberIdx;
+            memberDropdown.style.width = 100;
+            memberDropdown.RegisterValueChangedCallback(evt =>
+            {
+                int i = memberDropdown.index;
+                if (i >= 0 && i < memberNames.Count && memberNames[i] != null)
+                {
+                    sourceMemberProp.stringValue = memberNames[i];
+                    sourceMemberProp.serializedObject.ApplyModifiedProperties();
+                    rebuild();
+                }
+            });
+
+            innerRow.Add(memberDropdown);
+            container.Add(innerRow);
+
+            if (sourceComponentProp.objectReferenceValue != null && !string.IsNullOrEmpty(sourceMemberProp.stringValue))
+            {
+                var info = new Label($"  \u2192  {sourceComponentProp.objectReferenceValue.name}.{sourceMemberProp.stringValue}");
+                info.AddToClassList("script-info");
+                container.Add(info);
+            }
+
+            return container;
+        }
+
+        private static string GetListenerDisplayName(SerializedProperty lp)
+        {
+            var targetProp = lp.FindPropertyRelative("_target");
+            var goProp = lp.FindPropertyRelative("_gameObject");
+            var displayProp = lp.FindPropertyRelative("_methodDisplayName");
+
+            var target = targetProp.objectReferenceValue as Component;
+            var go = goProp.objectReferenceValue as GameObject;
+
+            if (target != null)
+                return $"{target.gameObject.name} ({target.GetType().Name})";
             if (go != null)
                 return $"{go.name} (No Script)";
-
             return "No Target Selected";
         }
 
-        private void RemoveListenerAt(SerializedProperty listenersProp, int index)
+        private static void AddNewListener(SerializedProperty listenersProp)
         {
-            if (index < 0 || index >= listenersProp.arraySize)
-                return;
+            int idx = listenersProp.arraySize;
+            listenersProp.arraySize++;
+            var lp = listenersProp.GetArrayElementAtIndex(idx);
+            lp.FindPropertyRelative("_enabled").boolValue = true;
+            lp.FindPropertyRelative("_gameObject").objectReferenceValue = null;
+            lp.FindPropertyRelative("_methodName").stringValue = "";
+            lp.FindPropertyRelative("_methodDisplayName").stringValue = "";
+            lp.FindPropertyRelative("_target").objectReferenceValue = null;
+            var pp = lp.FindPropertyRelative("_parameters");
+            pp.ClearArray();
+            pp.arraySize = 0;
+            listenersProp.serializedObject.ApplyModifiedProperties();
+        }
+
+        private static void RemoveListenerAt(SerializedProperty listenersProp, int index)
+        {
+            if (index < 0 || index >= listenersProp.arraySize) return;
             listenersProp.serializedObject.Update();
-            int sizeBefore = listenersProp.arraySize;
+            int before = listenersProp.arraySize;
             listenersProp.DeleteArrayElementAtIndex(index);
-            if (listenersProp.arraySize == sizeBefore)
+            if (listenersProp.arraySize == before)
                 listenersProp.DeleteArrayElementAtIndex(index);
             listenersProp.serializedObject.ApplyModifiedProperties();
         }
 
-        private float DrawTargetFields(Rect rect, SerializedProperty enabledProp,
-            SerializedProperty targetProp, SerializedProperty gameObjectProp,
-            SerializedProperty methodNameProp, SerializedProperty methodDisplayProp,
-            SerializedProperty paramsProp)
-        {
-            float y = rect.y;
-            Component currentTarget = targetProp.objectReferenceValue as Component;
-            GameObject displayGO = currentTarget != null
-                ? currentTarget.gameObject
-                : gameObjectProp.objectReferenceValue as GameObject;
-
-            Rect labelRect = new Rect(rect.x, y, 56f, RowH);
-            EditorGUI.LabelField(labelRect, "Object", Styles.FieldLabel);
-
-            Rect fieldRect = new Rect(labelRect.xMax + FieldGap, y, rect.width - labelRect.width - FieldGap, RowH);
-
-            EditorGUI.BeginChangeCheck();
-            GameObject newGO = EditorGUI.ObjectField(fieldRect, displayGO, typeof(GameObject), true) as GameObject;
-            if (EditorGUI.EndChangeCheck())
-            {
-                gameObjectProp.objectReferenceValue = newGO;
-                targetProp.objectReferenceValue = null;
-                if (newGO != null && currentTarget != null)
-                {
-                    Component same = newGO.GetComponent(currentTarget.GetType());
-                    if (same != null)
-                        targetProp.objectReferenceValue = same;
-                }
-
-                ClearMethod(methodNameProp, methodDisplayProp, paramsProp);
-                targetProp.serializedObject.ApplyModifiedProperties();
-            }
-
-            y += RowH + 2f;
-
-            currentTarget = targetProp.objectReferenceValue as Component;
-            GameObject goForDropdown = currentTarget != null
-                ? currentTarget.gameObject
-                : gameObjectProp.objectReferenceValue as GameObject;
-
-            EditorGUI.LabelField(new Rect(rect.x, y, 56f, RowH), "Script", Styles.FieldLabel);
-
-            Rect scriptFieldRect = new Rect(labelRect.xMax + FieldGap, y, rect.width - labelRect.width - FieldGap, RowH);
-
-            string displayName = "No Script Selected";
-            if (currentTarget != null)
-                displayName = currentTarget.GetType().Name;
-            else if (goForDropdown != null)
-                displayName = "Select Script...";
-
-            if (GUI.Button(scriptFieldRect, displayName, Styles.PopupButton))
-            {
-                if (goForDropdown != null)
-                    ShowComponentDropdown(scriptFieldRect, goForDropdown, targetProp, gameObjectProp,
-                        methodNameProp, methodDisplayProp, paramsProp);
-            }
-
-            y += RowH + 2f;
-
-            return y;
-        }
-
-        private void ShowComponentDropdown(Rect rect, GameObject go, SerializedProperty targetProp,
-            SerializedProperty gameObjectProp, SerializedProperty methodNameProp,
-            SerializedProperty methodDisplayProp, SerializedProperty paramsProp)
-        {
-            var components = go.GetComponents<Component>();
-            var grouped = components
-                .Where(c => c != null)
-                .GroupBy(c => c.GetType().Namespace ?? "")
-                .OrderBy(g =>
-                {
-                    if (string.IsNullOrEmpty(g.Key)) return 1;
-                    if (g.Key.StartsWith("UnityEngine")) return 2;
-                    return 0;
-                })
-                .ToList();
-
-            var menu = new GenericMenu();
-
-            foreach (var group in grouped)
-            {
-                string header = string.IsNullOrEmpty(group.Key) ? "Scripts" : group.Key;
-                foreach (var comp in group.OrderBy(c => c.GetType().Name))
-                {
-                    var type = comp.GetType();
-                    string label = $"{header}/{type.Name}";
-                    bool isSelected = targetProp.objectReferenceValue == comp;
-
-                    var capturedComp = comp;
-                    menu.AddItem(new GUIContent(label), isSelected, () =>
-                    {
-                        targetProp.objectReferenceValue = capturedComp;
-                        gameObjectProp.objectReferenceValue = null;
-                        ClearMethod(methodNameProp, methodDisplayProp, paramsProp);
-                        targetProp.serializedObject.ApplyModifiedProperties();
-                    });
-                }
-            }
-
-            if (components.Length == 0 || components.All(c => c == null))
-                menu.AddDisabledItem(new GUIContent("No components found"));
-
-            menu.DropDown(rect);
-        }
-
-        private void ClearMethod(SerializedProperty methodNameProp, SerializedProperty methodDisplayProp,
+        private static void ClearMethod(SerializedProperty methodNameProp, SerializedProperty methodDisplayProp,
             SerializedProperty paramsProp)
         {
             methodNameProp.stringValue = "";
@@ -431,52 +880,7 @@ namespace MHZE.EventSystem.Editor
             paramsProp.arraySize = 0;
         }
 
-        private void DrawMethodRow(Rect rect, SerializedProperty targetProp,
-            SerializedProperty methodNameProp, SerializedProperty methodDisplayProp,
-            SerializedProperty paramsProp, SerializedProperty listenerProp)
-        {
-            EditorGUI.LabelField(new Rect(rect.x, rect.y, 56f, rect.height), "Method", Styles.FieldLabel);
-
-            Rect fieldRect = new Rect(rect.x + 60f, rect.y, rect.width - 60f, rect.height);
-
-            var target = targetProp.objectReferenceValue as Component;
-            string display = !string.IsNullOrEmpty(methodDisplayProp.stringValue)
-                ? methodDisplayProp.stringValue
-                : "No Method Selected";
-
-            if (GUI.Button(fieldRect, display, Styles.PopupButton))
-            {
-                if (target != null)
-                    ShowMethodDropdown(fieldRect, target, targetProp, methodNameProp, methodDisplayProp,
-                        paramsProp, listenerProp);
-            }
-        }
-
-        private void ShowMethodDropdown(Rect rect, Component target, SerializedProperty targetProp,
-            SerializedProperty methodNameProp, SerializedProperty methodDisplayProp,
-            SerializedProperty paramsProp, SerializedProperty listenerProp)
-        {
-            var methods = GetBindableMethods(target.GetType());
-            var menu = new GenericMenu();
-
-            foreach (var method in methods)
-            {
-                string sig = FormatMethodSignature(method);
-                bool isSelected = method.Name == methodNameProp.stringValue;
-                var capturedMethod = method;
-                menu.AddItem(new GUIContent(sig), isSelected, () =>
-                {
-                    SelectMethod(capturedMethod, methodNameProp, methodDisplayProp, paramsProp, listenerProp);
-                });
-            }
-
-            if (methods.Count == 0)
-                menu.AddDisabledItem(new GUIContent("No bindable methods found"));
-
-            menu.DropDown(rect);
-        }
-
-        private List<MethodInfo> GetBindableMethods(Type type)
+        private static List<MethodInfo> GetBindableMethods(Type type)
         {
             return type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy)
                 .Where(m =>
@@ -486,33 +890,26 @@ namespace MHZE.EventSystem.Editor
                     if (UnitySpecialMethods.Contains(m.Name)) return false;
                     if (m.GetParameters().Any(p => p.IsOut || p.ParameterType.IsByRef)) return false;
                     if (m.IsDefined(typeof(ObsoleteAttribute), true)) return false;
-
                     Type dt = m.DeclaringType;
-                    if (dt == typeof(object) || dt == typeof(UnityEngine.Object) ||
+                    if (dt == typeof(object) || dt == typeof(Object) ||
                         dt == typeof(Component) || dt == typeof(Behaviour) ||
                         dt == typeof(MonoBehaviour))
                         return false;
-
                     return true;
                 })
                 .OrderBy(m => m.Name)
                 .ToList();
         }
 
-        private string FormatMethodSignature(MethodInfo method)
+        private static string FormatMethodSignature(MethodInfo method)
         {
-            var parameters = method.GetParameters();
-            string returnType = method.ReturnType.Name;
-            string paramList = string.Join(", ",
-                parameters.Select(p => $"{GetTypeDisplayName(p.ParameterType)} {p.Name}"));
-
-            if (string.IsNullOrEmpty(paramList))
-                return $"{method.Name}() : {returnType}";
-
-            return $"{method.Name}({paramList}) : {returnType}";
+            var pars = method.GetParameters();
+            string ret = method.ReturnType.Name;
+            string args = string.Join(", ", pars.Select(p => $"{GetTypeDisplayName(p.ParameterType)} {p.Name}"));
+            return string.IsNullOrEmpty(args) ? $"{method.Name}() : {ret}" : $"{method.Name}({args}) : {ret}";
         }
 
-        private string GetTypeDisplayName(Type type)
+        internal static string GetTypeDisplayName(Type type)
         {
             if (type == typeof(int)) return "int";
             if (type == typeof(float)) return "float";
@@ -539,430 +936,70 @@ namespace MHZE.EventSystem.Editor
             if (type == typeof(Quaternion)) return "Quaternion";
             if (type == typeof(GameObject)) return "GameObject";
             if (type == typeof(Transform)) return "Transform";
-
             return type.Name;
         }
 
-        private void SelectMethod(MethodInfo method, SerializedProperty methodNameProp,
-            SerializedProperty methodDisplayProp, SerializedProperty paramsProp,
-            SerializedProperty listenerProp)
+        private static void SelectMethod(MethodInfo method, SerializedProperty methodNameProp,
+            SerializedProperty methodDisplayProp, SerializedProperty paramsProp)
         {
             methodNameProp.stringValue = method.Name;
             methodDisplayProp.stringValue = FormatMethodSignature(method);
-
-            var parameters = method.GetParameters();
+            var pars = method.GetParameters();
             paramsProp.ClearArray();
-            paramsProp.arraySize = parameters.Length;
-
-            for (int i = 0; i < parameters.Length; i++)
+            paramsProp.arraySize = pars.Length;
+            for (int i = 0; i < pars.Length; i++)
             {
-                var paramProp = paramsProp.GetArrayElementAtIndex(i);
-                paramProp.FindPropertyRelative("_parameterName").stringValue = parameters[i].Name ?? $"param{i}";
-                paramProp.FindPropertyRelative("_parameterTypeName").stringValue =
-                    parameters[i].ParameterType.AssemblyQualifiedName;
-                paramProp.FindPropertyRelative("_source").enumValueIndex = (int)ArgumentSource.Constant;
-
-                ResetParamValues(paramProp);
-            }
-
-            paramsProp.serializedObject.ApplyModifiedProperties();
-        }
-
-        private void ResetParamValues(SerializedProperty paramProp)
-        {
-            paramProp.FindPropertyRelative("_sourceComponent").objectReferenceValue = null;
-            paramProp.FindPropertyRelative("_sourceMemberName").stringValue = "";
-            paramProp.FindPropertyRelative("_intValue").intValue = 0;
-            paramProp.FindPropertyRelative("_floatValue").floatValue = 0f;
-            paramProp.FindPropertyRelative("_doubleValue").doubleValue = 0.0;
-            paramProp.FindPropertyRelative("_longValue").longValue = 0L;
-            paramProp.FindPropertyRelative("_boolValue").boolValue = false;
-            paramProp.FindPropertyRelative("_stringValue").stringValue = "";
-            paramProp.FindPropertyRelative("_vector2Value").vector2Value = Vector2.zero;
-            paramProp.FindPropertyRelative("_vector3Value").vector3Value = Vector3.zero;
-            paramProp.FindPropertyRelative("_vector4Value").vector4Value = Vector4.zero;
-            paramProp.FindPropertyRelative("_colorValue").colorValue = Color.white;
-            paramProp.FindPropertyRelative("_rectValue").rectValue = new Rect(0, 0, 1, 1);
-            paramProp.FindPropertyRelative("_boundsValue").boundsValue = new Bounds(Vector3.zero, Vector3.one);
-            paramProp.FindPropertyRelative("_layerMaskValue").intValue = 0;
-            paramProp.FindPropertyRelative("_objectValue").objectReferenceValue = null;
-        }
-
-        private void DrawParameterSection(Rect rect, SerializedProperty paramsProp, string key)
-        {
-            float y = rect.y;
-
-            bool paramsExpanded = _paramFoldouts.TryGetValue(key, out var pe) && pe;
-
-            Rect foldoutRect = new Rect(rect.x + 2f, y, rect.width - 2f, RowH);
-            EditorGUI.BeginChangeCheck();
-            paramsExpanded = EditorGUI.Foldout(foldoutRect, paramsExpanded,
-                $"  Parameters  ({paramsProp.arraySize})", true, Styles.ParamSectionFoldout);
-            if (EditorGUI.EndChangeCheck())
-                _paramFoldouts[key] = paramsExpanded;
-
-            if (!_paramFoldouts.ContainsKey(key))
-                _paramFoldouts[key] = false;
-
-            y += RowH + 4f;
-
-            if (paramsExpanded)
-            {
-                for (int p = 0; p < paramsProp.arraySize; p++)
-                {
-                    var paramProp = paramsProp.GetArrayElementAtIndex(p);
-                    var typeNameProp = paramProp.FindPropertyRelative("_parameterTypeName");
-                    Type paramType = ResolveType(typeNameProp.stringValue);
-
-                    float ph = GetParamHeight(paramProp);
-                    Rect paramRect = new Rect(rect.x + 4f, y, rect.width - 4f, ph);
-                    DrawParameterEntry(paramRect, paramProp, paramType);
-                    y += ph + 2f;
-                }
+                var pp = paramsProp.GetArrayElementAtIndex(i);
+                pp.FindPropertyRelative("_parameterName").stringValue = pars[i].Name ?? $"param{i}";
+                pp.FindPropertyRelative("_parameterTypeName").stringValue = pars[i].ParameterType.AssemblyQualifiedName;
+                pp.FindPropertyRelative("_source").enumValueIndex = (int)ArgumentSource.Constant;
+                ResetParamValues(pp);
             }
         }
 
-        private void DrawParameterEntry(Rect rect, SerializedProperty paramProp, Type paramType)
+        private static void ResetParamValues(SerializedProperty pp)
         {
-            var nameProp = paramProp.FindPropertyRelative("_parameterName");
-            var sourceProp = paramProp.FindPropertyRelative("_source");
-            var sourceComponentProp = paramProp.FindPropertyRelative("_sourceComponent");
-            var sourceMemberProp = paramProp.FindPropertyRelative("_sourceMemberName");
-
-            var source = (ArgumentSource)sourceProp.enumValueIndex;
-            Color accentColor = source == ArgumentSource.Constant
-                ? Styles.Colors.BlueDim
-                : Styles.Colors.OrangeDim;
-            Color solidAccent = source == ArgumentSource.Constant
-                ? Styles.Colors.Blue
-                : Styles.Colors.Orange;
-
-            if (Event.current.type == EventType.Repaint)
-                Styles.DrawParamBackground(rect);
-
-            Styles.DrawAccentStrip(rect, solidAccent);
-
-            Rect innerRect = new Rect(rect.x + 10f, rect.y + 3f, rect.width - 14f, rect.height - 6f);
-            float y = innerRect.y;
-
-            string typeDisplay = paramType != null ? GetTypeDisplayName(paramType) : "unknown";
-            string headerText = $"<color=#{ColorUtility.ToHtmlStringRGB(Styles.Colors.TextPrimary)}>{nameProp.stringValue}</color>  <color=#{ColorUtility.ToHtmlStringRGB(Styles.Colors.TextMuted)}>({typeDisplay})</color>";
-
-            Rect headerRect = new Rect(innerRect.x, y, innerRect.width, RowH);
-            EditorGUI.LabelField(headerRect, headerText, Styles.ParamHeaderLabel);
-            y += RowH + 2f;
-
-            Rect sourceLabel = new Rect(innerRect.x, y, 44f, RowCompact);
-            EditorGUI.LabelField(sourceLabel, "Source", Styles.FieldLabelCompact);
-
-            Rect sourcePopupRect = new Rect(sourceLabel.xMax + FieldGap, y, 68f, RowCompact);
-            EditorGUI.PropertyField(sourcePopupRect, sourceProp, GUIContent.none);
-
-            if (source == ArgumentSource.Constant)
-            {
-                Rect valueRect = new Rect(sourcePopupRect.xMax + 8f, y,
-                    innerRect.xMax - sourcePopupRect.xMax - 8f, RowCompact);
-                DrawConstantValueField(valueRect, paramProp, paramType);
-            }
-            else
-            {
-                float remainingWidth = innerRect.xMax - sourcePopupRect.xMax - 8f;
-                float halfWidth = (remainingWidth - FieldGap) * 0.5f;
-
-                Rect compRect = new Rect(sourcePopupRect.xMax + 8f, y, halfWidth, RowCompact);
-                EditorGUI.ObjectField(compRect, sourceComponentProp, typeof(Component), GUIContent.none);
-
-                Rect memberRect = new Rect(compRect.xMax + FieldGap, y, halfWidth, RowCompact);
-                DrawScriptMemberDropdown(memberRect, sourceComponentProp, sourceMemberProp, paramType);
-            }
-
-            y += RowCompact + 2f;
-
-            if (source == ArgumentSource.Script && sourceComponentProp.objectReferenceValue != null)
-            {
-                string componentName = sourceComponentProp.objectReferenceValue.name;
-                string memberName = !string.IsNullOrEmpty(sourceMemberProp.stringValue)
-                    ? sourceMemberProp.stringValue
-                    : "?";
-                Rect infoRect = new Rect(innerRect.x, y, innerRect.width, RowCompact);
-                var infoStyle = new GUIStyle(EditorStyles.miniLabel)
-                {
-                    fontSize = 10,
-                    normal = { textColor = Styles.Colors.TextMuted },
-                    padding = new RectOffset(0, 0, 1, 1)
-                };
-                EditorGUI.LabelField(infoRect,
-                    $"  {Styles.GetIconString("arrow")}  {componentName}.{memberName}", infoStyle);
-            }
-        }
-
-        private void DrawConstantValueField(Rect rect, SerializedProperty paramProp, Type paramType)
-        {
-            if (paramType == null)
-            {
-                EditorGUI.LabelField(rect, "Unresolved type", Styles.ParamHeaderLabel);
-                return;
-            }
-
-            if (paramType == typeof(int))
-            {
-                var prop = paramProp.FindPropertyRelative("_intValue");
-                EditorGUI.PropertyField(rect, prop, GUIContent.none);
-            }
-            else if (paramType == typeof(float))
-            {
-                var prop = paramProp.FindPropertyRelative("_floatValue");
-                EditorGUI.PropertyField(rect, prop, GUIContent.none);
-            }
-            else if (paramType == typeof(double))
-            {
-                var prop = paramProp.FindPropertyRelative("_doubleValue");
-                EditorGUI.PropertyField(rect, prop, GUIContent.none);
-            }
-            else if (paramType == typeof(long))
-            {
-                var prop = paramProp.FindPropertyRelative("_longValue");
-                EditorGUI.PropertyField(rect, prop, GUIContent.none);
-            }
-            else if (paramType == typeof(bool))
-            {
-                var prop = paramProp.FindPropertyRelative("_boolValue");
-                EditorGUI.PropertyField(rect, prop, GUIContent.none);
-            }
-            else if (paramType == typeof(string))
-            {
-                var prop = paramProp.FindPropertyRelative("_stringValue");
-                EditorGUI.PropertyField(rect, prop, GUIContent.none);
-            }
-            else if (paramType == typeof(char))
-            {
-                var prop = paramProp.FindPropertyRelative("_stringValue");
-                string val = prop.stringValue ?? "";
-                val = EditorGUI.TextField(rect, val);
-                prop.stringValue = val.Length > 0 ? val[0].ToString() : "";
-            }
-            else if (paramType == typeof(Vector2))
-            {
-                var prop = paramProp.FindPropertyRelative("_vector2Value");
-                EditorGUI.PropertyField(rect, prop, GUIContent.none);
-            }
-            else if (paramType == typeof(Vector3))
-            {
-                var prop = paramProp.FindPropertyRelative("_vector3Value");
-                EditorGUI.PropertyField(rect, prop, GUIContent.none);
-            }
-            else if (paramType == typeof(Vector4))
-            {
-                var prop = paramProp.FindPropertyRelative("_vector4Value");
-                EditorGUI.PropertyField(rect, prop, GUIContent.none);
-            }
-            else if (paramType == typeof(Quaternion))
-            {
-                var prop = paramProp.FindPropertyRelative("_vector3Value");
-                EditorGUI.PropertyField(rect, prop, GUIContent.none);
-            }
-            else if (paramType == typeof(Color))
-            {
-                var prop = paramProp.FindPropertyRelative("_colorValue");
-                EditorGUI.PropertyField(rect, prop, GUIContent.none);
-            }
-            else if (paramType == typeof(Rect))
-            {
-                var prop = paramProp.FindPropertyRelative("_rectValue");
-                EditorGUI.PropertyField(rect, prop, GUIContent.none);
-            }
-            else if (paramType == typeof(Bounds))
-            {
-                var prop = paramProp.FindPropertyRelative("_boundsValue");
-                EditorGUI.PropertyField(rect, prop, GUIContent.none);
-            }
-            else if (paramType == typeof(AnimationCurve))
-            {
-                var prop = paramProp.FindPropertyRelative("_curveValue");
-                EditorGUI.PropertyField(rect, prop, GUIContent.none);
-            }
-            else if (paramType == typeof(Gradient))
-            {
-                var prop = paramProp.FindPropertyRelative("_gradientValue");
-                EditorGUI.PropertyField(rect, prop, GUIContent.none);
-            }
-            else if (paramType == typeof(LayerMask))
-            {
-                var prop = paramProp.FindPropertyRelative("_layerMaskValue");
-                EditorGUI.PropertyField(rect, prop, GUIContent.none);
-            }
-            else if (paramType.IsEnum)
-            {
-                var intProp = paramProp.FindPropertyRelative("_intValue");
-                DrawEnumField(rect, intProp, paramType);
-            }
-            else if (paramType == typeof(GameObject))
-            {
-                var prop = paramProp.FindPropertyRelative("_objectValue");
-                GameObject current = prop.objectReferenceValue as GameObject;
-                EditorGUI.BeginChangeCheck();
-                GameObject value = (GameObject)EditorGUI.ObjectField(rect, current, typeof(GameObject), true);
-                if (EditorGUI.EndChangeCheck())
-                    prop.objectReferenceValue = value;
-            }
-            else if (typeof(Component).IsAssignableFrom(paramType))
-            {
-                var prop = paramProp.FindPropertyRelative("_objectValue");
-                Component current = prop.objectReferenceValue as Component;
-                EditorGUI.BeginChangeCheck();
-                Component value = (Component)EditorGUI.ObjectField(rect, current, paramType, true);
-                if (EditorGUI.EndChangeCheck())
-                    prop.objectReferenceValue = value;
-            }
-            else if (typeof(Object).IsAssignableFrom(paramType))
-            {
-                var prop = paramProp.FindPropertyRelative("_objectValue");
-                Object current = prop.objectReferenceValue;
-                EditorGUI.BeginChangeCheck();
-                Object value = EditorGUI.ObjectField(rect, current, paramType, true);
-                if (EditorGUI.EndChangeCheck())
-                    prop.objectReferenceValue = value;
-            }
-            else if (paramType == typeof(short))
-            {
-                var prop = paramProp.FindPropertyRelative("_intValue");
-                int val = EditorGUI.IntField(rect, prop.intValue);
-                prop.intValue = Mathf.Clamp(val, short.MinValue, short.MaxValue);
-            }
-            else if (paramType == typeof(byte))
-            {
-                var prop = paramProp.FindPropertyRelative("_intValue");
-                int val = EditorGUI.IntField(rect, prop.intValue);
-                prop.intValue = Mathf.Clamp(val, byte.MinValue, byte.MaxValue);
-            }
-            else
-            {
-                var prop = paramProp.FindPropertyRelative("_stringValue");
-                EditorGUI.LabelField(rect, paramType.Name, prop.stringValue, Styles.ParamHeaderLabel);
-            }
-        }
-
-        private void DrawEnumField(Rect rect, SerializedProperty intProp, Type enumType)
-        {
-            int currentValue = intProp.intValue;
-            try
-            {
-                var enumObj = Enum.ToObject(enumType, currentValue);
-                var names = Enum.GetNames(enumType);
-                var values = Enum.GetValues(enumType);
-                int currentIndex = -1;
-                for (int i = 0; i < values.Length; i++)
-                {
-                    if (Equals(values.GetValue(i), enumObj))
-                    {
-                        currentIndex = i;
-                        break;
-                    }
-                }
-
-                int newIndex = EditorGUI.Popup(rect, currentIndex, names);
-                if (newIndex >= 0 && newIndex < values.Length)
-                    intProp.intValue = (int)values.GetValue(newIndex);
-            }
-            catch
-            {
-                EditorGUI.LabelField(rect, "Invalid enum value");
-            }
-        }
-
-        private void DrawScriptMemberDropdown(Rect rect, SerializedProperty sourceComponentProp,
-            SerializedProperty sourceMemberProp, Type paramType)
-        {
-            var comp = sourceComponentProp.objectReferenceValue as Component;
-
-            string display = !string.IsNullOrEmpty(sourceMemberProp.stringValue)
-                ? sourceMemberProp.stringValue
-                : "Select...";
-
-            if (GUI.Button(rect, display, Styles.PopupButton))
-            {
-                if (comp != null)
-                    ShowMemberDropdown(rect, comp, sourceMemberProp, paramType);
-            }
-        }
-
-        private void ShowMemberDropdown(Rect rect, Component component, SerializedProperty sourceMemberProp,
-            Type paramType)
-        {
-            var type = component.GetType();
-            var fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
-            var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy)
-                .Where(p => p.CanRead && p.GetIndexParameters().Length == 0);
-
-            var menu = new GenericMenu();
-
-            foreach (var field in fields)
-            {
-                string label = $"{field.Name} : {GetTypeDisplayName(field.FieldType)}";
-                bool isSelected = field.Name == sourceMemberProp.stringValue;
-                var capturedName = field.Name;
-                menu.AddItem(new GUIContent(label), isSelected, () =>
-                {
-                    sourceMemberProp.stringValue = capturedName;
-                    sourceMemberProp.serializedObject.ApplyModifiedProperties();
-                });
-            }
-
-            foreach (var prop in properties)
-            {
-                if (prop.Name == "enabled" || prop.Name == "name" || prop.Name == "tag" || prop.Name == "gameObject" ||
-                    prop.Name == "transform" || prop.Name == "hideFlags")
-                    continue;
-
-                string label = $"{prop.Name} : {GetTypeDisplayName(prop.PropertyType)}";
-                bool isSelected = prop.Name == sourceMemberProp.stringValue;
-                var capturedName = prop.Name;
-                menu.AddItem(new GUIContent(label), isSelected, () =>
-                {
-                    sourceMemberProp.stringValue = capturedName;
-                    sourceMemberProp.serializedObject.ApplyModifiedProperties();
-                });
-            }
-
-            if (fields.Length == 0 && !properties.Any())
-                menu.AddDisabledItem(new GUIContent("No public fields or properties"));
-
-            menu.DropDown(rect);
+            pp.FindPropertyRelative("_sourceComponent").objectReferenceValue = null;
+            pp.FindPropertyRelative("_sourceMemberName").stringValue = "";
+            pp.FindPropertyRelative("_intValue").intValue = 0;
+            pp.FindPropertyRelative("_floatValue").floatValue = 0f;
+            pp.FindPropertyRelative("_doubleValue").doubleValue = 0.0;
+            pp.FindPropertyRelative("_longValue").longValue = 0L;
+            pp.FindPropertyRelative("_boolValue").boolValue = false;
+            pp.FindPropertyRelative("_stringValue").stringValue = "";
+            pp.FindPropertyRelative("_vector2Value").vector2Value = Vector2.zero;
+            pp.FindPropertyRelative("_vector3Value").vector3Value = Vector3.zero;
+            pp.FindPropertyRelative("_vector4Value").vector4Value = Vector4.zero;
+            pp.FindPropertyRelative("_colorValue").colorValue = Color.white;
+            pp.FindPropertyRelative("_rectValue").rectValue = new Rect(0, 0, 1, 1);
+            pp.FindPropertyRelative("_boundsValue").boundsValue = new Bounds(Vector3.zero, Vector3.one);
+            pp.FindPropertyRelative("_layerMaskValue").intValue = 0;
+            pp.FindPropertyRelative("_objectValue").objectReferenceValue = null;
         }
 
         private static Type ResolveType(string typeName)
         {
-            if (string.IsNullOrEmpty(typeName))
-                return null;
-
-            Type resolved = Type.GetType(typeName);
-            if (resolved != null)
-                return resolved;
-
+            if (string.IsNullOrEmpty(typeName)) return null;
+            var t = Type.GetType(typeName);
+            if (t != null) return t;
             try
             {
-                foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+                foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
                 {
-                    Type found = assembly.GetType(typeName);
-                    if (found != null)
-                        return found;
-
-                    int lastDot = typeName.LastIndexOf('.');
-                    if (lastDot > 0)
+                    var found = asm.GetType(typeName);
+                    if (found != null) return found;
+                    int dot = typeName.LastIndexOf('.');
+                    if (dot > 0)
                     {
-                        string simpleName = typeName.Substring(lastDot + 1);
-                        found = assembly.GetTypes()
-                            .FirstOrDefault(t => t.Name == simpleName && t.FullName == typeName);
-                        if (found != null)
-                            return found;
+                        string simple = typeName.Substring(dot + 1);
+                        found = asm.GetTypes().FirstOrDefault(x => x.Name == simple && x.FullName == typeName);
+                        if (found != null) return found;
                     }
                 }
             }
-            catch
-            {
-            }
-
+            catch { }
             return null;
         }
+
     }
 }
