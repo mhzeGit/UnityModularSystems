@@ -51,3 +51,11 @@ https://github.com/mhzeGit/mhzeModularSystems.git?path=/Packages/com.mhze.use-sy
 ```
 
 Modular use system with raycast-based target detection, IUsable/IUsableTarget interfaces, configurable tools and targets, cooldown and impact delay support, and event-driven prompt integration.
+
+### Throw System
+
+```
+https://github.com/mhzeGit/mhzeModularSystems.git?path=/Packages/com.mhze.throw-system
+```
+
+Modular throw system with charge-based force, camera-forward direction, configurable exponential charge curve, input-driven throw and cancel, and event-driven integration.

@@ -1,0 +1,14 @@
+{
+  "name": "com.mhze.throw-system",
+  "version": "1.0.0",
+  "displayName": "Throw System",
+  "description": "Modular throw system with charge-based force, camera-forward direction, configurable charge curves, input-driven throw and cancel, and event-driven integration.",
+  "unity": "2021.3",
+  "author": {
+    "name": "MHZE",
+    "url": "https://github.com/mhze"
+  },
+  "dependencies": {
+    "com.unity.inputsystem": "1.4.0"
+  }
+}

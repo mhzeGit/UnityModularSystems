@@ -50,6 +50,14 @@
         "com.unity.inputsystem": "1.4.0"
       }
     },
+    "com.mhze.throw-system": {
+      "version": "file:com.mhze.throw-system",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.unity.inputsystem": "1.4.0"
+      }
+    },
     "com.mhze.unity-editor-navigator": {
       "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Packages/com.mhze.unity-editor-navigator",
       "depth": 0,

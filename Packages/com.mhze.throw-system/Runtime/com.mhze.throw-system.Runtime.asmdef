@@ -1,0 +1,14 @@
+{
+  "name": "com.mhze.throw-system.Runtime",
+  "rootNamespace": "MHZE.ThrowSystem",
+  "references": [
+    "Unity.InputSystem"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": []
+}
