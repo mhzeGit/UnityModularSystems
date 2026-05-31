@@ -23,40 +23,48 @@ namespace MHZE.InteractSystem
         public event Action<IInteractor> InteractReleased;
         public EventBinding<IInteractor> OnInteractedWithEvent = new EventBinding<IInteractor>();
 
-        public bool IsInteractable
-        {
-            get => isInteractable;
-            set
-            {
-                if (isInteractable == value) return;
-                isInteractable = value;
-                OnInteractableUpdated?.Invoke();
-            }
-        }
-
-        public bool AllowPrompt
-        {
-            get => allowPrompt;
-            set
-            {
-                if (allowPrompt == value) return;
-                allowPrompt = value;
-                OnInteractableUpdated?.Invoke();
-            }
-        }
-
+        public bool IsInteractable => isInteractable;
+        public bool AllowPrompt => allowPrompt;
         public bool OneTimeInteract => oneTimeInteract;
+        public bool InteractedOnce => interactedOnce;
 
-        public bool InteractedOnce
+        public void SetIsInteractable(bool value)
         {
-            get => interactedOnce;
-            set => interactedOnce = value;
+            if (isInteractable == value) return;
+            isInteractable = value;
+            OnInteractableUpdated?.Invoke();
+        }
+
+        public void SetAllowPrompt(bool value)
+        {
+            if (allowPrompt == value) return;
+            allowPrompt = value;
+            OnInteractableUpdated?.Invoke();
+        }
+
+        public void SetInteractedOnce(bool value)
+        {
+            interactedOnce = value;
         }
 
         public float HoldTime => holdTime;
 
         public string PromptPrefix => promptPrefix;
         public string PromptSuffix => promptSuffix;
+
+        public void SetPromptPrefix(string value)
+        {
+            if (promptPrefix == value) return;
+            promptPrefix = value;
+            OnInteractableUpdated?.Invoke();
+        }
+
+        public void SetPromptSuffix(string value)
+        {
+            if (promptSuffix == value) return;
+            promptSuffix = value;
+            OnInteractableUpdated?.Invoke();
+        }
 
         public virtual void OnInteract(IInteractor interactor)
         {

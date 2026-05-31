@@ -235,7 +235,7 @@ namespace MHZE.InteractSystem
             if (CurrentInteractable != null)
             {
                 if (CurrentInteractable.OneTimeInteract)
-                    CurrentInteractable.InteractedOnce = false;
+                    CurrentInteractable.SetInteractedOnce(false);
 
                 CurrentInteractable.OnHoverExit(this);
                 UnsubscribeCurrent();
