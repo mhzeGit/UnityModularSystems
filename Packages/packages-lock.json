@@ -45,7 +45,8 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "com.unity.inputsystem": "1.4.0"
+        "com.unity.inputsystem": "1.4.0",
+        "com.mhze.event-system": "1.0.0"
       }
     },
     "com.mhze.pickup-system": {

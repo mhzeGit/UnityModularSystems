@@ -2,7 +2,7 @@
 
 using System;
 using UnityEngine;
-using UnityEngine.Events;
+using MHZE.EventSystem;
 
 namespace MHZE.InteractSystem
 {
@@ -18,7 +18,7 @@ namespace MHZE.InteractSystem
 
         public event Action<IInteractor> Interacted;
         public event Action<IInteractor> InteractReleased;
-        public UnityEvent OnInteractedWithEvent;
+        public EventBinding OnInteractedWithEvent = new EventBinding();
 
         public bool IsInteractable
         {
@@ -50,7 +50,7 @@ namespace MHZE.InteractSystem
         public virtual void OnInteract(IInteractor interactor)
         {
             Interacted?.Invoke(interactor);
-            OnInteractedWithEvent?.Invoke();
+            OnInteractedWithEvent.Invoke();
         }
 
         public virtual void OnInteractReleased(IInteractor interactor)

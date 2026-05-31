@@ -2,7 +2,8 @@
   "name": "com.mhze.interact-system.Runtime",
   "rootNamespace": "MHZE.InteractSystem",
   "references": [
-    "Unity.InputSystem"
+    "Unity.InputSystem",
+    "com.mhze.event-system.Runtime"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
