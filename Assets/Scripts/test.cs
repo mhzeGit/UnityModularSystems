@@ -9,9 +9,20 @@ public class test : MonoBehaviour
     
             Debug.Log(number);
     }
-    // public void DebugFloat2()
-    // {
+    public void DebugFloat2()
+    {
     
-    //         Debug.Log(2);
-    // }
+            Debug.Log(2);
+    }
+    public void InteractTest(IInteractor interactor)
+    {
+    
+            Debug.Log(interactor.PlayerCamera.name);
+    }
+    public void InteractTestAndFloat(IInteractor interactor,float number)
+    {
+    
+            Debug.Log(interactor.PlayerCamera.name);
+            Debug.Log(number);
+    }
 }

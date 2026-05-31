@@ -1185,6 +1185,7 @@ namespace MHZE.EventSystem.Editor
                 var pp = paramsProp.GetArrayElementAtIndex(i);
                 pp.FindPropertyRelative("_parameterName").stringValue = pars[i].Name ?? $"param{i}";
                 pp.FindPropertyRelative("_parameterTypeName").stringValue = pars[i].ParameterType.AssemblyQualifiedName;
+                ResetParamValues(pp);
 
                 bool matched = TryMatchEventVariable(pars[i].ParameterType, eventArgTypes,
                     out int matchedIdx, out string matchedVar);
@@ -1194,7 +1195,6 @@ namespace MHZE.EventSystem.Editor
                     : (int)ArgumentSource.Constant;
                 pp.FindPropertyRelative("_eventArgIndex").intValue = matched ? matchedIdx : 0;
                 pp.FindPropertyRelative("_eventVariableName").stringValue = matchedVar ?? "";
-                ResetParamValues(pp);
             }
         }
 
