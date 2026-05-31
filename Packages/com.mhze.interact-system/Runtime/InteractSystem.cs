@@ -22,6 +22,7 @@ namespace MHZE.InteractSystem
         public IInteractable CurrentInteractable { get; private set; }
         public GameObject CurrentInteractableObject { get; private set; }
         Camera IInteractor.PlayerCamera => playerCamera;
+        Transform IInteractor.Transform => transform;
 
         public string InteractionBindingDisplayString
         {
