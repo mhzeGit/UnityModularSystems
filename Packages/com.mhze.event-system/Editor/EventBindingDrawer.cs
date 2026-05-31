@@ -435,7 +435,29 @@ namespace MHZE.EventSystem.Editor
                 }
             });
 
-            return BuildFieldRow("Script", dropdown);
+            var row = new VisualElement();
+            row.AddToClassList("field-row");
+            row.Add(new Label("Script") { style = { width = 56, minWidth = 56 } });
+
+            if (currentTarget != null)
+            {
+                var iconTexture = EditorGUIUtility.ObjectContent(currentTarget, currentTarget.GetType()).image;
+                if (iconTexture == null)
+                    iconTexture = EditorGUIUtility.FindTexture("cs Script Icon");
+                if (iconTexture != null)
+                {
+                    var iconImage = new Image();
+                    iconImage.image = iconTexture;
+                    iconImage.style.width = 16;
+                    iconImage.style.height = 16;
+                    iconImage.style.marginRight = 4;
+                    iconImage.style.alignSelf = Align.Center;
+                    row.Add(iconImage);
+                }
+            }
+
+            row.Add(dropdown);
+            return row;
         }
 
         private static VisualElement BuildMethodRow(SerializedProperty targetProp,
@@ -445,47 +467,162 @@ namespace MHZE.EventSystem.Editor
             var target = targetProp.objectReferenceValue as Component;
             var methods = target != null ? GetBindableMethods(target.GetType()) : new List<MethodInfo>();
 
-            var choices = new List<string>();
-            var methodItems = new List<MethodInfo>();
-            int idx = 0;
+            var row = new VisualElement();
+            row.AddToClassList("field-row");
+            row.Add(new Label("Method") { style = { width = 56, minWidth = 56 } });
+
+            if (target == null || methods.Count == 0 && string.IsNullOrEmpty(methodNameProp.stringValue))
+            {
+                var placeholder = new Label(target != null ? "No Method Selected" : "No Script Selected");
+                placeholder.style.color = new Color(0.5f, 0.5f, 0.5f);
+                placeholder.style.fontSize = 10;
+                placeholder.style.height = 18;
+                placeholder.style.unityTextAlign = TextAnchor.MiddleLeft;
+                row.Add(placeholder);
+                return row;
+            }
+
+            var displayArea = new VisualElement();
+            displayArea.AddToClassList("method-display-field");
+            displayArea.style.flexDirection = FlexDirection.Row;
+            displayArea.style.flexGrow = 1;
+            displayArea.style.minHeight = 18;
+            displayArea.style.paddingLeft = 6;
+            displayArea.style.alignItems = Align.Center;
+            displayArea.style.overflow = Overflow.Hidden;
+
             string currentName = methodNameProp.stringValue;
-            bool hasNoSelection = string.IsNullOrEmpty(currentName);
+            var selectedMethod = string.IsNullOrEmpty(currentName)
+                ? null
+                : methods.FirstOrDefault(m => m.Name == currentName);
 
-            if (hasNoSelection)
+            if (selectedMethod != null)
             {
-                choices.Add(target != null ? "No Method Selected" : "No Script Selected");
-                methodItems.Add(null);
+                BuildColoredSignature(displayArea, selectedMethod);
+            }
+            else
+            {
+                var placeholder = new Label("No Method Selected");
+                placeholder.style.color = new Color(0.5f, 0.5f, 0.5f);
+                placeholder.style.fontSize = 10;
+                placeholder.style.height = 18;
+                placeholder.style.unityTextAlign = TextAnchor.MiddleLeft;
+                displayArea.Add(placeholder);
             }
 
-            foreach (var m in methods)
-            {
-                choices.Add(FormatMethodSignature(m));
-                methodItems.Add(m);
-                if (!hasNoSelection && m.Name == currentName)
-                    idx = choices.Count - 1;
-            }
+            displayArea.Add(new VisualElement { style = { flexGrow = 1 } });
 
-            if (choices.Count == 0)
-            {
-                choices.Add(target != null ? "No Method Selected" : "No Script Selected");
-                methodItems.Add(null);
-            }
+            var arrow = new Label("\u25BE");
+            arrow.style.fontSize = 8;
+            arrow.style.marginRight = 4;
+            arrow.style.color = new Color(0.6f, 0.6f, 0.6f);
+            arrow.style.unityTextAlign = TextAnchor.MiddleCenter;
+            displayArea.Add(arrow);
 
-            var dropdown = new DropdownField();
-            dropdown.choices = choices;
-            dropdown.index = idx;
-            dropdown.RegisterValueChangedCallback(evt =>
+            displayArea.RegisterCallback<MouseDownEvent>(evt =>
             {
-                int i = dropdown.index;
-                if (i >= 0 && i < methodItems.Count && methodItems[i] != null)
+                if (evt.button != 0) return;
+                var menu = new GenericMenu();
+                foreach (var m in methods)
                 {
-                    SelectMethod(methodItems[i], methodNameProp, methodDisplayProp, paramsProp, eventArgTypes);
-                    targetProp.serializedObject.ApplyModifiedProperties();
-                    rebuild();
+                    string display = FormatMethodSignature(m);
+                    bool isSelected = m.Name == currentName;
+                    var capturedMethod = m;
+                    menu.AddItem(new GUIContent(display), isSelected, () =>
+                    {
+                        SelectMethod(capturedMethod, methodNameProp, methodDisplayProp, paramsProp, eventArgTypes);
+                        targetProp.serializedObject.ApplyModifiedProperties();
+                        rebuild();
+                    });
+                }
+                menu.ShowAsContext();
+            });
+
+            row.Add(displayArea);
+            return row;
+        }
+
+        private static void BuildColoredSignature(VisualElement container, MethodInfo method)
+        {
+            var retLabel = new Label(GetTypeDisplayName(method.ReturnType));
+            retLabel.style.color = new Color(0.349f, 0.647f, 0.976f);
+            retLabel.style.marginRight = 3;
+            retLabel.style.fontSize = 10;
+            retLabel.style.height = 18;
+            retLabel.style.unityTextAlign = TextAnchor.MiddleLeft;
+            retLabel.style.flexShrink = 0;
+            container.Add(retLabel);
+
+            var nameLabel = new Label(method.Name);
+            nameLabel.style.color = new Color(0.863f, 0.863f, 0.667f);
+            nameLabel.style.marginRight = 2;
+            nameLabel.style.fontSize = 10;
+            nameLabel.style.height = 18;
+            nameLabel.style.unityTextAlign = TextAnchor.MiddleLeft;
+            nameLabel.style.flexShrink = 0;
+            container.Add(nameLabel);
+
+            container.Add(new Label("(")
+            {
+                style =
+                {
+                    color = new Color(0.6f, 0.6f, 0.6f),
+                    fontSize = 10,
+                    height = 18,
+                    unityTextAlign = TextAnchor.MiddleLeft,
+                    flexShrink = 0
                 }
             });
 
-            return BuildFieldRow("Method", dropdown);
+            var pars = method.GetParameters();
+            for (int i = 0; i < pars.Length; i++)
+            {
+                if (i > 0)
+                {
+                    container.Add(new Label(", ")
+                    {
+                        style =
+                        {
+                            color = new Color(0.6f, 0.6f, 0.6f),
+                            fontSize = 10,
+                            height = 18,
+                            unityTextAlign = TextAnchor.MiddleLeft,
+                            flexShrink = 0
+                        }
+                    });
+                }
+
+                var p = pars[i];
+                var typeLabel = new Label(GetTypeDisplayName(p.ParameterType));
+                typeLabel.style.color = new Color(0.282f, 0.792f, 0.580f);
+                typeLabel.style.marginRight = 2;
+                typeLabel.style.fontSize = 10;
+                typeLabel.style.height = 18;
+                typeLabel.style.unityTextAlign = TextAnchor.MiddleLeft;
+                typeLabel.style.flexShrink = 0;
+                container.Add(typeLabel);
+
+                var nameLabel2 = new Label(p.Name);
+                nameLabel2.style.color = new Color(0.85f, 0.85f, 0.85f);
+                nameLabel2.style.marginRight = 2;
+                nameLabel2.style.fontSize = 10;
+                nameLabel2.style.height = 18;
+                nameLabel2.style.unityTextAlign = TextAnchor.MiddleLeft;
+                nameLabel2.style.flexShrink = 0;
+                container.Add(nameLabel2);
+            }
+
+            container.Add(new Label(")")
+            {
+                style =
+                {
+                    color = new Color(0.6f, 0.6f, 0.6f),
+                    fontSize = 10,
+                    height = 18,
+                    unityTextAlign = TextAnchor.MiddleLeft,
+                    flexShrink = 0
+                }
+            });
         }
 
         private VisualElement BuildParameterSection(SerializedProperty listenerProp,
@@ -1132,9 +1269,9 @@ namespace MHZE.EventSystem.Editor
         private static string FormatMethodSignature(MethodInfo method)
         {
             var pars = method.GetParameters();
-            string ret = method.ReturnType.Name;
+            string ret = GetTypeDisplayName(method.ReturnType);
             string args = string.Join(", ", pars.Select(p => $"{GetTypeDisplayName(p.ParameterType)} {p.Name}"));
-            return string.IsNullOrEmpty(args) ? $"{method.Name}() : {ret}" : $"{method.Name}({args}) : {ret}";
+            return string.IsNullOrEmpty(args) ? $"{ret} {method.Name}()" : $"{ret} {method.Name}({args})";
         }
 
         internal static string GetTypeDisplayName(Type type)
