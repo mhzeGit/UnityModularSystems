@@ -213,9 +213,10 @@ public class UltimateDoorController : MonoBehaviour
         ));
     }
 
-    public void Toggle(Transform interactor = null)
+    public void Toggle(Transform interactor)
     {
         if (_state == DoorState.Locked) return;
+        Debug.Log(interactor);
 
         if (_isAnimating)
         {

@@ -7,7 +7,7 @@ namespace MHZE.InteractSystem
     public interface IInteractor
     {
         Camera PlayerCamera { get; }
-        Transform Transform { get; }
+        Transform InteractorTransform { get; }
         string InteractionBindingDisplayString { get; }
     }
 }
