@@ -446,12 +446,19 @@ namespace MHZE.EventSystem.Editor
             var methodItems = new List<MethodInfo>();
             int idx = 0;
             string currentName = methodNameProp.stringValue;
+            bool hasNoSelection = string.IsNullOrEmpty(currentName);
+
+            if (hasNoSelection)
+            {
+                choices.Add(target != null ? "No Method Selected" : "No Script Selected");
+                methodItems.Add(null);
+            }
 
             foreach (var m in methods)
             {
                 choices.Add(FormatMethodSignature(m));
                 methodItems.Add(m);
-                if (m.Name == currentName)
+                if (!hasNoSelection && m.Name == currentName)
                     idx = choices.Count - 1;
             }
 

@@ -57,7 +57,7 @@ public class InteractInputPromptMediator : MonoBehaviour
     {
         if (inputPromptManager == null || interactPromptDefinition == null) return;
 
-        if (interactable.AllowPrompt)
+        if (interactable.AllowPrompt && !ShouldSuppressPrompt(interactable))
         {
             ShowInteractPrompt(interactable);
         }
@@ -83,7 +83,7 @@ public class InteractInputPromptMediator : MonoBehaviour
         if (inputPromptManager == null) return;
 
         var interactable = interactSystem.CurrentInteractable;
-        if (interactable != null && interactable.AllowPrompt)
+        if (interactable != null && interactable.AllowPrompt && !ShouldSuppressPrompt(interactable))
         {
             if (interactPromptDefinition != null)
             {
@@ -143,14 +143,16 @@ public class InteractInputPromptMediator : MonoBehaviour
     {
         if (inputPromptManager == null) return;
 
-        if (interactPromptDefinition != null)
+        var interactable = obj != null ? obj.GetComponent<IInteractable>() : null;
+        if (interactable != null && interactable.OneTimeInteract)
         {
-            inputPromptManager.HidePrompt(interactPromptDefinition.Key);
-        }
+            interactable.InteractedOnce = true;
 
-        if (holdPromptDefinition != null)
-        {
-            inputPromptManager.HidePrompt(holdPromptDefinition.Key);
+            if (interactPromptDefinition != null)
+                inputPromptManager.HidePrompt(interactPromptDefinition.Key);
+
+            if (holdPromptDefinition != null)
+                inputPromptManager.HidePrompt(holdPromptDefinition.Key);
         }
     }
 
@@ -182,9 +184,14 @@ public class InteractInputPromptMediator : MonoBehaviour
         if (inputPromptManager == null || interactPromptDefinition == null) return;
 
         var interactable = interactSystem.CurrentInteractable;
-        if (interactable != null && interactable.AllowPrompt)
+        if (interactable != null && interactable.AllowPrompt && !ShouldSuppressPrompt(interactable))
         {
             ShowInteractPrompt(interactable);
         }
+    }
+
+    private static bool ShouldSuppressPrompt(IInteractable interactable)
+    {
+        return interactable.OneTimeInteract && interactable.InteractedOnce;
     }
 }
