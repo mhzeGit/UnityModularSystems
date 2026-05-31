@@ -66,7 +66,20 @@ namespace MHZE.EventSystem
             var listeners = Listeners;
             int count = listeners.Count;
             for (int i = 0; i < count; i++)
-                listeners[i].Invoke(arg);
+                listeners[i].Invoke(new object[] { arg });
+        }
+    }
+
+    [Serializable]
+    public class EventBinding<T1, T2> : EventBinding
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Invoke(T1 arg1, T2 arg2)
+        {
+            var listeners = Listeners;
+            int count = listeners.Count;
+            for (int i = 0; i < count; i++)
+                listeners[i].Invoke(new object[] { arg1, arg2 });
         }
     }
 }

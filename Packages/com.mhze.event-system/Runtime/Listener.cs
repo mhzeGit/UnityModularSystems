@@ -145,6 +145,12 @@ namespace MHZE.EventSystem
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke(object eventArg)
         {
+            Invoke(new object[] { eventArg });
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Invoke(object[] eventArgs)
+        {
             if (!_enabled)
                 return;
 
@@ -167,7 +173,7 @@ namespace MHZE.EventSystem
                 if (i < _parameters.Length && _parameters[i] != null)
                 {
                     if (_parameters[i].Source == ArgumentSource.Event)
-                        _cachedArgs[i] = eventArg;
+                        _cachedArgs[i] = ResolveEventArg(eventArgs, _parameters[i]._eventArgIndex, _parameters[i]._eventVariableName, _cachedParamInfo[i].ParameterType);
                     else
                         _cachedArgs[i] = _parameters[i].Resolve(_cachedParamInfo[i].ParameterType);
                 }
@@ -187,6 +193,32 @@ namespace MHZE.EventSystem
                 return Activator.CreateInstance(type);
 
             return null;
+        }
+
+        private static object ResolveEventArg(object[] eventArgs, int argIndex, string variableName, Type expectedType)
+        {
+            if (eventArgs == null || argIndex < 0 || argIndex >= eventArgs.Length)
+                return GetDefaultValue(expectedType);
+
+            object eventArg = eventArgs[argIndex];
+
+            if (string.IsNullOrEmpty(variableName))
+                return eventArg;
+
+            if (eventArg == null)
+                return GetDefaultValue(expectedType);
+
+            var argType = eventArg.GetType();
+
+            var field = argType.GetField(variableName, BindingFlags.Public | BindingFlags.Instance);
+            if (field != null)
+                return field.GetValue(eventArg);
+
+            var prop = argType.GetProperty(variableName, BindingFlags.Public | BindingFlags.Instance);
+            if (prop != null && prop.CanRead && prop.GetIndexParameters().Length == 0)
+                return prop.GetValue(eventArg);
+
+            return eventArg;
         }
     }
 }

@@ -14,6 +14,8 @@ namespace MHZE.EventSystem
 
         [SerializeField] internal Component _sourceComponent;
         [SerializeField] internal string _sourceMemberName;
+        [SerializeField] internal string _eventVariableName;
+        [SerializeField] internal int _eventArgIndex;
 
         [SerializeField] internal int _intValue;
         [SerializeField] internal float _floatValue;
@@ -42,6 +44,8 @@ namespace MHZE.EventSystem
         public ArgumentSource Source { get => _source; internal set => _source = value; }
         public Component SourceComponent { get => _sourceComponent; internal set => _sourceComponent = value; }
         public string SourceMemberName { get => _sourceMemberName; internal set => _sourceMemberName = value; }
+        public string EventVariableName { get => _eventVariableName; internal set => _eventVariableName = value; }
+        public int EventArgIndex { get => _eventArgIndex; internal set => _eventArgIndex = value; }
 
         public int IntValue { get => _intValue; set => _intValue = value; }
         public float FloatValue { get => _floatValue; set => _floatValue = value; }

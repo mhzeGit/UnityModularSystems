@@ -14,7 +14,7 @@ namespace MHZE.EventSystem.Editor
     [CustomPropertyDrawer(typeof(EventBinding), true)]
     public class EventBindingDrawer : PropertyDrawer
     {
-        private Type _eventArgType;
+        private Type[] _eventArgTypes = Array.Empty<Type>();
         private static readonly string[] UnitySpecialMethods =
         {
             "Awake", "Start", "Update", "LateUpdate", "FixedUpdate",
@@ -68,11 +68,14 @@ namespace MHZE.EventSystem.Editor
             var root = new VisualElement();
             root.AddToClassList("event-binding-root");
 
-            _eventArgType = null;
-            if (fieldInfo != null && fieldInfo.FieldType.IsGenericType &&
-                fieldInfo.FieldType.GetGenericTypeDefinition() == typeof(EventBinding<>))
+            _eventArgTypes = Array.Empty<Type>();
+            if (fieldInfo != null && fieldInfo.FieldType.IsGenericType)
             {
-                _eventArgType = fieldInfo.FieldType.GetGenericArguments()[0];
+                var def = fieldInfo.FieldType.GetGenericTypeDefinition();
+                if (def == typeof(EventBinding<>) || def == typeof(EventBinding<,>))
+                {
+                    _eventArgTypes = fieldInfo.FieldType.GetGenericArguments();
+                }
             }
 
             var styleSheet = GetStyleSheet();
@@ -137,7 +140,7 @@ namespace MHZE.EventSystem.Editor
                 {
                     int index = i;
                     var lp = listeners.GetArrayElementAtIndex(index);
-                    var card = BuildListenerCard(lp, index, listeners, () => root.schedule.Execute((TimerState _) => RebuildNow()), _eventArgType);
+                    var card = BuildListenerCard(lp, index, listeners, () => root.schedule.Execute((TimerState _) => RebuildNow()), _eventArgTypes);
                     content.Add(card);
 
                     var dragHandle = card.Q("drag-handle");
@@ -244,7 +247,7 @@ namespace MHZE.EventSystem.Editor
         }
 
         private VisualElement BuildListenerCard(SerializedProperty lp, int index,
-            SerializedProperty listenersProp, Action rebuild, Type eventArgType = null)
+            SerializedProperty listenersProp, Action rebuild, Type[] eventArgTypes = null)
         {
             var card = new VisualElement();
             card.AddToClassList("listener-card");
@@ -317,7 +320,7 @@ namespace MHZE.EventSystem.Editor
 
             card.Add(BuildGameObjectRow(goProp, targetProp, methodNameProp, methodDisplayProp, paramsProp, rebuild));
             card.Add(BuildComponentRow(targetProp, goProp, methodNameProp, methodDisplayProp, paramsProp, rebuild));
-            card.Add(BuildMethodRow(targetProp, methodNameProp, methodDisplayProp, paramsProp, rebuild, eventArgType));
+            card.Add(BuildMethodRow(targetProp, methodNameProp, methodDisplayProp, paramsProp, rebuild, eventArgTypes));
 
             if (paramsProp.arraySize > 0)
             {
@@ -437,7 +440,7 @@ namespace MHZE.EventSystem.Editor
 
         private static VisualElement BuildMethodRow(SerializedProperty targetProp,
             SerializedProperty methodNameProp, SerializedProperty methodDisplayProp,
-            SerializedProperty paramsProp, Action rebuild, Type eventArgType = null)
+            SerializedProperty paramsProp, Action rebuild, Type[] eventArgTypes = null)
         {
             var target = targetProp.objectReferenceValue as Component;
             var methods = target != null ? GetBindableMethods(target.GetType()) : new List<MethodInfo>();
@@ -476,7 +479,7 @@ namespace MHZE.EventSystem.Editor
                 int i = dropdown.index;
                 if (i >= 0 && i < methodItems.Count && methodItems[i] != null)
                 {
-                    SelectMethod(methodItems[i], methodNameProp, methodDisplayProp, paramsProp, eventArgType);
+                    SelectMethod(methodItems[i], methodNameProp, methodDisplayProp, paramsProp, eventArgTypes);
                     targetProp.serializedObject.ApplyModifiedProperties();
                     rebuild();
                 }
@@ -585,10 +588,7 @@ namespace MHZE.EventSystem.Editor
             }
             else if (source == ArgumentSource.Event)
             {
-                var label = new Label("Use Event Argument");
-                label.style.unityFontStyleAndWeight = FontStyle.Italic;
-                label.style.color = new Color(0.039f, 1.000f, 0.624f);
-                container.Add(label);
+                container.Add(BuildEventSourceField(pp, paramType));
             }
             else
             {
@@ -959,6 +959,107 @@ namespace MHZE.EventSystem.Editor
             return container;
         }
 
+        private VisualElement BuildEventSourceField(SerializedProperty pp, Type paramType)
+        {
+            var eventVarProp = pp.FindPropertyRelative("_eventVariableName");
+            var eventArgIdxProp = pp.FindPropertyRelative("_eventArgIndex");
+
+            if (_eventArgTypes.Length == 0)
+            {
+                var label = new Label("Event argument type unavailable");
+                label.style.unityFontStyleAndWeight = FontStyle.Italic;
+                label.style.color = new Color(0.6f, 0.1f, 0.1f);
+                return label;
+            }
+
+            if (paramType == null)
+            {
+                var label = new Label("Unresolved parameter type");
+                label.style.color = new Color(0.6f, 0.1f, 0.1f);
+                return label;
+            }
+
+            var choices = new List<string>();
+            var choiceIndices = new List<int>();
+            var choiceNames = new List<string>();
+
+            for (int ai = 0; ai < _eventArgTypes.Length; ai++)
+            {
+                var argType = _eventArgTypes[ai];
+                if (argType == null) continue;
+
+                bool addedHeader = false;
+
+                if (paramType.IsAssignableFrom(argType) || paramType == typeof(object))
+                {
+                    choices.Add($"Arg {ai} : {GetTypeDisplayName(argType)}");
+                    choiceIndices.Add(ai);
+                    choiceNames.Add("");
+                    addedHeader = true;
+                }
+
+                foreach (var field in argType.GetFields(BindingFlags.Public | BindingFlags.Instance))
+                {
+                    if (paramType.IsAssignableFrom(field.FieldType))
+                    {
+                        choices.Add($"  {field.Name} : {GetTypeDisplayName(field.FieldType)}");
+                        choiceIndices.Add(ai);
+                        choiceNames.Add(field.Name);
+                    }
+                }
+
+                foreach (var prop in argType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                             .Where(p => p.CanRead && p.GetIndexParameters().Length == 0))
+                {
+                    if (paramType.IsAssignableFrom(prop.PropertyType))
+                    {
+                        choices.Add($"  {prop.Name} : {GetTypeDisplayName(prop.PropertyType)}");
+                        choiceIndices.Add(ai);
+                        choiceNames.Add(prop.Name);
+                    }
+                }
+            }
+
+            var dropdown = new DropdownField();
+            dropdown.style.flexGrow = 1;
+
+            if (choices.Count > 0)
+            {
+                int currentIdx = eventArgIdxProp.intValue;
+                string currentVar = eventVarProp.stringValue;
+
+                int idx = 0;
+                for (int i = 0; i < choiceIndices.Count; i++)
+                {
+                    if (choiceIndices[i] == currentIdx && choiceNames[i] == (currentVar ?? ""))
+                    {
+                        idx = i;
+                        break;
+                    }
+                }
+
+                dropdown.choices = choices;
+                dropdown.index = idx;
+                dropdown.RegisterValueChangedCallback(evt =>
+                {
+                    int i = dropdown.index;
+                    if (i >= 0 && i < choiceIndices.Count)
+                    {
+                        eventArgIdxProp.intValue = choiceIndices[i];
+                        eventVarProp.stringValue = choiceNames[i];
+                        eventArgIdxProp.serializedObject.ApplyModifiedProperties();
+                    }
+                });
+            }
+            else
+            {
+                dropdown.choices = new List<string> { "No matching variables" };
+                dropdown.SetEnabled(false);
+            }
+
+            return dropdown;
+        }
+
         private static string GetListenerDisplayName(SerializedProperty lp)
         {
             var targetProp = lp.FindPropertyRelative("_target");
@@ -1072,7 +1173,7 @@ namespace MHZE.EventSystem.Editor
         }
 
         private static void SelectMethod(MethodInfo method, SerializedProperty methodNameProp,
-            SerializedProperty methodDisplayProp, SerializedProperty paramsProp, Type eventArgType = null)
+            SerializedProperty methodDisplayProp, SerializedProperty paramsProp, Type[] eventArgTypes = null)
         {
             methodNameProp.stringValue = method.Name;
             methodDisplayProp.stringValue = FormatMethodSignature(method);
@@ -1085,21 +1186,70 @@ namespace MHZE.EventSystem.Editor
                 pp.FindPropertyRelative("_parameterName").stringValue = pars[i].Name ?? $"param{i}";
                 pp.FindPropertyRelative("_parameterTypeName").stringValue = pars[i].ParameterType.AssemblyQualifiedName;
 
-                bool matchesEventArg = eventArgType != null &&
-                    (pars[i].ParameterType == eventArgType ||
-                     eventArgType.IsAssignableFrom(pars[i].ParameterType));
+                bool matched = TryMatchEventVariable(pars[i].ParameterType, eventArgTypes,
+                    out int matchedIdx, out string matchedVar);
 
-                pp.FindPropertyRelative("_source").enumValueIndex = matchesEventArg
+                pp.FindPropertyRelative("_source").enumValueIndex = matched
                     ? (int)ArgumentSource.Event
                     : (int)ArgumentSource.Constant;
+                pp.FindPropertyRelative("_eventArgIndex").intValue = matched ? matchedIdx : 0;
+                pp.FindPropertyRelative("_eventVariableName").stringValue = matchedVar ?? "";
                 ResetParamValues(pp);
             }
+        }
+
+        private static bool TryMatchEventVariable(Type paramType, Type[] eventArgTypes,
+            out int argIndex, out string varName)
+        {
+            argIndex = 0;
+            varName = null;
+
+            if (eventArgTypes == null || eventArgTypes.Length == 0 || paramType == null)
+                return false;
+
+            for (int ai = 0; ai < eventArgTypes.Length; ai++)
+            {
+                var argType = eventArgTypes[ai];
+                if (argType == null) continue;
+
+                if (paramType.IsAssignableFrom(argType) || paramType == typeof(object))
+                {
+                    argIndex = ai;
+                    varName = "";
+                    return true;
+                }
+
+                foreach (var field in argType.GetFields(BindingFlags.Public | BindingFlags.Instance))
+                {
+                    if (paramType.IsAssignableFrom(field.FieldType))
+                    {
+                        argIndex = ai;
+                        varName = field.Name;
+                        return true;
+                    }
+                }
+
+                foreach (var prop in argType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                             .Where(p => p.CanRead && p.GetIndexParameters().Length == 0))
+                {
+                    if (paramType.IsAssignableFrom(prop.PropertyType))
+                    {
+                        argIndex = ai;
+                        varName = prop.Name;
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         private static void ResetParamValues(SerializedProperty pp)
         {
             pp.FindPropertyRelative("_sourceComponent").objectReferenceValue = null;
             pp.FindPropertyRelative("_sourceMemberName").stringValue = "";
+            pp.FindPropertyRelative("_eventVariableName").stringValue = "";
+            pp.FindPropertyRelative("_eventArgIndex").intValue = 0;
             pp.FindPropertyRelative("_intValue").intValue = 0;
             pp.FindPropertyRelative("_floatValue").floatValue = 0f;
             pp.FindPropertyRelative("_doubleValue").doubleValue = 0.0;
