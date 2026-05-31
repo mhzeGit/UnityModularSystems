@@ -15,6 +15,48 @@ namespace MHZE.EventSystem.Editor
     public class EventBindingDrawer : PropertyDrawer
     {
         private Type[] _eventArgTypes = Array.Empty<Type>();
+
+        private static string _copiedListenerJson;
+
+        [Serializable]
+        private class CopiedListenerData
+        {
+            public bool enabled;
+            public int targetInstanceId;
+            public int gameObjectInstanceId;
+            public string methodName;
+            public string methodDisplayName;
+            public string customLabel;
+            public List<CopiedParameterData> parameters = new List<CopiedParameterData>();
+        }
+
+        [Serializable]
+        private class CopiedParameterData
+        {
+            public string parameterName;
+            public string parameterTypeName;
+            public int source;
+            public int sourceComponentInstanceId;
+            public string sourceMemberName;
+            public string eventVariableName;
+            public int eventArgIndex;
+            public int intValue;
+            public float floatValue;
+            public double doubleValue;
+            public long longValue;
+            public bool boolValue;
+            public string stringValue;
+            public Vector2 vector2Value;
+            public Vector3 vector3Value;
+            public Vector4 vector4Value;
+            public Color colorValue;
+            public Rect rectValue;
+            public Bounds boundsValue;
+            public AnimationCurve curveValue;
+            public Gradient gradientValue;
+            public int layerMaskValue;
+            public int objectInstanceId;
+        }
         private static readonly string[] UnitySpecialMethods =
         {
             "Awake", "Start", "Update", "LateUpdate", "FixedUpdate",
@@ -115,6 +157,10 @@ namespace MHZE.EventSystem.Editor
             int dragFromIdx = -1;
             bool dragActive = false;
 
+            // Clipboard hover state
+            int hoveredCardIdx = -1;
+            bool hoveringAddButton = false;
+
             void SetExpanded(bool val)
             {
                 expanded = val;
@@ -142,6 +188,13 @@ namespace MHZE.EventSystem.Editor
                     var lp = listeners.GetArrayElementAtIndex(index);
                     var card = BuildListenerCard(lp, index, listeners, () => root.schedule.Execute((TimerState _) => RebuildNow()), _eventArgTypes);
                     content.Add(card);
+
+                    int capturedIdx = i;
+                    card.RegisterCallback<PointerEnterEvent>(_ => hoveredCardIdx = capturedIdx);
+                    card.RegisterCallback<PointerLeaveEvent>(_ =>
+                    {
+                        if (hoveredCardIdx == capturedIdx) hoveredCardIdx = -1;
+                    });
 
                     var dragHandle = card.Q("drag-handle");
                     if (dragHandle != null)
@@ -172,6 +225,25 @@ namespace MHZE.EventSystem.Editor
             }
 
             footerBtn.clicked += AddNewAndRebuild;
+            footerBtn.RegisterCallback<PointerEnterEvent>(_ => hoveringAddButton = true);
+            footerBtn.RegisterCallback<PointerLeaveEvent>(_ => hoveringAddButton = false);
+            footerBtn.RegisterCallback<MouseDownEvent>(evt =>
+            {
+                if (evt.button == 1)
+                {
+                    var menu = new GenericMenu();
+                    menu.AddItem(new GUIContent("Paste"), false, () =>
+                    {
+                        if (string.IsNullOrEmpty(_copiedListenerJson)) return;
+                        int idx = listenersProp.arraySize;
+                        AddNewListener(listenersProp);
+                        if (!expanded) SetExpanded(true);
+                        PasteClipboardToListener(listenersProp.GetArrayElementAtIndex(idx));
+                        RebuildNow();
+                    });
+                    menu.ShowAsContext();
+                }
+            });
 
             RebuildNow();
 
@@ -211,6 +283,41 @@ namespace MHZE.EventSystem.Editor
                 if (!dragActive) return;
                 dragActive = false;
                 RebuildNow();
+            }, TrickleDown.TrickleDown);
+
+            root.RegisterCallback<KeyDownEvent>(evt =>
+            {
+                if (!evt.ctrlKey && !evt.commandKey) return;
+
+                if (evt.target is TextField || evt.target is IntegerField ||
+                    evt.target is FloatField || evt.target is DoubleField ||
+                    evt.target is LongField || evt.target is ObjectField)
+                    return;
+
+                if (evt.keyCode == KeyCode.C && hoveredCardIdx >= 0)
+                {
+                    CopyListenerToClipboard(listenersProp.GetArrayElementAtIndex(hoveredCardIdx));
+                    evt.StopPropagation();
+                }
+                else if (evt.keyCode == KeyCode.V)
+                {
+                    if (hoveringAddButton)
+                    {
+                        int idx = listenersProp.arraySize;
+                        AddNewListener(listenersProp);
+                        if (!expanded) SetExpanded(true);
+                        PasteClipboardToListener(listenersProp.GetArrayElementAtIndex(idx));
+                        RebuildNow();
+                        evt.StopPropagation();
+                    }
+                    else if (hoveredCardIdx >= 0)
+                    {
+                        var targetLp = listenersProp.GetArrayElementAtIndex(hoveredCardIdx);
+                        PasteClipboardToListener(targetLp);
+                        RebuildNow();
+                        evt.StopPropagation();
+                    }
+                }
             }, TrickleDown.TrickleDown);
 
             int ComputeDropIndex(float localY)
@@ -317,6 +424,26 @@ namespace MHZE.EventSystem.Editor
             hdr.Add(rmBtn);
 
             card.Add(hdr);
+
+            card.RegisterCallback<MouseDownEvent>(evt =>
+            {
+                if (evt.button == 1)
+                {
+                    var menu = new GenericMenu();
+                    int capturedIndex = index;
+                    menu.AddItem(new GUIContent("Copy"), false, () =>
+                    {
+                        CopyListenerToClipboard(listenersProp.GetArrayElementAtIndex(capturedIndex));
+                    });
+                    menu.AddItem(new GUIContent("Paste"), !string.IsNullOrEmpty(_copiedListenerJson), () =>
+                    {
+                        var targetLp = listenersProp.GetArrayElementAtIndex(capturedIndex);
+                        PasteClipboardToListener(targetLp);
+                        rebuild();
+                    });
+                    menu.ShowAsContext();
+                }
+            });
 
             card.Add(BuildGameObjectRow(goProp, targetProp, methodNameProp, methodDisplayProp, paramsProp, rebuild));
             card.Add(BuildComponentRow(targetProp, goProp, methodNameProp, methodDisplayProp, paramsProp, rebuild));
@@ -1141,6 +1268,107 @@ namespace MHZE.EventSystem.Editor
             }
 
             return dropdown;
+        }
+
+        private static void CopyListenerToClipboard(SerializedProperty lp)
+        {
+            var data = new CopiedListenerData();
+            data.enabled = lp.FindPropertyRelative("_enabled").boolValue;
+            var target = lp.FindPropertyRelative("_target").objectReferenceValue as Component;
+            data.targetInstanceId = target != null ? target.GetInstanceID() : 0;
+            var go = lp.FindPropertyRelative("_gameObject").objectReferenceValue as GameObject;
+            data.gameObjectInstanceId = go != null ? go.GetInstanceID() : 0;
+            data.methodName = lp.FindPropertyRelative("_methodName").stringValue;
+            data.methodDisplayName = lp.FindPropertyRelative("_methodDisplayName").stringValue;
+            data.customLabel = lp.FindPropertyRelative("_customLabel").stringValue;
+
+            var paramsProp = lp.FindPropertyRelative("_parameters");
+            for (int i = 0; i < paramsProp.arraySize; i++)
+            {
+                var pp = paramsProp.GetArrayElementAtIndex(i);
+                var pd = new CopiedParameterData();
+                pd.parameterName = pp.FindPropertyRelative("_parameterName").stringValue;
+                pd.parameterTypeName = pp.FindPropertyRelative("_parameterTypeName").stringValue;
+                pd.source = pp.FindPropertyRelative("_source").enumValueIndex;
+                var sc = pp.FindPropertyRelative("_sourceComponent").objectReferenceValue as Component;
+                pd.sourceComponentInstanceId = sc != null ? sc.GetInstanceID() : 0;
+                pd.sourceMemberName = pp.FindPropertyRelative("_sourceMemberName").stringValue;
+                pd.eventVariableName = pp.FindPropertyRelative("_eventVariableName").stringValue;
+                pd.eventArgIndex = pp.FindPropertyRelative("_eventArgIndex").intValue;
+                pd.intValue = pp.FindPropertyRelative("_intValue").intValue;
+                pd.floatValue = pp.FindPropertyRelative("_floatValue").floatValue;
+                pd.doubleValue = pp.FindPropertyRelative("_doubleValue").doubleValue;
+                pd.longValue = pp.FindPropertyRelative("_longValue").longValue;
+                pd.boolValue = pp.FindPropertyRelative("_boolValue").boolValue;
+                pd.stringValue = pp.FindPropertyRelative("_stringValue").stringValue;
+                pd.vector2Value = pp.FindPropertyRelative("_vector2Value").vector2Value;
+                pd.vector3Value = pp.FindPropertyRelative("_vector3Value").vector3Value;
+                pd.vector4Value = pp.FindPropertyRelative("_vector4Value").vector4Value;
+                pd.colorValue = pp.FindPropertyRelative("_colorValue").colorValue;
+                pd.rectValue = pp.FindPropertyRelative("_rectValue").rectValue;
+                pd.boundsValue = pp.FindPropertyRelative("_boundsValue").boundsValue;
+                pd.curveValue = pp.FindPropertyRelative("_curveValue").animationCurveValue;
+                pd.gradientValue = pp.FindPropertyRelative("_gradientValue").gradientValue;
+                pd.layerMaskValue = pp.FindPropertyRelative("_layerMaskValue").intValue;
+                var obj = pp.FindPropertyRelative("_objectValue").objectReferenceValue;
+                pd.objectInstanceId = obj != null ? obj.GetInstanceID() : 0;
+                data.parameters.Add(pd);
+            }
+
+            _copiedListenerJson = JsonUtility.ToJson(data, false);
+        }
+
+        private static void PasteClipboardToListener(SerializedProperty lp)
+        {
+            if (string.IsNullOrEmpty(_copiedListenerJson)) return;
+
+            var data = JsonUtility.FromJson<CopiedListenerData>(_copiedListenerJson);
+            if (data == null) return;
+
+            lp.FindPropertyRelative("_enabled").boolValue = data.enabled;
+            lp.FindPropertyRelative("_target").objectReferenceValue =
+                EditorUtility.InstanceIDToObject(data.targetInstanceId) as Component;
+            lp.FindPropertyRelative("_gameObject").objectReferenceValue =
+                EditorUtility.InstanceIDToObject(data.gameObjectInstanceId) as GameObject;
+            lp.FindPropertyRelative("_methodName").stringValue = data.methodName;
+            lp.FindPropertyRelative("_methodDisplayName").stringValue = data.methodDisplayName;
+            lp.FindPropertyRelative("_customLabel").stringValue = data.customLabel;
+
+            var paramsProp = lp.FindPropertyRelative("_parameters");
+            paramsProp.ClearArray();
+            paramsProp.arraySize = data.parameters.Count;
+            for (int i = 0; i < data.parameters.Count; i++)
+            {
+                var pd = data.parameters[i];
+                var pp = paramsProp.GetArrayElementAtIndex(i);
+                pp.FindPropertyRelative("_parameterName").stringValue = pd.parameterName;
+                pp.FindPropertyRelative("_parameterTypeName").stringValue = pd.parameterTypeName;
+                pp.FindPropertyRelative("_source").enumValueIndex = pd.source;
+                pp.FindPropertyRelative("_sourceComponent").objectReferenceValue =
+                    EditorUtility.InstanceIDToObject(pd.sourceComponentInstanceId) as Component;
+                pp.FindPropertyRelative("_sourceMemberName").stringValue = pd.sourceMemberName;
+                pp.FindPropertyRelative("_eventVariableName").stringValue = pd.eventVariableName;
+                pp.FindPropertyRelative("_eventArgIndex").intValue = pd.eventArgIndex;
+                pp.FindPropertyRelative("_intValue").intValue = pd.intValue;
+                pp.FindPropertyRelative("_floatValue").floatValue = pd.floatValue;
+                pp.FindPropertyRelative("_doubleValue").doubleValue = pd.doubleValue;
+                pp.FindPropertyRelative("_longValue").longValue = pd.longValue;
+                pp.FindPropertyRelative("_boolValue").boolValue = pd.boolValue;
+                pp.FindPropertyRelative("_stringValue").stringValue = pd.stringValue;
+                pp.FindPropertyRelative("_vector2Value").vector2Value = pd.vector2Value;
+                pp.FindPropertyRelative("_vector3Value").vector3Value = pd.vector3Value;
+                pp.FindPropertyRelative("_vector4Value").vector4Value = pd.vector4Value;
+                pp.FindPropertyRelative("_colorValue").colorValue = pd.colorValue;
+                pp.FindPropertyRelative("_rectValue").rectValue = pd.rectValue;
+                pp.FindPropertyRelative("_boundsValue").boundsValue = pd.boundsValue;
+                pp.FindPropertyRelative("_curveValue").animationCurveValue = pd.curveValue;
+                pp.FindPropertyRelative("_gradientValue").gradientValue = pd.gradientValue;
+                pp.FindPropertyRelative("_layerMaskValue").intValue = pd.layerMaskValue;
+                pp.FindPropertyRelative("_objectValue").objectReferenceValue =
+                    EditorUtility.InstanceIDToObject(pd.objectInstanceId);
+            }
+
+            lp.serializedObject.ApplyModifiedProperties();
         }
 
         private static string GetListenerDisplayName(SerializedProperty lp)

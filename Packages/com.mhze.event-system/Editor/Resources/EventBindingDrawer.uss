@@ -312,6 +312,7 @@
     -unity-font-style: bold;
     color: rgba(152, 152, 157, 255);
     min-height: 18px;
+    margin-left: 10px;
 }
 
 .param-section-foldout .unity-foldout__content {
@@ -381,6 +382,7 @@
 .value-container {
     flex-grow: 1;
     min-height: 16px;
+    margin-left: 4px;
 }
 
 .script-info {
