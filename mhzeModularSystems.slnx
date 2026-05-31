@@ -5,12 +5,10 @@
   <Project Path="com.mhze.throw-system.Runtime.csproj" />
   <Project Path="com.mhze.input-prompt-system.Editor.csproj" />
   <Project Path="com.mhze.input-prompt-system.Runtime.csproj" />
-  <Project Path="com.mhze.event-system.Runtime.csproj" />
   <Project Path="com.mhze.pickup-system.Runtime.csproj" />
   <Project Path="com.modular.freeform-camera.Runtime.csproj" />
   <Project Path="com.mhze.use-system.Runtime.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
   <Project Path="com.modular.freeform-camera.Editor.csproj" />
-  <Project Path="com.mhze.event-system.Editor.csproj" />
   <Project Path="com.modular.firstperson-controller.Editor.csproj" />
 </Solution>

@@ -1,7 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Reflection;
-using MHZE.EventSystem;
+using ArgEvent;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
@@ -23,10 +23,10 @@ public class EventBenchmark : MonoBehaviour
     // 3) C# event keyword (slightly safer encapsulation, same perf as Action)
     public event Action csharpEvent;
 
-    // 4) MHZE EventBinding (reflection-based dispatch)
-    public EventBinding mhzeEvent = new EventBinding();
+    // 4) ArgEventBinding (reflection-based dispatch)
+    public ArgEventBinding mhzeEvent = new ArgEventBinding();
 
-    private enum Mode { UnityEvent = 1, CSharpAction = 2, CSharpEvent = 3, MhzeEvent = 4 }
+    private enum Mode { UnityEvent = 1, CSharpAction = 2, CSharpEvent = 3, ArgEventBinding = 4 }
     private Mode _activeMode = Mode.UnityEvent;
 
     private readonly Stopwatch _sw = new Stopwatch();
@@ -45,7 +45,7 @@ public class EventBenchmark : MonoBehaviour
         RegisterListeners();
         RunBenchmark();
         UnityEngine.Debug.Log(
-            "[EventBenchmark] Press 1 = UnityEvent | 2 = C# Action | 3 = C# event | 4 = MHZE EventBinding");
+            "[EventBenchmark] Press 1 = UnityEvent | 2 = C# Action | 3 = C# event | 4 = ArgEventBinding");
     }
 
     private void RegisterListeners()
@@ -96,7 +96,7 @@ public class EventBenchmark : MonoBehaviour
         if (Keyboard.current.digit1Key.wasPressedThisFrame) SwitchMode(Mode.UnityEvent);
         if (Keyboard.current.digit2Key.wasPressedThisFrame) SwitchMode(Mode.CSharpAction);
         if (Keyboard.current.digit3Key.wasPressedThisFrame) SwitchMode(Mode.CSharpEvent);
-        if (Keyboard.current.digit4Key.wasPressedThisFrame) SwitchMode(Mode.MhzeEvent);
+        if (Keyboard.current.digit4Key.wasPressedThisFrame) SwitchMode(Mode.ArgEventBinding);
     }
 
     private void SwitchMode(Mode m)
@@ -126,7 +126,7 @@ public class EventBenchmark : MonoBehaviour
                     csharpEvent?.Invoke();
                 break;
 
-            case Mode.MhzeEvent:
+            case Mode.ArgEventBinding:
                 for (int i = 0; i < invocationsPerFrame; i++)
                     mhzeEvent.Invoke();
                 break;
@@ -165,7 +165,7 @@ public class EventBenchmark : MonoBehaviour
             Mode.UnityEvent    => "1 - UnityEvent",
             Mode.CSharpAction  => "2 - C# Action",
             Mode.CSharpEvent   => "3 - C# event",
-            Mode.MhzeEvent     => "4 - MHZE EventBinding",
+            Mode.ArgEventBinding     => "4 - ArgEventBinding",
             _                  => "?"
         };
 
@@ -174,7 +174,7 @@ public class EventBenchmark : MonoBehaviour
                $"Cost:      {_lastMs} ms  ({_lastTicks} ticks)\n" +
                $"Calls/frame: {invocationsPerFrame:N0}\n" +
                $"Listeners:   {listenerCount}\n\n" +
-               "[1] UnityEvent  [2] C# Action  [3] C# event  [4] MHZE EventBinding";
+               "[1] UnityEvent  [2] C# Action  [3] C# event  [4] ArgEventBinding";
     }
 
     public void Dummy() { }

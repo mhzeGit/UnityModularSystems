@@ -2,7 +2,7 @@
 
 using System;
 using UnityEngine;
-using MHZE.EventSystem;
+using ArgEvent;
 
 namespace MHZE.InteractSystem
 {
@@ -21,7 +21,7 @@ namespace MHZE.InteractSystem
 
         public event Action<IInteractor> Interacted;
         public event Action<IInteractor> InteractReleased;
-        public EventBinding<IInteractor> OnInteractedWithEvent = new EventBinding<IInteractor>();
+        public ArgEventBinding<IInteractor> OnInteractedWithEvent = new ArgEventBinding<IInteractor>();
 
         public bool IsInteractable => isInteractable;
         public bool AllowPrompt => allowPrompt;

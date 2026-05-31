@@ -1181,18 +1181,88 @@ MonoBehaviour:
     - _enabled: 1
       _target: {fileID: 352262969}
       _gameObject: {fileID: 0}
-      _methodName: DebugFloat
-      _methodDisplayName: 'DebugFloat(float number) : Void'
+      _methodName: InteractTestAndFloat
+      _methodDisplayName: 'InteractTestAndFloat(IInteractor interactor, float number)
+        : Void'
       _customLabel: 
       _parameters:
+      - _parameterName: interactor
+        _parameterTypeName: MHZE.InteractSystem.IInteractor, com.mhze.interact-system.Runtime,
+          Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        _source: 2
+        _sourceComponent: {fileID: 0}
+        _sourceMemberName: 
+        _eventVariableName: 
+        _eventArgIndex: 0
+        _intValue: 0
+        _floatValue: 0
+        _doubleValue: 0
+        _longValue: 0
+        _boolValue: 0
+        _stringValue: 
+        _vector2Value: {x: 0, y: 0}
+        _vector3Value: {x: 0, y: 0, z: 0}
+        _vector4Value: {x: 0, y: 0, z: 0, w: 0}
+        _colorValue: {r: 1, g: 1, b: 1, a: 1}
+        _rectValue:
+          serializedVersion: 2
+          x: 0
+          y: 0
+          width: 1
+          height: 1
+        _boundsValue:
+          m_Center: {x: 0, y: 0, z: 0}
+          m_Extent: {x: 0.5, y: 0.5, z: 0.5}
+        _curveValue:
+          serializedVersion: 2
+          m_Curve: []
+          m_PreInfinity: 0
+          m_PostInfinity: 0
+          m_RotationOrder: 0
+        _gradientValue:
+          serializedVersion: 2
+          key0: {r: 0, g: 0, b: 0, a: 0}
+          key1: {r: 0, g: 0, b: 0, a: 0}
+          key2: {r: 0, g: 0, b: 0, a: 0}
+          key3: {r: 0, g: 0, b: 0, a: 0}
+          key4: {r: 0, g: 0, b: 0, a: 0}
+          key5: {r: 0, g: 0, b: 0, a: 0}
+          key6: {r: 0, g: 0, b: 0, a: 0}
+          key7: {r: 0, g: 0, b: 0, a: 0}
+          ctime0: 0
+          ctime1: 65535
+          ctime2: 0
+          ctime3: 0
+          ctime4: 0
+          ctime5: 0
+          ctime6: 0
+          ctime7: 0
+          atime0: 0
+          atime1: 65535
+          atime2: 0
+          atime3: 0
+          atime4: 0
+          atime5: 0
+          atime6: 0
+          atime7: 0
+          m_Mode: 0
+          m_ColorSpace: 0
+          m_NumColorKeys: 2
+          m_NumAlphaKeys: 2
+        _layerMaskValue:
+          serializedVersion: 2
+          m_Bits: 0
+        _objectValue: {fileID: 0}
       - _parameterName: number
         _parameterTypeName: System.Single, mscorlib, Version=4.0.0.0, Culture=neutral,
           PublicKeyToken=b77a5c561934e089
-        _source: 0
+        _source: 2
         _sourceComponent: {fileID: 0}
         _sourceMemberName: 
+        _eventVariableName: 
+        _eventArgIndex: 1
         _intValue: 0
-        _floatValue: 55
+        _floatValue: 0
         _doubleValue: 0
         _longValue: 0
         _boolValue: 0
@@ -1402,6 +1472,7 @@ GameObject:
   m_Component:
   - component: {fileID: 958302324}
   - component: {fileID: 958302326}
+  - component: {fileID: 958302327}
   m_Layer: 0
   m_Name: DoorBase
   m_TagString: Untagged
@@ -1442,7 +1513,7 @@ MonoBehaviour:
   _rotationAxis: {x: 0, y: 1, z: 0}
   _openAngle: 90
   _slideAxis: {x: 1, y: 0, z: 0}
-  _slideDistance: 2
+  _slideDistance: 1
   _animationDuration: 0.5
   _movementCurve:
     serializedVersion: 2
@@ -1468,28 +1539,193 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  _autoOpen: 0
-  _autoClose: 0
+  _autoOpen: 1
+  _autoClose: 1
   _triggerLayer:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 64
+  _allowIntruption: 1
   _hasPassword: 0
   _passwordHash: 
-  _onOpened:
-    m_PersistentCalls:
-      m_Calls: []
-  _onClosed:
-    m_PersistentCalls:
-      m_Calls: []
-  _onLocked:
-    m_PersistentCalls:
-      m_Calls: []
-  _onUnlocked:
-    m_PersistentCalls:
-      m_Calls: []
-  _onLockFailed:
-    m_PersistentCalls:
-      m_Calls: []
+  OnOpened:
+    _listeners:
+    - _enabled: 1
+      _target: {fileID: 1450565037}
+      _gameObject: {fileID: 0}
+      _methodName: SetPromptSuffix
+      _methodDisplayName: void SetPromptSuffix(string value)
+      _customLabel: 
+      _parameters:
+      - _parameterName: value
+        _parameterTypeName: System.String, mscorlib, Version=4.0.0.0, Culture=neutral,
+          PublicKeyToken=b77a5c561934e089
+        _source: 0
+        _sourceComponent: {fileID: 0}
+        _sourceMemberName: 
+        _eventVariableName: 
+        _eventArgIndex: 0
+        _intValue: 0
+        _floatValue: 0
+        _doubleValue: 0
+        _longValue: 0
+        _boolValue: 0
+        _stringValue: To Close Door
+        _vector2Value: {x: 0, y: 0}
+        _vector3Value: {x: 0, y: 0, z: 0}
+        _vector4Value: {x: 0, y: 0, z: 0, w: 0}
+        _colorValue: {r: 1, g: 1, b: 1, a: 1}
+        _rectValue:
+          serializedVersion: 2
+          x: 0
+          y: 0
+          width: 1
+          height: 1
+        _boundsValue:
+          m_Center: {x: 0, y: 0, z: 0}
+          m_Extent: {x: 0.5, y: 0.5, z: 0.5}
+        _curveValue:
+          serializedVersion: 2
+          m_Curve: []
+          m_PreInfinity: 0
+          m_PostInfinity: 0
+          m_RotationOrder: 0
+        _gradientValue:
+          serializedVersion: 2
+          key0: {r: 0, g: 0, b: 0, a: 0}
+          key1: {r: 0, g: 0, b: 0, a: 0}
+          key2: {r: 0, g: 0, b: 0, a: 0}
+          key3: {r: 0, g: 0, b: 0, a: 0}
+          key4: {r: 0, g: 0, b: 0, a: 0}
+          key5: {r: 0, g: 0, b: 0, a: 0}
+          key6: {r: 0, g: 0, b: 0, a: 0}
+          key7: {r: 0, g: 0, b: 0, a: 0}
+          ctime0: 0
+          ctime1: 65535
+          ctime2: 0
+          ctime3: 0
+          ctime4: 0
+          ctime5: 0
+          ctime6: 0
+          ctime7: 0
+          atime0: 0
+          atime1: 65535
+          atime2: 0
+          atime3: 0
+          atime4: 0
+          atime5: 0
+          atime6: 0
+          atime7: 0
+          m_Mode: 0
+          m_ColorSpace: 0
+          m_NumColorKeys: 2
+          m_NumAlphaKeys: 2
+        _layerMaskValue:
+          serializedVersion: 2
+          m_Bits: 0
+        _objectValue: {fileID: 0}
+  OnClosed:
+    _listeners:
+    - _enabled: 1
+      _target: {fileID: 1450565037}
+      _gameObject: {fileID: 0}
+      _methodName: SetPromptSuffix
+      _methodDisplayName: void SetPromptSuffix(string value)
+      _customLabel: 
+      _parameters:
+      - _parameterName: value
+        _parameterTypeName: System.String, mscorlib, Version=4.0.0.0, Culture=neutral,
+          PublicKeyToken=b77a5c561934e089
+        _source: 0
+        _sourceComponent: {fileID: 0}
+        _sourceMemberName: 
+        _eventVariableName: 
+        _eventArgIndex: 0
+        _intValue: 0
+        _floatValue: 0
+        _doubleValue: 0
+        _longValue: 0
+        _boolValue: 0
+        _stringValue: To Open Door
+        _vector2Value: {x: 0, y: 0}
+        _vector3Value: {x: 0, y: 0, z: 0}
+        _vector4Value: {x: 0, y: 0, z: 0, w: 0}
+        _colorValue: {r: 1, g: 1, b: 1, a: 1}
+        _rectValue:
+          serializedVersion: 2
+          x: 0
+          y: 0
+          width: 1
+          height: 1
+        _boundsValue:
+          m_Center: {x: 0, y: 0, z: 0}
+          m_Extent: {x: 0.5, y: 0.5, z: 0.5}
+        _curveValue:
+          serializedVersion: 2
+          m_Curve: []
+          m_PreInfinity: 0
+          m_PostInfinity: 0
+          m_RotationOrder: 0
+        _gradientValue:
+          serializedVersion: 2
+          key0: {r: 0, g: 0, b: 0, a: 0}
+          key1: {r: 0, g: 0, b: 0, a: 0}
+          key2: {r: 0, g: 0, b: 0, a: 0}
+          key3: {r: 0, g: 0, b: 0, a: 0}
+          key4: {r: 0, g: 0, b: 0, a: 0}
+          key5: {r: 0, g: 0, b: 0, a: 0}
+          key6: {r: 0, g: 0, b: 0, a: 0}
+          key7: {r: 0, g: 0, b: 0, a: 0}
+          ctime0: 0
+          ctime1: 65535
+          ctime2: 0
+          ctime3: 0
+          ctime4: 0
+          ctime5: 0
+          ctime6: 0
+          ctime7: 0
+          atime0: 0
+          atime1: 65535
+          atime2: 0
+          atime3: 0
+          atime4: 0
+          atime5: 0
+          atime6: 0
+          atime7: 0
+          m_Mode: 0
+          m_ColorSpace: 0
+          m_NumColorKeys: 2
+          m_NumAlphaKeys: 2
+        _layerMaskValue:
+          serializedVersion: 2
+          m_Bits: 0
+        _objectValue: {fileID: 0}
+  OnLocked:
+    _listeners: []
+  OnUnlocked:
+    _listeners: []
+  OnLockFailed:
+    _listeners: []
+--- !u!65 &958302327
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 958302323}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.0222119, y: 2.0137215, z: 1.3270524}
+  m_Center: {x: -0.48750776, y: 0.9803012, z: 0}
 --- !u!1 &980384542
 GameObject:
   m_ObjectHideFlags: 0
@@ -2135,7 +2371,81 @@ MonoBehaviour:
   promptPrefix: Press
   promptSuffix: To Open Door
   OnInteractedWithEvent:
-    _listeners: []
+    _listeners:
+    - _enabled: 1
+      _target: {fileID: 958302326}
+      _gameObject: {fileID: 0}
+      _methodName: Toggle
+      _methodDisplayName: void Toggle(Transform interactor)
+      _customLabel: 
+      _parameters:
+      - _parameterName: interactor
+        _parameterTypeName: UnityEngine.Transform, UnityEngine.CoreModule, Version=0.0.0.0,
+          Culture=neutral, PublicKeyToken=null
+        _source: 2
+        _sourceComponent: {fileID: 0}
+        _sourceMemberName: 
+        _eventVariableName: InteractorTransform
+        _eventArgIndex: 0
+        _intValue: 0
+        _floatValue: 0
+        _doubleValue: 0
+        _longValue: 0
+        _boolValue: 0
+        _stringValue: 
+        _vector2Value: {x: 0, y: 0}
+        _vector3Value: {x: 0, y: 0, z: 0}
+        _vector4Value: {x: 0, y: 0, z: 0, w: 0}
+        _colorValue: {r: 1, g: 1, b: 1, a: 1}
+        _rectValue:
+          serializedVersion: 2
+          x: 0
+          y: 0
+          width: 1
+          height: 1
+        _boundsValue:
+          m_Center: {x: 0, y: 0, z: 0}
+          m_Extent: {x: 0.5, y: 0.5, z: 0.5}
+        _curveValue:
+          serializedVersion: 2
+          m_Curve: []
+          m_PreInfinity: 0
+          m_PostInfinity: 0
+          m_RotationOrder: 0
+        _gradientValue:
+          serializedVersion: 2
+          key0: {r: 0, g: 0, b: 0, a: 0}
+          key1: {r: 0, g: 0, b: 0, a: 0}
+          key2: {r: 0, g: 0, b: 0, a: 0}
+          key3: {r: 0, g: 0, b: 0, a: 0}
+          key4: {r: 0, g: 0, b: 0, a: 0}
+          key5: {r: 0, g: 0, b: 0, a: 0}
+          key6: {r: 0, g: 0, b: 0, a: 0}
+          key7: {r: 0, g: 0, b: 0, a: 0}
+          ctime0: 0
+          ctime1: 65535
+          ctime2: 0
+          ctime3: 0
+          ctime4: 0
+          ctime5: 0
+          ctime6: 0
+          ctime7: 0
+          atime0: 0
+          atime1: 65535
+          atime2: 0
+          atime3: 0
+          atime4: 0
+          atime5: 0
+          atime6: 0
+          atime7: 0
+          m_Mode: 0
+          m_ColorSpace: 0
+          m_NumColorKeys: 2
+          m_NumAlphaKeys: 2
+        _layerMaskValue:
+          serializedVersion: 2
+          m_Bits: 0
+        _objectValue: {fileID: 1940762176}
 --- !u!1 &1594471776
 GameObject:
   m_ObjectHideFlags: 0

@@ -3,7 +3,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using MHZE.EventSystem;
+using ArgEvent;
 
 public class UseTargetBase : MonoBehaviour, IUsableTarget
 {
@@ -19,7 +19,7 @@ public class UseTargetBase : MonoBehaviour, IUsableTarget
     public UseTargetsName useTargetsName;
     public List<ToolData> toolData;
 
-    public EventBinding OnUsedAtTargetEvent = new EventBinding();
+    public ArgEventBinding OnUsedAtTargetEvent = new ArgEventBinding();
     public event Action<GameObject, ToolsName, RaycastHit> OnUsedAtTarget;
 
 

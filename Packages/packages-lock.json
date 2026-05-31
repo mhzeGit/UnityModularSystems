@@ -10,11 +10,12 @@
       },
       "hash": "78ee5418415953b79c358bfe6355fcc3fde7912b"
     },
-    "com.mhze.event-system": {
-      "version": "file:com.mhze.event-system",
+    "com.mhze.argevent": {
+      "version": "https://github.com/mhzeGit/ArgEventSystem.git?path=Packages/com.mhze.argevent",
       "depth": 0,
-      "source": "embedded",
-      "dependencies": {}
+      "source": "git",
+      "dependencies": {},
+      "hash": "0130a632bc8e1639b4fade1f90d7d4a1820a5a49"
     },
     "com.mhze.firstperson-controller": {
       "version": "file:com.mhze.firstperson-controller",
@@ -46,7 +47,7 @@
       "source": "embedded",
       "dependencies": {
         "com.unity.inputsystem": "1.4.0",
-        "com.mhze.event-system": "1.0.0"
+        "com.mhze.argevent": "1.0.0"
       }
     },
     "com.mhze.pickup-system": {
@@ -55,7 +56,7 @@
       "source": "embedded",
       "dependencies": {
         "com.unity.inputsystem": "1.4.0",
-        "com.mhze.event-system": "1.0.0"
+        "com.mhze.argevent": "1.0.0"
       }
     },
     "com.mhze.throw-system": {
@@ -107,7 +108,7 @@
       "source": "embedded",
       "dependencies": {
         "com.unity.inputsystem": "1.4.0",
-        "com.mhze.event-system": "1.0.0"
+        "com.mhze.argevent": "1.0.0"
       }
     },
     "com.unity.ai.navigation": {

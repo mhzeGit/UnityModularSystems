@@ -3,7 +3,7 @@ using System.Collections;
 using System.Security.Cryptography;
 using System.Text;
 using UnityEngine;
-using MHZE.EventSystem;
+using ArgEvent;
 
 public class UltimateDoorController : MonoBehaviour
 {
@@ -42,11 +42,11 @@ public class UltimateDoorController : MonoBehaviour
     [Tooltip("Base64-encoded SHA256 hash of the password set via the Password property.")]
     [SerializeField] private string _passwordHash;
 
-    public EventBinding OnOpened = new EventBinding();
-    public EventBinding OnClosed = new EventBinding();
-    public EventBinding OnLocked = new EventBinding();
-    public EventBinding OnUnlocked = new EventBinding();
-    public EventBinding OnLockFailed = new EventBinding();
+    public ArgEventBinding OnOpened = new ArgEventBinding();
+    public ArgEventBinding OnClosed = new ArgEventBinding();
+    public ArgEventBinding OnLocked = new ArgEventBinding();
+    public ArgEventBinding OnUnlocked = new ArgEventBinding();
+    public ArgEventBinding OnLockFailed = new ArgEventBinding();
 
     private Transform _transform;
     private Quaternion _restRotation;
