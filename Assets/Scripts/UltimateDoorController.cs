@@ -103,7 +103,7 @@ public class UltimateDoorController : MonoBehaviour
     private bool DetermineOpenDirection(Vector3 targetPosition)
     {
         Vector3 toTarget = (targetPosition - _transform.position).normalized;
-        return Vector3.Dot(_transform.forward, toTarget) < 0f;
+        return Vector3.Dot(_transform.forward, toTarget) > 0f;
     }
 
     private IEnumerator AnimateMove(Quaternion startRot, Vector3 startPos, Quaternion targetRot, Vector3 targetPos, bool opening)
@@ -153,7 +153,7 @@ public class UltimateDoorController : MonoBehaviour
         }
     }
 
-    public void Open()
+    public void Open(Transform interactor = null)
     {
         if (_state == DoorState.Locked) return;
         if (!_isAnimating && _state == DoorState.Open) return;
@@ -163,7 +163,15 @@ public class UltimateDoorController : MonoBehaviour
         _isAnimating = true;
         _isOpening = true;
 
-        bool reverse = _reverseDirection;
+        bool reverse;
+        if (interactor != null)
+        {
+            reverse = DetermineOpenDirection(interactor.position);
+        }
+        else
+        {
+            reverse = _reverseDirection;
+        }
         _reverseDirection = false;
 
         Quaternion startRot = _transform.localRotation;
@@ -205,7 +213,7 @@ public class UltimateDoorController : MonoBehaviour
         ));
     }
 
-    public void Toggle()
+    public void Toggle(Transform interactor = null)
     {
         if (_state == DoorState.Locked) return;
 
@@ -214,14 +222,14 @@ public class UltimateDoorController : MonoBehaviour
             if (_isOpening)
                 Close();
             else
-                Open();
+                Open(interactor);
         }
         else
         {
             if (_state == DoorState.Open)
                 Close();
             else
-                Open();
+                Open(interactor);
         }
     }
 
