@@ -45,6 +45,7 @@ namespace MHZE.Editor
             AddSectionHeader(root, "Animation");
             root.Add(new PropertyField(so.FindProperty("_animationDuration")));
             root.Add(new PropertyField(so.FindProperty("_movementCurve")));
+            root.Add(new PropertyField(so.FindProperty("_allowIntruption"), "Allow Interruption"));
 
             AddSectionHeader(root, "Automatic Door");
             var autoOpenField = new PropertyField(so.FindProperty("_autoOpen"), "Auto Open");
@@ -63,11 +64,11 @@ namespace MHZE.Editor
             root.Add(_passwordDetails);
 
             AddSectionHeader(root, "Events");
-            root.Add(new PropertyField(so.FindProperty("_onOpened"), "On Opened"));
-            root.Add(new PropertyField(so.FindProperty("_onClosed"), "On Closed"));
-            root.Add(new PropertyField(so.FindProperty("_onLocked"), "On Locked"));
-            root.Add(new PropertyField(so.FindProperty("_onUnlocked"), "On Unlocked"));
-            root.Add(new PropertyField(so.FindProperty("_onLockFailed"), "On Lock Failed"));
+            root.Add(new PropertyField(so.FindProperty("OnOpened")));
+            root.Add(new PropertyField(so.FindProperty("OnClosed")));
+            root.Add(new PropertyField(so.FindProperty("OnLocked")));
+            root.Add(new PropertyField(so.FindProperty("OnUnlocked")));
+            root.Add(new PropertyField(so.FindProperty("OnLockFailed")));
 
             root.Bind(so);
 

@@ -146,7 +146,7 @@ public class InteractInputPromptMediator : MonoBehaviour
         var interactable = obj != null ? obj.GetComponent<IInteractable>() : null;
         if (interactable != null && interactable.OneTimeInteract)
         {
-            interactable.InteractedOnce = true;
+            interactable.SetInteractedOnce(true);
 
             if (interactPromptDefinition != null)
                 inputPromptManager.HidePrompt(interactPromptDefinition.Key);

@@ -3,7 +3,7 @@ using System.Collections;
 using System.Security.Cryptography;
 using System.Text;
 using UnityEngine;
-using UnityEngine.Events;
+using MHZE.EventSystem;
 
 public class UltimateDoorController : MonoBehaviour
 {
@@ -34,17 +34,19 @@ public class UltimateDoorController : MonoBehaviour
     [SerializeField] private bool _autoClose;
     [Tooltip("Layers that can trigger the automatic door. Defaults to Player.")]
     [SerializeField] private LayerMask _triggerLayer = 1 << 3;
+    [Tooltip("If false, the door will not reverse mid-animation; it completes its current motion first.")]
+    [SerializeField] private bool _allowIntruption = true;
 
     [Tooltip("When enabled, unlocking requires a matching password.")]
     [SerializeField] private bool _hasPassword;
     [Tooltip("Base64-encoded SHA256 hash of the password set via the Password property.")]
     [SerializeField] private string _passwordHash;
 
-    [SerializeField] private UnityEvent _onOpened;
-    [SerializeField] private UnityEvent _onClosed;
-    [SerializeField] private UnityEvent _onLocked;
-    [SerializeField] private UnityEvent _onUnlocked;
-    [SerializeField] private UnityEvent _onLockFailed;
+    public EventBinding OnOpened = new EventBinding();
+    public EventBinding OnClosed = new EventBinding();
+    public EventBinding OnLocked = new EventBinding();
+    public EventBinding OnUnlocked = new EventBinding();
+    public EventBinding OnLockFailed = new EventBinding();
 
     private Transform _transform;
     private Quaternion _restRotation;
@@ -57,11 +59,11 @@ public class UltimateDoorController : MonoBehaviour
     public DoorState State => _state;
     public DoorMode Mode => _mode;
 
-    public UnityEvent OnOpened => _onOpened;
-    public UnityEvent OnClosed => _onClosed;
-    public UnityEvent OnLocked => _onLocked;
-    public UnityEvent OnUnlocked => _onUnlocked;
-    public UnityEvent OnLockFailed => _onLockFailed;
+    public bool AllowIntruption
+    {
+        get => _allowIntruption;
+        set => _allowIntruption = value;
+    }
 
     public string Password
     {
@@ -133,12 +135,12 @@ public class UltimateDoorController : MonoBehaviour
         if (opening)
         {
             _state = DoorState.Open;
-            _onOpened.Invoke();
+            OnOpened?.Invoke();
         }
         else
         {
             _state = DoorState.Closed;
-            _onClosed.Invoke();
+            OnClosed?.Invoke();
         }
     }
 
@@ -155,6 +157,7 @@ public class UltimateDoorController : MonoBehaviour
     {
         if (_state == DoorState.Locked) return;
         if (!_isAnimating && _state == DoorState.Open) return;
+        if (!_allowIntruption && _isAnimating) return;
 
         StopExistingRoutine();
         _isAnimating = true;
@@ -187,6 +190,7 @@ public class UltimateDoorController : MonoBehaviour
     {
         if (_state == DoorState.Locked) return;
         if (!_isAnimating && _state == DoorState.Closed) return;
+        if (!_allowIntruption && _isAnimating) return;
 
         StopExistingRoutine();
         _isAnimating = true;
@@ -226,7 +230,7 @@ public class UltimateDoorController : MonoBehaviour
         if (_state == DoorState.Locked) return;
 
         _state = DoorState.Locked;
-        _onLocked.Invoke();
+        OnLocked?.Invoke();
     }
 
     public void Unlock(string input)
@@ -236,18 +240,18 @@ public class UltimateDoorController : MonoBehaviour
         if (!_hasPassword || string.IsNullOrEmpty(_passwordHash))
         {
             _state = DoorState.Closed;
-            _onUnlocked.Invoke();
+            OnUnlocked?.Invoke();
             return;
         }
 
         if (string.Equals(_passwordHash, HashPassword(input), StringComparison.Ordinal))
         {
             _state = DoorState.Closed;
-            _onUnlocked.Invoke();
+            OnUnlocked?.Invoke();
         }
         else
         {
-            _onLockFailed.Invoke();
+            OnLockFailed?.Invoke();
         }
     }
 
