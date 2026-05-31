@@ -51,6 +51,8 @@ public class UltimateDoorController : MonoBehaviour
     private Vector3 _restPosition;
     private Coroutine _moveRoutine;
     private bool _reverseDirection;
+    private bool _isAnimating;
+    private bool _isOpening;
 
     public DoorState State => _state;
     public DoorMode Mode => _mode;
@@ -104,8 +106,6 @@ public class UltimateDoorController : MonoBehaviour
 
     private IEnumerator AnimateMove(Quaternion startRot, Vector3 startPos, Quaternion targetRot, Vector3 targetPos, bool opening)
     {
-        StopExistingRoutine();
-
         float elapsed = 0f;
 
         while (elapsed < _animationDuration)
@@ -128,6 +128,7 @@ public class UltimateDoorController : MonoBehaviour
             _transform.localPosition = targetPos;
 
         _moveRoutine = null;
+        _isAnimating = false;
 
         if (opening)
         {
@@ -153,9 +154,11 @@ public class UltimateDoorController : MonoBehaviour
     public void Open()
     {
         if (_state == DoorState.Locked) return;
-        if (_state == DoorState.Open) return;
+        if (!_isAnimating && _state == DoorState.Open) return;
 
-        _state = DoorState.Closed;
+        StopExistingRoutine();
+        _isAnimating = true;
+        _isOpening = true;
 
         bool reverse = _reverseDirection;
         _reverseDirection = false;
@@ -183,9 +186,11 @@ public class UltimateDoorController : MonoBehaviour
     public void Close()
     {
         if (_state == DoorState.Locked) return;
-        if (_state == DoorState.Closed) return;
+        if (!_isAnimating && _state == DoorState.Closed) return;
 
-        _state = DoorState.Open;
+        StopExistingRoutine();
+        _isAnimating = true;
+        _isOpening = false;
 
         _moveRoutine = StartCoroutine(AnimateMove(
             _transform.localRotation,
@@ -200,10 +205,20 @@ public class UltimateDoorController : MonoBehaviour
     {
         if (_state == DoorState.Locked) return;
 
-        if (_state == DoorState.Open)
-            Close();
-        else if (_state == DoorState.Closed)
-            Open();
+        if (_isAnimating)
+        {
+            if (_isOpening)
+                Close();
+            else
+                Open();
+        }
+        else
+        {
+            if (_state == DoorState.Open)
+                Close();
+            else
+                Open();
+        }
     }
 
     public void Lock()
