@@ -184,6 +184,32 @@ namespace MHZE.EventSystem
             _cachedMethod.Invoke(_target, _cachedArgs);
         }
 
+        private static object TryResolveInterfaceMember(object instance, Type concreteType, string memberName)
+        {
+            if (concreteType.IsInterface)
+            {
+                var ifaceField = concreteType.GetField(memberName, BindingFlags.Public | BindingFlags.Instance);
+                if (ifaceField != null)
+                    return ifaceField.GetValue(instance);
+
+                var ifaceProp = concreteType.GetProperty(memberName, BindingFlags.Public | BindingFlags.Instance);
+                if (ifaceProp != null && ifaceProp.CanRead && ifaceProp.GetIndexParameters().Length == 0)
+                    return ifaceProp.GetValue(instance);
+            }
+
+            foreach (var iface in concreteType.GetInterfaces())
+            {
+                var ifaceField = iface.GetField(memberName, BindingFlags.Public | BindingFlags.Instance);
+                if (ifaceField != null)
+                    return ifaceField.GetValue(instance);
+
+                var ifaceProp = iface.GetProperty(memberName, BindingFlags.Public | BindingFlags.Instance);
+                if (ifaceProp != null && ifaceProp.CanRead && ifaceProp.GetIndexParameters().Length == 0)
+                    return ifaceProp.GetValue(instance);
+            }
+            return null;
+        }
+
         private static object GetDefaultValue(Type type)
         {
             if (type == null)
@@ -200,25 +226,48 @@ namespace MHZE.EventSystem
             if (eventArgs == null || argIndex < 0 || argIndex >= eventArgs.Length)
                 return GetDefaultValue(expectedType);
 
-            object eventArg = eventArgs[argIndex];
+            object current = eventArgs[argIndex];
 
             if (string.IsNullOrEmpty(variableName))
-                return eventArg;
+                return current;
 
-            if (eventArg == null)
+            if (current == null)
                 return GetDefaultValue(expectedType);
 
-            var argType = eventArg.GetType();
+            string[] path = variableName.Split('.');
+            for (int i = 0; i < path.Length; i++)
+            {
+                if (current == null)
+                    return GetDefaultValue(expectedType);
 
-            var field = argType.GetField(variableName, BindingFlags.Public | BindingFlags.Instance);
-            if (field != null)
-                return field.GetValue(eventArg);
+                var type = current.GetType();
+                string memberName = path[i];
 
-            var prop = argType.GetProperty(variableName, BindingFlags.Public | BindingFlags.Instance);
-            if (prop != null && prop.CanRead && prop.GetIndexParameters().Length == 0)
-                return prop.GetValue(eventArg);
+                var field = type.GetField(memberName, BindingFlags.Public | BindingFlags.Instance);
+                if (field != null)
+                {
+                    current = field.GetValue(current);
+                    continue;
+                }
 
-            return eventArg;
+                var prop = type.GetProperty(memberName, BindingFlags.Public | BindingFlags.Instance);
+                if (prop != null && prop.CanRead && prop.GetIndexParameters().Length == 0)
+                {
+                    current = prop.GetValue(current);
+                    continue;
+                }
+
+                object resolved = TryResolveInterfaceMember(current, type, memberName);
+                if (resolved != null)
+                {
+                    current = resolved;
+                    continue;
+                }
+
+                return GetDefaultValue(expectedType);
+            }
+
+            return current;
         }
     }
 }

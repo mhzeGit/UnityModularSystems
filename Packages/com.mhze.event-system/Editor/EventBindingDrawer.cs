@@ -1198,21 +1198,20 @@ namespace MHZE.EventSystem.Editor
                 var argType = _eventArgTypes[ai];
                 if (argType == null) continue;
 
-                bool addedHeader = false;
+                string displayName = GetTypeDisplayName(argType);
 
                 if (paramType.IsAssignableFrom(argType) || paramType == typeof(object))
                 {
-                    choices.Add($"Arg {ai} : {GetTypeDisplayName(argType)}");
+                    choices.Add($"Arg {ai} : {displayName}");
                     choiceIndices.Add(ai);
                     choiceNames.Add("");
-                    addedHeader = true;
                 }
 
                 foreach (var field in argType.GetFields(BindingFlags.Public | BindingFlags.Instance))
                 {
                     if (paramType.IsAssignableFrom(field.FieldType))
                     {
-                        choices.Add($"  {field.Name} : {GetTypeDisplayName(field.FieldType)}");
+                        choices.Add($"{displayName} > {field.Name}");
                         choiceIndices.Add(ai);
                         choiceNames.Add(field.Name);
                     }
@@ -1223,7 +1222,7 @@ namespace MHZE.EventSystem.Editor
                 {
                     if (paramType.IsAssignableFrom(prop.PropertyType))
                     {
-                        choices.Add($"  {prop.Name} : {GetTypeDisplayName(prop.PropertyType)}");
+                        choices.Add($"{displayName} > {prop.Name}");
                         choiceIndices.Add(ai);
                         choiceNames.Add(prop.Name);
                     }
@@ -1236,12 +1235,12 @@ namespace MHZE.EventSystem.Editor
             if (choices.Count > 0)
             {
                 int currentIdx = eventArgIdxProp.intValue;
-                string currentVar = eventVarProp.stringValue;
+                string currentVar = eventVarProp.stringValue ?? "";
 
                 int idx = 0;
                 for (int i = 0; i < choiceIndices.Count; i++)
                 {
-                    if (choiceIndices[i] == currentIdx && choiceNames[i] == (currentVar ?? ""))
+                    if (choiceIndices[i] == currentIdx && (choiceNames[i] ?? "") == currentVar)
                     {
                         idx = i;
                         break;
@@ -1269,6 +1268,8 @@ namespace MHZE.EventSystem.Editor
 
             return dropdown;
         }
+
+
 
         private static void CopyListenerToClipboard(SerializedProperty lp)
         {
