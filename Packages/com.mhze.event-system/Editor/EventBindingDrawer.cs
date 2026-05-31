@@ -494,15 +494,12 @@ namespace MHZE.EventSystem.Editor
             var section = new VisualElement();
             section.AddToClassList("param-section");
 
-            var key = $"{listenerProp.propertyPath}_params";
-
             var foldout = new Foldout
             {
                 text = $"  Parameters  ({paramsProp.arraySize})",
-                value = _paramFoldouts.TryGetValue(key, out var pe) && pe
+                value = true
             };
             foldout.AddToClassList("param-section-foldout");
-            foldout.RegisterValueChangedCallback(evt => { _paramFoldouts[key] = evt.newValue; });
 
             for (int p = 0; p < paramsProp.arraySize; p++)
             {
@@ -515,8 +512,6 @@ namespace MHZE.EventSystem.Editor
             section.Add(foldout);
             return section;
         }
-
-        private static readonly Dictionary<string, bool> _paramFoldouts = new Dictionary<string, bool>();
 
         private VisualElement BuildParameterEntry(SerializedProperty pp, Type paramType, Action rebuild)
         {
