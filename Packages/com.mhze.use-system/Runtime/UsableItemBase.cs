@@ -1,6 +1,6 @@
 using System;
 using UnityEngine;
-using UnityEngine.Events;
+using MHZE.EventSystem;
 
 public class UsableItemBase : MonoBehaviour, IUsable
 {
@@ -9,8 +9,8 @@ public class UsableItemBase : MonoBehaviour, IUsable
     [SerializeField] ToolsName toolName;
     [SerializeField] float useImpactDelay;
     [SerializeField] float useCooldown = 0.5f;
-    public UnityEvent OnUsedItemEvent;
-    public UnityEvent OnUsedItemOnTargetEvent;
+    public EventBinding OnUsedItemEvent = new EventBinding();
+    public EventBinding OnUsedItemOnTargetEvent = new EventBinding();
 
 
     public event Action<GameObject, UseTargetsName> OnUsedItem;

@@ -1,13 +1,13 @@
 using UnityEngine;
-using UnityEngine.Events;
+using MHZE.EventSystem;
 
 namespace MHZE.PickupSystem
 {
     public class PickableItemBase : MonoBehaviour, IPickable
     {
         public PickableItemData pickableItemData;
-        public UnityEvent OnPickedItem;
-        public UnityEvent OnDroppedItem;
+        public EventBinding OnPickedItem = new EventBinding();
+        public EventBinding OnDroppedItem = new EventBinding();
 
         Rigidbody cachedRigidbody;
         MeshRenderer[] cachedRenderers;

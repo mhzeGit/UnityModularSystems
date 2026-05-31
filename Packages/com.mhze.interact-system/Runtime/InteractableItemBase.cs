@@ -10,15 +10,18 @@ namespace MHZE.InteractSystem
     {
         [SerializeField] private bool isInteractable = true;
         [SerializeField] private bool allowPrompt = true;
+        [SerializeField] private bool oneTimeInteract = false;
         [SerializeField] private float holdTime = 0f;
         [SerializeField] private string promptPrefix = string.Empty;
         [SerializeField] private string promptSuffix = string.Empty;
+
+        private bool interactedOnce;
 
         public event Action OnInteractableUpdated;
 
         public event Action<IInteractor> Interacted;
         public event Action<IInteractor> InteractReleased;
-        public EventBinding OnInteractedWithEvent = new EventBinding();
+        public EventBinding<IInteractor> OnInteractedWithEvent = new EventBinding<IInteractor>();
 
         public bool IsInteractable
         {
@@ -42,6 +45,14 @@ namespace MHZE.InteractSystem
             }
         }
 
+        public bool OneTimeInteract => oneTimeInteract;
+
+        public bool InteractedOnce
+        {
+            get => interactedOnce;
+            set => interactedOnce = value;
+        }
+
         public float HoldTime => holdTime;
 
         public string PromptPrefix => promptPrefix;
@@ -50,7 +61,7 @@ namespace MHZE.InteractSystem
         public virtual void OnInteract(IInteractor interactor)
         {
             Interacted?.Invoke(interactor);
-            OnInteractedWithEvent.Invoke();
+            OnInteractedWithEvent.Invoke(interactor);
         }
 
         public virtual void OnInteractReleased(IInteractor interactor)

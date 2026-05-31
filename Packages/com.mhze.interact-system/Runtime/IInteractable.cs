@@ -13,6 +13,8 @@ namespace MHZE.InteractSystem
 
         bool IsInteractable { get; set; }
         bool AllowPrompt { get; set; }
+        bool OneTimeInteract { get; }
+        bool InteractedOnce { get; set; }
         float HoldTime { get; }
         string PromptPrefix { get; }
         string PromptSuffix { get; }

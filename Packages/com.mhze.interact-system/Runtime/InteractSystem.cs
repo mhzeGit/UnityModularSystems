@@ -90,6 +90,7 @@ namespace MHZE.InteractSystem
         void InteractInputStarted(InputAction.CallbackContext context)
         {
             if (CurrentInteractable == null || !CurrentInteractable.IsInteractable) return;
+            if (CurrentInteractable.OneTimeInteract && CurrentInteractable.InteractedOnce) return;
 
             float holdTime = CurrentInteractable.HoldTime;
 
@@ -233,6 +234,9 @@ namespace MHZE.InteractSystem
         {
             if (CurrentInteractable != null)
             {
+                if (CurrentInteractable.OneTimeInteract)
+                    CurrentInteractable.InteractedOnce = false;
+
                 CurrentInteractable.OnHoverExit(this);
                 UnsubscribeCurrent();
 

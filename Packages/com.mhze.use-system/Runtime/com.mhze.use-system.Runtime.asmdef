@@ -1,7 +1,8 @@
 {
   "name": "com.mhze.use-system.Runtime",
   "references": [
-    "Unity.InputSystem"
+    "Unity.InputSystem",
+    "com.mhze.event-system.Runtime"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
