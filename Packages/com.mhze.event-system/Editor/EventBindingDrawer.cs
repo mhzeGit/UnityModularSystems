@@ -544,85 +544,36 @@ namespace MHZE.EventSystem.Editor
 
         private static void BuildColoredSignature(VisualElement container, MethodInfo method)
         {
-            var retLabel = new Label(GetTypeDisplayName(method.ReturnType));
-            retLabel.style.color = new Color(0.349f, 0.647f, 0.976f);
-            retLabel.style.marginRight = 3;
-            retLabel.style.fontSize = 10;
-            retLabel.style.height = 18;
-            retLabel.style.unityTextAlign = TextAnchor.MiddleLeft;
-            retLabel.style.flexShrink = 0;
-            container.Add(retLabel);
+            const string nameColor = "#DCDCAA";
+            const string punctColor = "#999999";
+            const string paramNameColor = "#D9D9D9";
 
-            var nameLabel = new Label(method.Name);
-            nameLabel.style.color = new Color(0.863f, 0.863f, 0.667f);
-            nameLabel.style.marginRight = 2;
-            nameLabel.style.fontSize = 10;
-            nameLabel.style.height = 18;
-            nameLabel.style.unityTextAlign = TextAnchor.MiddleLeft;
-            nameLabel.style.flexShrink = 0;
-            container.Add(nameLabel);
-
-            container.Add(new Label("(")
-            {
-                style =
-                {
-                    color = new Color(0.6f, 0.6f, 0.6f),
-                    fontSize = 10,
-                    height = 18,
-                    unityTextAlign = TextAnchor.MiddleLeft,
-                    flexShrink = 0
-                }
-            });
+            var sb = new System.Text.StringBuilder();
+            sb.Append($"<color={GetTypeHexColor(method.ReturnType)}>{GetTypeDisplayName(method.ReturnType)}</color> ");
+            sb.Append($"<color={nameColor}>{method.Name}</color>");
+            sb.Append($"<color={punctColor}>(</color>");
 
             var pars = method.GetParameters();
             for (int i = 0; i < pars.Length; i++)
             {
                 if (i > 0)
-                {
-                    container.Add(new Label(", ")
-                    {
-                        style =
-                        {
-                            color = new Color(0.6f, 0.6f, 0.6f),
-                            fontSize = 10,
-                            height = 18,
-                            unityTextAlign = TextAnchor.MiddleLeft,
-                            flexShrink = 0
-                        }
-                    });
-                }
-
+                    sb.Append(", ");
                 var p = pars[i];
-                var typeLabel = new Label(GetTypeDisplayName(p.ParameterType));
-                typeLabel.style.color = new Color(0.282f, 0.792f, 0.580f);
-                typeLabel.style.marginRight = 2;
-                typeLabel.style.fontSize = 10;
-                typeLabel.style.height = 18;
-                typeLabel.style.unityTextAlign = TextAnchor.MiddleLeft;
-                typeLabel.style.flexShrink = 0;
-                container.Add(typeLabel);
-
-                var nameLabel2 = new Label(p.Name);
-                nameLabel2.style.color = new Color(0.85f, 0.85f, 0.85f);
-                nameLabel2.style.marginRight = 2;
-                nameLabel2.style.fontSize = 10;
-                nameLabel2.style.height = 18;
-                nameLabel2.style.unityTextAlign = TextAnchor.MiddleLeft;
-                nameLabel2.style.flexShrink = 0;
-                container.Add(nameLabel2);
+                sb.Append($"<color={GetTypeHexColor(p.ParameterType)}>{GetTypeDisplayName(p.ParameterType)}</color> ");
+                sb.Append($"<color={paramNameColor}>{p.Name}</color>");
             }
 
-            container.Add(new Label(")")
-            {
-                style =
-                {
-                    color = new Color(0.6f, 0.6f, 0.6f),
-                    fontSize = 10,
-                    height = 18,
-                    unityTextAlign = TextAnchor.MiddleLeft,
-                    flexShrink = 0
-                }
-            });
+            sb.Append($"<color={punctColor}>)</color>");
+
+            var label = new Label(sb.ToString());
+            label.enableRichText = true;
+            label.style.fontSize = 10;
+            label.style.height = 18;
+            label.style.unityTextAlign = TextAnchor.MiddleLeft;
+            label.style.flexShrink = 0;
+            label.style.whiteSpace = WhiteSpace.NoWrap;
+            label.style.overflow = Overflow.Hidden;
+            container.Add(label);
         }
 
         private VisualElement BuildParameterSection(SerializedProperty listenerProp,
@@ -1272,6 +1223,29 @@ namespace MHZE.EventSystem.Editor
             string ret = GetTypeDisplayName(method.ReturnType);
             string args = string.Join(", ", pars.Select(p => $"{GetTypeDisplayName(p.ParameterType)} {p.Name}"));
             return string.IsNullOrEmpty(args) ? $"{ret} {method.Name}()" : $"{ret} {method.Name}({args})";
+        }
+
+        internal static string GetTypeHexColor(Type type)
+        {
+            if (type == typeof(void) || type == typeof(object))
+                return "#569CD6";
+            if (type == typeof(bool))
+                return "#E06C75";
+            if (type == typeof(int))
+                return "#FF86A6";
+            if (type == typeof(float))
+                return "#569CD6";
+            if (type == typeof(double) || type == typeof(long) || type == typeof(short) || type == typeof(byte) ||
+                type == typeof(uint) || type == typeof(ulong) || type == typeof(ushort) ||
+                type == typeof(sbyte) || type == typeof(char))
+                return "#569CD6";
+            if (type == typeof(string))
+                return "#C586C0";
+            if (type.IsInterface)
+                return "#4EC9B0";
+            if (type.IsEnum)
+                return "#B8D7A3";
+            return "#48CA94";
         }
 
         internal static string GetTypeDisplayName(Type type)
