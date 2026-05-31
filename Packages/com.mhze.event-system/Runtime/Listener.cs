@@ -142,6 +142,42 @@ namespace MHZE.EventSystem
             _cachedMethod.Invoke(_target, _cachedArgs);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Invoke(object eventArg)
+        {
+            if (!_enabled)
+                return;
+
+            if (!_initialized)
+                Initialize();
+
+            Action action = _cachedAction;
+            if (action != null)
+            {
+                action();
+                return;
+            }
+
+            if (_cachedMethod == null)
+                return;
+
+            int paramCount = _cachedParamInfo.Length;
+            for (int i = 0; i < paramCount; i++)
+            {
+                if (i < _parameters.Length && _parameters[i] != null)
+                {
+                    if (_parameters[i].Source == ArgumentSource.Event)
+                        _cachedArgs[i] = eventArg;
+                    else
+                        _cachedArgs[i] = _parameters[i].Resolve(_cachedParamInfo[i].ParameterType);
+                }
+                else
+                    _cachedArgs[i] = GetDefaultValue(_cachedParamInfo[i].ParameterType);
+            }
+
+            _cachedMethod.Invoke(_target, _cachedArgs);
+        }
+
         private static object GetDefaultValue(Type type)
         {
             if (type == null)

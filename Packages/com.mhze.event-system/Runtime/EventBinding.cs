@@ -56,4 +56,17 @@ namespace MHZE.EventSystem
             _listeners.Clear();
         }
     }
+
+    [Serializable]
+    public class EventBinding<T> : EventBinding
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Invoke(T arg)
+        {
+            var listeners = Listeners;
+            int count = listeners.Count;
+            for (int i = 0; i < count; i++)
+                listeners[i].Invoke(arg);
+        }
+    }
 }

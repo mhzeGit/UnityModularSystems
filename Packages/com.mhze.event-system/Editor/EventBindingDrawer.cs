@@ -11,9 +11,10 @@ using Object = UnityEngine.Object;
 
 namespace MHZE.EventSystem.Editor
 {
-    [CustomPropertyDrawer(typeof(EventBinding))]
+    [CustomPropertyDrawer(typeof(EventBinding), true)]
     public class EventBindingDrawer : PropertyDrawer
     {
+        private Type _eventArgType;
         private static readonly string[] UnitySpecialMethods =
         {
             "Awake", "Start", "Update", "LateUpdate", "FixedUpdate",
@@ -66,6 +67,13 @@ namespace MHZE.EventSystem.Editor
         {
             var root = new VisualElement();
             root.AddToClassList("event-binding-root");
+
+            _eventArgType = null;
+            if (fieldInfo != null && fieldInfo.FieldType.IsGenericType &&
+                fieldInfo.FieldType.GetGenericTypeDefinition() == typeof(EventBinding<>))
+            {
+                _eventArgType = fieldInfo.FieldType.GetGenericArguments()[0];
+            }
 
             var styleSheet = GetStyleSheet();
             if (styleSheet != null)
@@ -129,7 +137,7 @@ namespace MHZE.EventSystem.Editor
                 {
                     int index = i;
                     var lp = listeners.GetArrayElementAtIndex(index);
-                    var card = BuildListenerCard(lp, index, listeners, () => root.schedule.Execute((TimerState _) => RebuildNow()));
+                    var card = BuildListenerCard(lp, index, listeners, () => root.schedule.Execute((TimerState _) => RebuildNow()), _eventArgType);
                     content.Add(card);
 
                     var dragHandle = card.Q("drag-handle");
@@ -236,7 +244,7 @@ namespace MHZE.EventSystem.Editor
         }
 
         private VisualElement BuildListenerCard(SerializedProperty lp, int index,
-            SerializedProperty listenersProp, Action rebuild)
+            SerializedProperty listenersProp, Action rebuild, Type eventArgType = null)
         {
             var card = new VisualElement();
             card.AddToClassList("listener-card");
@@ -309,7 +317,7 @@ namespace MHZE.EventSystem.Editor
 
             card.Add(BuildGameObjectRow(goProp, targetProp, methodNameProp, methodDisplayProp, paramsProp, rebuild));
             card.Add(BuildComponentRow(targetProp, goProp, methodNameProp, methodDisplayProp, paramsProp, rebuild));
-            card.Add(BuildMethodRow(targetProp, methodNameProp, methodDisplayProp, paramsProp, rebuild));
+            card.Add(BuildMethodRow(targetProp, methodNameProp, methodDisplayProp, paramsProp, rebuild, eventArgType));
 
             if (paramsProp.arraySize > 0)
             {
@@ -429,7 +437,7 @@ namespace MHZE.EventSystem.Editor
 
         private static VisualElement BuildMethodRow(SerializedProperty targetProp,
             SerializedProperty methodNameProp, SerializedProperty methodDisplayProp,
-            SerializedProperty paramsProp, Action rebuild)
+            SerializedProperty paramsProp, Action rebuild, Type eventArgType = null)
         {
             var target = targetProp.objectReferenceValue as Component;
             var methods = target != null ? GetBindableMethods(target.GetType()) : new List<MethodInfo>();
@@ -461,7 +469,7 @@ namespace MHZE.EventSystem.Editor
                 int i = dropdown.index;
                 if (i >= 0 && i < methodItems.Count && methodItems[i] != null)
                 {
-                    SelectMethod(methodItems[i], methodNameProp, methodDisplayProp, paramsProp);
+                    SelectMethod(methodItems[i], methodNameProp, methodDisplayProp, paramsProp, eventArgType);
                     targetProp.serializedObject.ApplyModifiedProperties();
                     rebuild();
                 }
@@ -568,6 +576,13 @@ namespace MHZE.EventSystem.Editor
             {
                 container.Add(BuildConstantValueField(pp, paramType));
             }
+            else if (source == ArgumentSource.Event)
+            {
+                var label = new Label("Use Event Argument");
+                label.style.unityFontStyleAndWeight = FontStyle.Italic;
+                label.style.color = new Color(0.039f, 1.000f, 0.624f);
+                container.Add(label);
+            }
             else
             {
                 container.Add(BuildScriptSourceField(sourceComponentProp, sourceMemberProp, paramType, rebuild));
@@ -578,7 +593,9 @@ namespace MHZE.EventSystem.Editor
         {
             accent.style.backgroundColor = source == ArgumentSource.Constant
                 ? new Color(0.039f, 0.518f, 1.000f, 0.6f)
-                : new Color(1.000f, 0.624f, 0.039f, 0.6f);
+                : source == ArgumentSource.Event
+                    ? new Color(0.039f, 1.000f, 0.624f, 0.6f)
+                    : new Color(1.000f, 0.624f, 0.039f, 0.6f);
         }
 
         private static VisualElement BuildConstantValueField(SerializedProperty pp, Type paramType)
@@ -1048,7 +1065,7 @@ namespace MHZE.EventSystem.Editor
         }
 
         private static void SelectMethod(MethodInfo method, SerializedProperty methodNameProp,
-            SerializedProperty methodDisplayProp, SerializedProperty paramsProp)
+            SerializedProperty methodDisplayProp, SerializedProperty paramsProp, Type eventArgType = null)
         {
             methodNameProp.stringValue = method.Name;
             methodDisplayProp.stringValue = FormatMethodSignature(method);
@@ -1060,7 +1077,14 @@ namespace MHZE.EventSystem.Editor
                 var pp = paramsProp.GetArrayElementAtIndex(i);
                 pp.FindPropertyRelative("_parameterName").stringValue = pars[i].Name ?? $"param{i}";
                 pp.FindPropertyRelative("_parameterTypeName").stringValue = pars[i].ParameterType.AssemblyQualifiedName;
-                pp.FindPropertyRelative("_source").enumValueIndex = (int)ArgumentSource.Constant;
+
+                bool matchesEventArg = eventArgType != null &&
+                    (pars[i].ParameterType == eventArgType ||
+                     eventArgType.IsAssignableFrom(pars[i].ParameterType));
+
+                pp.FindPropertyRelative("_source").enumValueIndex = matchesEventArg
+                    ? (int)ArgumentSource.Event
+                    : (int)ArgumentSource.Constant;
                 ResetParamValues(pp);
             }
         }
