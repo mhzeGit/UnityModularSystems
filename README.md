@@ -60,6 +60,14 @@ https://github.com/mhzeGit/UnityModularSystems.git?path=/Packages/com.mhze.throw
 
 Modular throw system with charge-based force, camera-forward direction, configurable exponential charge curve, input-driven throw and cancel, and event-driven integration.
 
+### Ultimate Trigger System
+
+```
+https://github.com/mhzeGit/UnityModularSystems.git?path=/Packages/com.mhze.ultimate
+```
+
+Configurable trigger zone with tag-based filtering (selectable via dropdown), UnityEvent bindings, and built-in collider debug previews. Supports enter/stay/exit events with box/sphere/capsule/mesh collider visualisation.
+
 ## Mediator Scripts
 
 Mediator scripts in `Assets/Scripts/` connect standalone packages together. Attach these to a GameObject in your scene and assign the relevant system references in the Inspector.

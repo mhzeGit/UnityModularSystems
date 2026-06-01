@@ -1,0 +1,14 @@
+{
+  "name": "com.mhze.ultimate",
+  "version": "1.0.0",
+  "displayName": "Ultimate Trigger System",
+  "description": "Configurable trigger zone with tag-based filtering, UnityEvent bindings, and collider debug previews. Supports enter/stay/exit events and built-in box/sphere/capsule/mesh collider preview.",
+  "unity": "2021.3",
+  "author": {
+    "name": "MHZE",
+    "url": "https://github.com/mhze"
+  },
+  "dependencies": {
+    "com.mhze.argevent": "1.0.0"
+  }
+}

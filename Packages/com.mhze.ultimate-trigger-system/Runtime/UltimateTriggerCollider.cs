@@ -6,7 +6,7 @@ namespace MHZE
     public class UltimateTriggerCollider : MonoBehaviour
     {
         [Header("Tag Filtering")]
-        [SerializeField] private string[] _targetTags = { "Player" };
+        [SerializeField, TagSelector] private string[] _targetTags = { "Player" };
 
         [Header("Trigger Events")]
         [SerializeField] private bool _useOnEnter = true;

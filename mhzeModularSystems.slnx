@@ -4,9 +4,11 @@
   <Project Path="Assembly-CSharp.csproj" />
   <Project Path="com.mhze.throw-system.Runtime.csproj" />
   <Project Path="com.mhze.input-prompt-system.Editor.csproj" />
+  <Project Path="com.mhze.ultimate.Runtime.csproj" />
   <Project Path="com.mhze.input-prompt-system.Runtime.csproj" />
   <Project Path="com.mhze.pickup-system.Runtime.csproj" />
   <Project Path="com.modular.freeform-camera.Runtime.csproj" />
+  <Project Path="com.mhze.ultimate.Editor.csproj" />
   <Project Path="com.mhze.use-system.Runtime.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
   <Project Path="com.modular.freeform-camera.Editor.csproj" />

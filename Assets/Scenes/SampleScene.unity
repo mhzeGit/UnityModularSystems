@@ -1182,8 +1182,8 @@ MonoBehaviour:
       _target: {fileID: 352262969}
       _gameObject: {fileID: 0}
       _methodName: InteractTestAndFloat
-      _methodDisplayName: 'InteractTestAndFloat(IInteractor interactor, float number)
-        : Void'
+      _methodDisplayName: void InteractTestAndFloat(IInteractor interactor, float
+        number)
       _customLabel: 
       _parameters:
       - _parameterName: interactor
@@ -1256,13 +1256,13 @@ MonoBehaviour:
       - _parameterName: number
         _parameterTypeName: System.Single, mscorlib, Version=4.0.0.0, Culture=neutral,
           PublicKeyToken=b77a5c561934e089
-        _source: 2
+        _source: 0
         _sourceComponent: {fileID: 0}
         _sourceMemberName: 
         _eventVariableName: 
-        _eventArgIndex: 1
+        _eventArgIndex: 0
         _intValue: 0
-        _floatValue: 0
+        _floatValue: 123
         _doubleValue: 0
         _longValue: 0
         _boolValue: 0
