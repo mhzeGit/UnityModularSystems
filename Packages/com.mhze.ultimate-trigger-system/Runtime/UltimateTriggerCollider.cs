@@ -5,10 +5,8 @@ namespace MHZE
 {
     public class UltimateTriggerCollider : MonoBehaviour
     {
-        [Header("Tag Filtering")]
         [SerializeField, TagSelector] private string[] _targetTags = { "Player" };
 
-        [Header("Trigger Events")]
         [SerializeField] private bool _useOnEnter = true;
         [SerializeField] private bool _useOnStay = true;
         [SerializeField] private bool _useOnExit = true;
@@ -20,7 +18,6 @@ namespace MHZE
         public event System.Action<Collider> OnTriggerStayed;
         public event System.Action<Collider> OnTriggerExited;
 
-        [Header("Debug")]
         [SerializeField] private bool _showDebugPreview;
 
         private Collider _collider;

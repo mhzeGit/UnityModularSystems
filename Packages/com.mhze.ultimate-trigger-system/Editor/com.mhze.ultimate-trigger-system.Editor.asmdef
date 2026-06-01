@@ -1,7 +1,7 @@
 {
-  "name": "com.mhze.ultimate.Editor",
+  "name": "com.mhze.ultimate-trigger-system.Editor",
   "references": [
-    "com.mhze.ultimate.Runtime"
+    "com.mhze.ultimate-trigger-system.Runtime"
   ],
   "includePlatforms": ["Editor"],
   "excludePlatforms": [],

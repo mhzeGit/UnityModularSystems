@@ -1,5 +1,5 @@
 {
-  "name": "com.mhze.ultimate.Runtime",
+  "name": "com.mhze.ultimate-trigger-system.Runtime",
   "references": [
     "com.mhze.argevent.Runtime"
   ],

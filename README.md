@@ -63,7 +63,7 @@ Modular throw system with charge-based force, camera-forward direction, configur
 ### Ultimate Trigger System
 
 ```
-https://github.com/mhzeGit/UnityModularSystems.git?path=/Packages/com.mhze.ultimate
+https://github.com/mhzeGit/UnityModularSystems.git?path=/Packages/com.mhze.ultimate-trigger-system
 ```
 
 Configurable trigger zone with tag-based filtering (selectable via dropdown), UnityEvent bindings, and built-in collider debug previews. Supports enter/stay/exit events with box/sphere/capsule/mesh collider visualisation.

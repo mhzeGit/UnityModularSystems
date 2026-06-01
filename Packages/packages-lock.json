@@ -67,7 +67,7 @@
         "com.unity.inputsystem": "1.4.0"
       }
     },
-    "com.mhze.ultimate": {
+    "com.mhze.ultimate-trigger-system": {
       "version": "file:com.mhze.ultimate-trigger-system",
       "depth": 0,
       "source": "embedded",
