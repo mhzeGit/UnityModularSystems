@@ -1,0 +1,13 @@
+{
+  "name": "com.mhze.ultimate-door-system.Runtime",
+  "references": [
+    "com.mhze.argevent.Runtime"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": []
+}

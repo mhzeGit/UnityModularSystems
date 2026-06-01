@@ -60,6 +60,14 @@ https://github.com/mhzeGit/UnityModularSystems.git?path=/Packages/com.mhze.throw
 
 Modular throw system with charge-based force, camera-forward direction, configurable exponential charge curve, input-driven throw and cancel, and event-driven integration.
 
+### Ultimate Door System
+
+```
+https://github.com/mhzeGit/UnityModularSystems.git?path=/Packages/com.mhze.ultimate-door-system
+```
+
+Configurable door system with procedural, Animation component, Animator, and no-animation modes. Supports rotating and sliding doors, password-based locking with SHA256 hashing, auto open/close triggers with direction detection, configurable movement curves, and event-driven integration for open, close, lock, unlock, and lock-failed events.
+
 ### Ultimate Trigger System
 
 ```

@@ -1,0 +1,14 @@
+{
+  "name": "com.mhze.ultimate-door-system",
+  "version": "1.0.0",
+  "displayName": "Ultimate Door System",
+  "description": "Configurable door system with procedural, Animation component, Animator, and no-animation modes. Supports rotating and sliding doors, password-based locking, auto open/close triggers, and event-driven integration.",
+  "unity": "2021.3",
+  "author": {
+    "name": "MHZE",
+    "url": "https://github.com/mhze"
+  },
+  "dependencies": {
+    "com.mhze.argevent": "1.0.0"
+  }
+}

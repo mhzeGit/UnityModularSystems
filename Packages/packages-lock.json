@@ -67,6 +67,14 @@
         "com.unity.inputsystem": "1.4.0"
       }
     },
+    "com.mhze.ultimate-door-system": {
+      "version": "file:com.mhze.ultimate-door-system",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.mhze.argevent": "1.0.0"
+      }
+    },
     "com.mhze.ultimate-trigger-system": {
       "version": "file:com.mhze.ultimate-trigger-system",
       "depth": 0,
