@@ -1,9 +1,7 @@
 using UnityEngine;
 using ArgEvent;
 
-namespace MHZE
-{
-    public class UltimateTriggerCollider : MonoBehaviour
+public class UltimateTriggerCollider : MonoBehaviour
     {
         [SerializeField, TagSelector] private string[] _targetTags = { "Player" };
 
@@ -373,4 +371,3 @@ namespace MHZE
             return mat;
         }
     }
-}

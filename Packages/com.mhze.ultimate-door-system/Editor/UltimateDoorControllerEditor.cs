@@ -6,9 +6,7 @@ using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace MHZE.Editor
-{
-    [CustomEditor(typeof(UltimateDoorController))]
+[CustomEditor(typeof(UltimateDoorController))]
     public class UltimateDoorControllerEditor : UnityEditor.Editor
     {
         private VisualElement _rotationSection;
@@ -243,4 +241,3 @@ namespace MHZE.Editor
             root.Add(header);
         }
     }
-}
