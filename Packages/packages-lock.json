@@ -47,7 +47,7 @@
       "source": "embedded",
       "dependencies": {
         "com.unity.inputsystem": "1.4.0",
-        "com.mhze.argevent": "1.0.0"
+        "com.mhze.argevent": "https://github.com/mhzeGit/ArgEventSystem.git?path=Packages/com.mhze.argevent"
       }
     },
     "com.mhze.pickup-system": {
@@ -56,7 +56,7 @@
       "source": "embedded",
       "dependencies": {
         "com.unity.inputsystem": "1.4.0",
-        "com.mhze.argevent": "1.0.0"
+        "com.mhze.argevent": "https://github.com/mhzeGit/ArgEventSystem.git?path=Packages/com.mhze.argevent"
       }
     },
     "com.mhze.throw-system": {
@@ -108,7 +108,7 @@
       "source": "embedded",
       "dependencies": {
         "com.unity.inputsystem": "1.4.0",
-        "com.mhze.argevent": "1.0.0"
+        "com.mhze.argevent": "https://github.com/mhzeGit/ArgEventSystem.git?path=Packages/com.mhze.argevent"
       }
     },
     "com.unity.ai.navigation": {
