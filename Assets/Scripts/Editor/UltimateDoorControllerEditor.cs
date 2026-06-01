@@ -15,6 +15,9 @@ namespace MHZE.Editor
         private VisualElement _slidingSection;
         private VisualElement _triggerGroup;
         private VisualElement _passwordDetails;
+        private VisualElement _proceduralSection;
+        private VisualElement _animationSection;
+        private VisualElement _animatorSection;
 
         public override VisualElement CreateInspectorGUI()
         {
@@ -25,27 +28,44 @@ namespace MHZE.Editor
 
             var so = serializedObject;
 
-            AddSectionHeader(root, "State");
-            root.Add(new PropertyField(so.FindProperty("_state")));
-            var modeField = new PropertyField(so.FindProperty("_mode"));
-            root.Add(modeField);
+            AddSectionHeader(root, "Animation");
+            var animTypeField = new PropertyField(so.FindProperty("_animationType"));
+            root.Add(animTypeField);
 
+            _proceduralSection = new VisualElement();
+            var modeField = new PropertyField(so.FindProperty("_mode"));
+            _proceduralSection.Add(modeField);
             _rotationSection = new VisualElement();
-            AddSectionHeader(_rotationSection, "Rotation Settings");
             _rotationSection.Add(new PropertyField(so.FindProperty("_rotationAxis")));
             _rotationSection.Add(new PropertyField(so.FindProperty("_openAngle")));
-            root.Add(_rotationSection);
-
+            _proceduralSection.Add(_rotationSection);
             _slidingSection = new VisualElement();
-            AddSectionHeader(_slidingSection, "Sliding Settings");
             _slidingSection.Add(new PropertyField(so.FindProperty("_slideAxis")));
             _slidingSection.Add(new PropertyField(so.FindProperty("_slideDistance")));
-            root.Add(_slidingSection);
+            _proceduralSection.Add(_slidingSection);
+            _proceduralSection.Add(new PropertyField(so.FindProperty("_animationDuration")));
+            _proceduralSection.Add(new PropertyField(so.FindProperty("_movementCurve")));
+            _proceduralSection.Add(new PropertyField(so.FindProperty("_allowIntruption"), "Allow Interruption"));
+            root.Add(_proceduralSection);
 
-            AddSectionHeader(root, "Animation");
-            root.Add(new PropertyField(so.FindProperty("_animationDuration")));
-            root.Add(new PropertyField(so.FindProperty("_movementCurve")));
-            root.Add(new PropertyField(so.FindProperty("_allowIntruption"), "Allow Interruption"));
+            _animationSection = new VisualElement();
+            _animationSection.Add(new PropertyField(so.FindProperty("_animationComponent")));
+            _animationSection.Add(new PropertyField(so.FindProperty("_openClip")));
+            _animationSection.Add(new PropertyField(so.FindProperty("_closeClip")));
+            _animationSection.Add(new PropertyField(so.FindProperty("_unlockClip")));
+            _animationSection.Add(new PropertyField(so.FindProperty("_lockClip")));
+            _animationSection.Add(new PropertyField(so.FindProperty("_attemptOpenLockedClip")));
+            root.Add(_animationSection);
+
+            _animatorSection = new VisualElement();
+            _animatorSection.Add(new PropertyField(so.FindProperty("_animatorComponent")));
+            _animatorSection.Add(new PropertyField(so.FindProperty("_openTrigger")));
+            _animatorSection.Add(new PropertyField(so.FindProperty("_closeTrigger")));
+            _animatorSection.Add(new PropertyField(so.FindProperty("_openBool")));
+            _animatorSection.Add(new PropertyField(so.FindProperty("_unlockTrigger")));
+            _animatorSection.Add(new PropertyField(so.FindProperty("_lockTrigger")));
+            _animatorSection.Add(new PropertyField(so.FindProperty("_attemptOpenLockedTrigger")));
+            root.Add(_animatorSection);
 
             AddSectionHeader(root, "Automatic Door");
             var autoOpenField = new PropertyField(so.FindProperty("_autoOpen"), "Auto Open");
@@ -57,6 +77,7 @@ namespace MHZE.Editor
             root.Add(_triggerGroup);
 
             AddSectionHeader(root, "Lock");
+            root.Add(new PropertyField(so.FindProperty("_lockState")));
             var hasPasswordField = new PropertyField(so.FindProperty("_hasPassword"));
             root.Add(hasPasswordField);
             _passwordDetails = new VisualElement();
@@ -69,16 +90,31 @@ namespace MHZE.Editor
             root.Add(new PropertyField(so.FindProperty("OnLocked")));
             root.Add(new PropertyField(so.FindProperty("OnUnlocked")));
             root.Add(new PropertyField(so.FindProperty("OnLockFailed")));
+            root.Add(new PropertyField(so.FindProperty("OnAttemptOpenLocked")));
 
             root.Bind(so);
 
-            UpdateSectionVisibility((UltimateDoorController.DoorMode)so.FindProperty("_mode").enumValueIndex);
+            UpdateSectionVisibility(
+                (UltimateDoorController.DoorMode)so.FindProperty("_mode").enumValueIndex,
+                (UltimateDoorController.AnimationType)so.FindProperty("_animationType").enumValueIndex
+            );
             RefreshTriggerVisibility();
             UpdatePasswordVisibility(so.FindProperty("_hasPassword").boolValue);
 
             modeField.RegisterValueChangeCallback(evt =>
             {
-                UpdateSectionVisibility((UltimateDoorController.DoorMode)evt.changedProperty.enumValueIndex);
+                UpdateSectionVisibility(
+                    (UltimateDoorController.DoorMode)evt.changedProperty.enumValueIndex,
+                    (UltimateDoorController.AnimationType)so.FindProperty("_animationType").enumValueIndex
+                );
+            });
+
+            animTypeField.RegisterValueChangeCallback(evt =>
+            {
+                UpdateSectionVisibility(
+                    (UltimateDoorController.DoorMode)so.FindProperty("_mode").enumValueIndex,
+                    (UltimateDoorController.AnimationType)evt.changedProperty.enumValueIndex
+                );
             });
 
             autoOpenField.RegisterValueChangeCallback(evt => RefreshTriggerVisibility());
@@ -92,12 +128,24 @@ namespace MHZE.Editor
             return root;
         }
 
-        private void UpdateSectionVisibility(UltimateDoorController.DoorMode mode)
+        private void UpdateSectionVisibility(
+            UltimateDoorController.DoorMode mode,
+            UltimateDoorController.AnimationType animType)
         {
-            _rotationSection.style.display = mode == UltimateDoorController.DoorMode.Rotating
+            bool isProcedural = animType == UltimateDoorController.AnimationType.Procedural;
+            _proceduralSection.style.display = isProcedural ? DisplayStyle.Flex : DisplayStyle.None;
+            _animationSection.style.display = animType == UltimateDoorController.AnimationType.Animation
                 ? DisplayStyle.Flex : DisplayStyle.None;
-            _slidingSection.style.display = mode == UltimateDoorController.DoorMode.Sliding
+            _animatorSection.style.display = animType == UltimateDoorController.AnimationType.Animator
                 ? DisplayStyle.Flex : DisplayStyle.None;
+
+            if (isProcedural)
+            {
+                _rotationSection.style.display = mode == UltimateDoorController.DoorMode.Rotating
+                    ? DisplayStyle.Flex : DisplayStyle.None;
+                _slidingSection.style.display = mode == UltimateDoorController.DoorMode.Sliding
+                    ? DisplayStyle.Flex : DisplayStyle.None;
+            }
         }
 
         private void RefreshTriggerVisibility()
