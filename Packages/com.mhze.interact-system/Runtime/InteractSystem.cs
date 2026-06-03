@@ -12,7 +12,7 @@ namespace MHZE.InteractSystem
         [SerializeField] private InputActionReference interactInputAction;
 
         [Header("Raycast Settings")]
-        [SerializeField] private Camera playerCamera;
+        private Camera playerCamera;
         [SerializeField] private LayerMask interactableLayer = -1;
         [SerializeField] private float maxDistance = 5f;
 
