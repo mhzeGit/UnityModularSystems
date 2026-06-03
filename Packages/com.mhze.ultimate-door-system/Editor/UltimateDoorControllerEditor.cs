@@ -213,9 +213,14 @@ namespace MHZE.UltimateDoorSystem.Editor
             so.Update();
             hashField.value = hashProp.stringValue;
         }
-    }
-}
-}
+
+        private static void ApplyPassword(SerializedObject so, SerializedProperty hashProp, string password)
+        {
+            using (SHA256 sha256 = SHA256.Create())
+            {
+                byte[] bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
+                hashProp.stringValue = Convert.ToBase64String(bytes);
+            }
 
             so.ApplyModifiedProperties();
         }
@@ -239,3 +244,4 @@ namespace MHZE.UltimateDoorSystem.Editor
             root.Add(header);
         }
     }
+}

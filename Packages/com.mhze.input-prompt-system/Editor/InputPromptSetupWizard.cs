@@ -51,7 +51,7 @@ namespace MHZE.InputPromptSystem.Editor
 
     private static InputPromptUI FindOrCreateCanvasUI(GameObject canvasPrefab, GameObject textPrefab)
     {
-        var existing = Object.FindFirstObjectByType<InputPromptUI>();
+        var existing = Object.FindAnyObjectByType<InputPromptUI>();
         if (existing != null)
         {
             Undo.RecordObject(existing, "Setup Input Prompt UI");
@@ -97,7 +97,7 @@ namespace MHZE.InputPromptSystem.Editor
 
     private static void FindOrCreateManager(InputPromptUI promptUI, InputBindingIconLibrary iconLibrary, InputPromptCollection promptCollection)
     {
-        var existing = Object.FindFirstObjectByType<InputPromptManager>();
+        var existing = Object.FindAnyObjectByType<InputPromptManager>();
         if (existing != null)
         {
             Undo.RecordObject(existing, "Setup Input Prompt Manager");

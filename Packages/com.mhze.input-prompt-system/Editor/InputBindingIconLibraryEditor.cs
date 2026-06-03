@@ -7,7 +7,7 @@ using UnityEngine.InputSystem;
 namespace MHZE.InputPromptSystem.Editor
 {
     [CustomEditor(typeof(InputBindingIconLibrary))]
-    public class InputBindingIconLibraryEditor : Editor
+    public class InputBindingIconLibraryEditor : UnityEditor.Editor
 {
     private InputActionReference sourceAction;
     private int selectedBindingIndex;
