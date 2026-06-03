@@ -1,5 +1,8 @@
 using UnityEngine;
 
-public class TagSelectorAttribute : PropertyAttribute
+namespace MHZE.UltimateTriggerSystem
 {
+    public class TagSelectorAttribute : PropertyAttribute
+    {
+    }
 }

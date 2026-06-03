@@ -1,8 +1,8 @@
 {
-  "name": "com.modular.firstperson-controller.Editor",
-  "rootNamespace": "ModularSystems.FirstPersonController.Editor",
+  "name": "com.mhze.firstperson-controller.Editor",
+  "rootNamespace": "MHZE.FirstPersonController.Editor",
   "references": [
-    "com.modular.firstperson-controller.Runtime"
+    "com.mhze.firstperson-controller.Runtime"
   ],
   "includePlatforms": ["Editor"],
   "excludePlatforms": [],

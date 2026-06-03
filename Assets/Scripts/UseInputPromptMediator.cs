@@ -1,4 +1,5 @@
 using MHZE.InputPromptSystem;
+using MHZE.UseSystem;
 using UnityEngine;
 
 public class UseInputPromptMediator : MonoBehaviour

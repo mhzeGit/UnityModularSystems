@@ -1,5 +1,6 @@
 {
   "name": "com.mhze.ultimate-door-system.Runtime",
+  "rootNamespace": "MHZE.UltimateDoorSystem",
   "references": [
     "com.mhze.argevent.Runtime"
   ],

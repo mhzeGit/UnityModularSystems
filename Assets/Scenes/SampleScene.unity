@@ -956,7 +956,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 439615641}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: -5, y: 0, z: -5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -1024,6 +1024,17 @@ MonoBehaviour:
     _listeners: []
   OnUsedItemOnTargetEvent:
     _listeners: []
+--- !u!114 &515654375 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3585882969646142804, guid: 6032907c50ac0954f97b3693d74dee3f, type: 3}
+  m_PrefabInstance: {fileID: 4788414468706829591}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 515654364}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1f0e1e1ff545ea244b10fdbc5bc2813b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.mhze.pickup-system.Runtime::MHZE.PickupSystem.PickableItemBase
 --- !u!1 &553967128
 GameObject:
   m_ObjectHideFlags: 0
@@ -1157,7 +1168,14 @@ MonoBehaviour:
     usePromptPrefix: Press
     usePromptSuffix: To Destryoo
   OnUsedAtTargetEvent:
-    _listeners: []
+    _listeners:
+    - _enabled: 0
+      _target: {fileID: 0}
+      _gameObject: {fileID: 553967128}
+      _methodName: 
+      _methodDisplayName: 
+      _customLabel: 
+      _parameters: []
 --- !u!114 &553967135
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1367,6 +1385,98 @@ MonoBehaviour:
   PlayerArmBase: {fileID: 0}
   PickableObjectHolder: {fileID: 1364816171}
   DropInputAction: {fileID: 7727032971491509709, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+--- !u!1 &644913258
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 644913259}
+  - component: {fileID: 644913261}
+  - component: {fileID: 644913260}
+  m_Layer: 0
+  m_Name: PlayerCamera
+  m_TagString: MainCamera
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &644913259
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 644913258}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1829612873}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!81 &644913260
+AudioListener:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 644913258}
+  m_Enabled: 1
+--- !u!20 &644913261
+Camera:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 644913258}
+  m_Enabled: 1
+  serializedVersion: 2
+  m_ClearFlags: 1
+  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_projectionMatrixMode: 1
+  m_GateFitMode: 2
+  m_FOVAxisMode: 0
+  m_Iso: 200
+  m_ShutterSpeed: 0.005
+  m_Aperture: 16
+  m_FocusDistance: 10
+  m_FocalLength: 50
+  m_BladeCount: 5
+  m_Curvature: {x: 2, y: 11}
+  m_BarrelClipping: 0.25
+  m_Anamorphism: 0
+  m_SensorSize: {x: 36, y: 24}
+  m_LensShift: {x: 0, y: 0}
+  m_NormalizedViewPortRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  near clip plane: 0.05
+  far clip plane: 1000
+  field of view: 80
+  orthographic: 0
+  orthographic size: 5
+  m_Depth: 0
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_RenderingPath: -1
+  m_TargetTexture: {fileID: 0}
+  m_TargetDisplay: 0
+  m_TargetEye: 3
+  m_HDR: 1
+  m_AllowMSAA: 1
+  m_AllowDynamicResolution: 0
+  m_ForceIntoRT: 0
+  m_OcclusionCulling: 1
+  m_StereoConvergence: 10
+  m_StereoSeparation: 0.022
 --- !u!1 &696219158
 GameObject:
   m_ObjectHideFlags: 0
@@ -1471,8 +1581,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 958302324}
-  - component: {fileID: 958302326}
   - component: {fileID: 958302327}
+  - component: {fileID: 958302328}
   m_Layer: 0
   m_Name: DoorBase
   m_TagString: Untagged
@@ -1496,7 +1606,28 @@ Transform:
   - {fileID: 150426522}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &958302326
+--- !u!65 &958302327
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 958302323}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.0222119, y: 2.0137215, z: 1.3270524}
+  m_Center: {x: -0.48750776, y: 0.9803012, z: 0}
+--- !u!114 &958302328
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1505,15 +1636,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 958302323}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ac392e45e9ea142458b43cddb521c56f, type: 3}
+  m_Script: {fileID: 11500000, guid: cd276437d10ba5a4e813f724631f1d22, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DoorController
+  m_EditorClassIdentifier: com.mhze.ultimate-door-system.Runtime::UltimateDoorController
   _state: 1
+  _lockState: 0
+  _animationType: 0
   _mode: 0
-  _rotationAxis: {x: 0, y: 1, z: 0}
-  _openAngle: 90
-  _slideAxis: {x: 1, y: 0, z: 0}
-  _slideDistance: 1
   _animationDuration: 0.5
   _movementCurve:
     serializedVersion: 2
@@ -1539,179 +1668,69 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  _allowIntruption: 1
+  _rotationAxis: {x: 0, y: 1, z: 0}
+  _openAngle: 90
+  _slideAxis: {x: 1, y: 0, z: 0}
+  _slideDistance: 2
   _autoOpen: 1
   _autoClose: 1
   _triggerLayer:
     serializedVersion: 2
     m_Bits: 64
-  _allowIntruption: 1
   _hasPassword: 0
   _passwordHash: 
+  _animationComponent: {fileID: 0}
+  _openClip: {fileID: 0}
+  _closeClip: {fileID: 0}
+  _unlockClip: {fileID: 0}
+  _lockClip: {fileID: 0}
+  _attemptOpenLockedClip: {fileID: 0}
+  _animatorComponent: {fileID: 0}
+  _openTrigger: Open
+  _closeTrigger: Close
+  _openBool: isOpen
+  _unlockTrigger: Unlock
+  _lockTrigger: Lock
+  _attemptOpenLockedTrigger: AttemptOpenLocked
   OnOpened:
-    _listeners:
-    - _enabled: 1
-      _target: {fileID: 1450565037}
-      _gameObject: {fileID: 0}
-      _methodName: SetPromptSuffix
-      _methodDisplayName: void SetPromptSuffix(string value)
-      _customLabel: 
-      _parameters:
-      - _parameterName: value
-        _parameterTypeName: System.String, mscorlib, Version=4.0.0.0, Culture=neutral,
-          PublicKeyToken=b77a5c561934e089
-        _source: 0
-        _sourceComponent: {fileID: 0}
-        _sourceMemberName: 
-        _eventVariableName: 
-        _eventArgIndex: 0
-        _intValue: 0
-        _floatValue: 0
-        _doubleValue: 0
-        _longValue: 0
-        _boolValue: 0
-        _stringValue: To Close Door
-        _vector2Value: {x: 0, y: 0}
-        _vector3Value: {x: 0, y: 0, z: 0}
-        _vector4Value: {x: 0, y: 0, z: 0, w: 0}
-        _colorValue: {r: 1, g: 1, b: 1, a: 1}
-        _rectValue:
-          serializedVersion: 2
-          x: 0
-          y: 0
-          width: 1
-          height: 1
-        _boundsValue:
-          m_Center: {x: 0, y: 0, z: 0}
-          m_Extent: {x: 0.5, y: 0.5, z: 0.5}
-        _curveValue:
-          serializedVersion: 2
-          m_Curve: []
-          m_PreInfinity: 0
-          m_PostInfinity: 0
-          m_RotationOrder: 0
-        _gradientValue:
-          serializedVersion: 2
-          key0: {r: 0, g: 0, b: 0, a: 0}
-          key1: {r: 0, g: 0, b: 0, a: 0}
-          key2: {r: 0, g: 0, b: 0, a: 0}
-          key3: {r: 0, g: 0, b: 0, a: 0}
-          key4: {r: 0, g: 0, b: 0, a: 0}
-          key5: {r: 0, g: 0, b: 0, a: 0}
-          key6: {r: 0, g: 0, b: 0, a: 0}
-          key7: {r: 0, g: 0, b: 0, a: 0}
-          ctime0: 0
-          ctime1: 65535
-          ctime2: 0
-          ctime3: 0
-          ctime4: 0
-          ctime5: 0
-          ctime6: 0
-          ctime7: 0
-          atime0: 0
-          atime1: 65535
-          atime2: 0
-          atime3: 0
-          atime4: 0
-          atime5: 0
-          atime6: 0
-          atime7: 0
-          m_Mode: 0
-          m_ColorSpace: 0
-          m_NumColorKeys: 2
-          m_NumAlphaKeys: 2
-        _layerMaskValue:
-          serializedVersion: 2
-          m_Bits: 0
-        _objectValue: {fileID: 0}
+    _listeners: []
   OnClosed:
-    _listeners:
-    - _enabled: 1
-      _target: {fileID: 1450565037}
-      _gameObject: {fileID: 0}
-      _methodName: SetPromptSuffix
-      _methodDisplayName: void SetPromptSuffix(string value)
-      _customLabel: 
-      _parameters:
-      - _parameterName: value
-        _parameterTypeName: System.String, mscorlib, Version=4.0.0.0, Culture=neutral,
-          PublicKeyToken=b77a5c561934e089
-        _source: 0
-        _sourceComponent: {fileID: 0}
-        _sourceMemberName: 
-        _eventVariableName: 
-        _eventArgIndex: 0
-        _intValue: 0
-        _floatValue: 0
-        _doubleValue: 0
-        _longValue: 0
-        _boolValue: 0
-        _stringValue: To Open Door
-        _vector2Value: {x: 0, y: 0}
-        _vector3Value: {x: 0, y: 0, z: 0}
-        _vector4Value: {x: 0, y: 0, z: 0, w: 0}
-        _colorValue: {r: 1, g: 1, b: 1, a: 1}
-        _rectValue:
-          serializedVersion: 2
-          x: 0
-          y: 0
-          width: 1
-          height: 1
-        _boundsValue:
-          m_Center: {x: 0, y: 0, z: 0}
-          m_Extent: {x: 0.5, y: 0.5, z: 0.5}
-        _curveValue:
-          serializedVersion: 2
-          m_Curve: []
-          m_PreInfinity: 0
-          m_PostInfinity: 0
-          m_RotationOrder: 0
-        _gradientValue:
-          serializedVersion: 2
-          key0: {r: 0, g: 0, b: 0, a: 0}
-          key1: {r: 0, g: 0, b: 0, a: 0}
-          key2: {r: 0, g: 0, b: 0, a: 0}
-          key3: {r: 0, g: 0, b: 0, a: 0}
-          key4: {r: 0, g: 0, b: 0, a: 0}
-          key5: {r: 0, g: 0, b: 0, a: 0}
-          key6: {r: 0, g: 0, b: 0, a: 0}
-          key7: {r: 0, g: 0, b: 0, a: 0}
-          ctime0: 0
-          ctime1: 65535
-          ctime2: 0
-          ctime3: 0
-          ctime4: 0
-          ctime5: 0
-          ctime6: 0
-          ctime7: 0
-          atime0: 0
-          atime1: 65535
-          atime2: 0
-          atime3: 0
-          atime4: 0
-          atime5: 0
-          atime6: 0
-          atime7: 0
-          m_Mode: 0
-          m_ColorSpace: 0
-          m_NumColorKeys: 2
-          m_NumAlphaKeys: 2
-        _layerMaskValue:
-          serializedVersion: 2
-          m_Bits: 0
-        _objectValue: {fileID: 0}
+    _listeners: []
   OnLocked:
     _listeners: []
   OnUnlocked:
     _listeners: []
   OnLockFailed:
     _listeners: []
---- !u!65 &958302327
-BoxCollider:
+  OnAttemptOpenLocked:
+    _listeners: []
+--- !u!1 &968367673
+GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 958302323}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 968367677}
+  - component: {fileID: 968367676}
+  - component: {fileID: 968367675}
+  - component: {fileID: 968367674}
+  m_Layer: 0
+  m_Name: FPC_Physics
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!136 &968367674
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 968367673}
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -1720,12 +1739,81 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 1
+  m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1.0222119, y: 2.0137215, z: 1.3270524}
-  m_Center: {x: -0.48750776, y: 0.9803012, z: 0}
+  serializedVersion: 2
+  m_Radius: 0.3
+  m_Height: 1.8
+  m_Direction: 1
+  m_Center: {x: 0, y: 0.9, z: 0}
+--- !u!54 &968367675
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 968367673}
+  serializedVersion: 5
+  m_Mass: 75
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 0
+  m_Interpolate: 1
+  m_Constraints: 112
+  m_CollisionDetection: 2
+--- !u!114 &968367676
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 968367673}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5ad3be151be8e1549a9df67c4251cd4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.modular.firstperson-controller.Runtime::ModularSystems.FirstPersonController.FirstPersonController
+  physicsMode: 1
+  characterController: {fileID: 0}
+  playerRigidbody: {fileID: 968367675}
+  playerCapsule: {fileID: 968367674}
+  playerCamera: {fileID: 644913261}
+  cameraPivot: {fileID: 1829612873}
+  settings: {fileID: 11400000, guid: 58e841d5fd45dfd4d8819f1afcd0013a, type: 2}
+  moveAction: {fileID: 0}
+  lookAction: {fileID: 0}
+  jumpAction: {fileID: 0}
+  crouchAction: {fileID: 0}
+  sprintAction: {fileID: 0}
+--- !u!4 &968367677
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 968367673}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1829612873}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &980384542
 GameObject:
   m_ObjectHideFlags: 0
@@ -1931,7 +2019,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1025130632}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: -5, y: 0, z: 5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -1999,10 +2087,84 @@ MonoBehaviour:
   _targetTags:
   - Player
   _useOnEnter: 1
-  _useOnStay: 1
-  _useOnExit: 1
+  _useOnStay: 0
+  _useOnExit: 0
   OnEnter:
-    _listeners: []
+    _listeners:
+    - _enabled: 1
+      _target: {fileID: 958302328}
+      _gameObject: {fileID: 0}
+      _methodName: Toggle
+      _methodDisplayName: void Toggle(Transform interactor)
+      _customLabel: 
+      _parameters:
+      - _parameterName: interactor
+        _parameterTypeName: UnityEngine.Transform, UnityEngine.CoreModule, Version=0.0.0.0,
+          Culture=neutral, PublicKeyToken=null
+        _source: 0
+        _sourceComponent: {fileID: 0}
+        _sourceMemberName: 
+        _eventVariableName: 
+        _eventArgIndex: 0
+        _intValue: 0
+        _floatValue: 0
+        _doubleValue: 0
+        _longValue: 0
+        _boolValue: 0
+        _stringValue: 
+        _vector2Value: {x: 0, y: 0}
+        _vector3Value: {x: 0, y: 0, z: 0}
+        _vector4Value: {x: 0, y: 0, z: 0, w: 0}
+        _colorValue: {r: 1, g: 1, b: 1, a: 1}
+        _rectValue:
+          serializedVersion: 2
+          x: 0
+          y: 0
+          width: 1
+          height: 1
+        _boundsValue:
+          m_Center: {x: 0, y: 0, z: 0}
+          m_Extent: {x: 0.5, y: 0.5, z: 0.5}
+        _curveValue:
+          serializedVersion: 2
+          m_Curve: []
+          m_PreInfinity: 0
+          m_PostInfinity: 0
+          m_RotationOrder: 0
+        _gradientValue:
+          serializedVersion: 2
+          key0: {r: 0, g: 0, b: 0, a: 0}
+          key1: {r: 0, g: 0, b: 0, a: 0}
+          key2: {r: 0, g: 0, b: 0, a: 0}
+          key3: {r: 0, g: 0, b: 0, a: 0}
+          key4: {r: 0, g: 0, b: 0, a: 0}
+          key5: {r: 0, g: 0, b: 0, a: 0}
+          key6: {r: 0, g: 0, b: 0, a: 0}
+          key7: {r: 0, g: 0, b: 0, a: 0}
+          ctime0: 0
+          ctime1: 65535
+          ctime2: 0
+          ctime3: 0
+          ctime4: 0
+          ctime5: 0
+          ctime6: 0
+          ctime7: 0
+          atime0: 0
+          atime1: 65535
+          atime2: 0
+          atime3: 0
+          atime4: 0
+          atime5: 0
+          atime6: 0
+          atime7: 0
+          m_Mode: 0
+          m_ColorSpace: 0
+          m_NumColorKeys: 2
+          m_NumAlphaKeys: 2
+        _layerMaskValue:
+          serializedVersion: 2
+          m_Bits: 0
+        _objectValue: {fileID: 1940762176}
   OnStay:
     _listeners: []
   OnExit:
@@ -2201,7 +2363,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1354315426}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 5, y: 0, z: -5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -2373,7 +2535,7 @@ MonoBehaviour:
   OnInteractedWithEvent:
     _listeners:
     - _enabled: 1
-      _target: {fileID: 958302326}
+      _target: {fileID: 958302328}
       _gameObject: {fileID: 0}
       _methodName: Toggle
       _methodDisplayName: void Toggle(Transform interactor)
@@ -2445,7 +2607,7 @@ MonoBehaviour:
         _layerMaskValue:
           serializedVersion: 2
           m_Bits: 0
-        _objectValue: {fileID: 1940762176}
+        _objectValue: {fileID: 0}
 --- !u!1 &1594471776
 GameObject:
   m_ObjectHideFlags: 0
@@ -2658,6 +2820,38 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc9510b82352e1b4ca97460a934fa74c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: com.mhze.input-prompt-system.Runtime::MHZE.InputPromptSystem.InputPromptUI
+--- !u!1 &1829612872
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1829612873}
+  m_Layer: 0
+  m_Name: CameraPivot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1829612873
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1829612872}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 1.65, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 644913259}
+  m_Father: {fileID: 968367677}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1925224629
 GameObject:
   m_ObjectHideFlags: 0
@@ -2905,7 +3099,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2136329609}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 5, y: 0, z: 5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -2921,8 +3115,32 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 1297221679967118853, guid: 6032907c50ac0954f97b3693d74dee3f, type: 3}
+      propertyPath: OnInteractedWithEvent._listeners.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1297221679967118853, guid: 6032907c50ac0954f97b3693d74dee3f, type: 3}
+      propertyPath: OnInteractedWithEvent._listeners.Array.data[0]._target
+      value: 
+      objectReference: {fileID: 515654375}
+    - target: {fileID: 1297221679967118853, guid: 6032907c50ac0954f97b3693d74dee3f, type: 3}
+      propertyPath: OnInteractedWithEvent._listeners.Array.data[0]._enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1297221679967118853, guid: 6032907c50ac0954f97b3693d74dee3f, type: 3}
+      propertyPath: OnInteractedWithEvent._listeners.Array.data[0]._gameObject
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 1297221679967118853, guid: 6032907c50ac0954f97b3693d74dee3f, type: 3}
+      propertyPath: OnInteractedWithEvent._listeners.Array.data[0]._methodName
+      value: Pickup
+      objectReference: {fileID: 0}
+    - target: {fileID: 1297221679967118853, guid: 6032907c50ac0954f97b3693d74dee3f, type: 3}
       propertyPath: OnInteractedWithEvent.m_PersistentCalls.m_Calls.Array.size
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1297221679967118853, guid: 6032907c50ac0954f97b3693d74dee3f, type: 3}
+      propertyPath: OnInteractedWithEvent._listeners.Array.data[0]._methodDisplayName
+      value: void Pickup()
       objectReference: {fileID: 0}
     - target: {fileID: 1297221679967118853, guid: 6032907c50ac0954f97b3693d74dee3f, type: 3}
       propertyPath: OnInteractedWithEvent.m_PersistentCalls.m_Calls.Array.data[1].m_Mode
@@ -2954,7 +3172,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8431694060813017753, guid: 6032907c50ac0954f97b3693d74dee3f, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: -0.908
       objectReference: {fileID: 0}
     - target: {fileID: 8431694060813017753, guid: 6032907c50ac0954f97b3693d74dee3f, type: 3}
       propertyPath: m_LocalPosition.y
@@ -3008,10 +3226,10 @@ SceneRoots:
   - {fileID: 4771945}
   - {fileID: 410087041}
   - {fileID: 832575519}
-  - {fileID: 439615645}
-  - {fileID: 1025130636}
-  - {fileID: 1354315430}
   - {fileID: 2136329613}
+  - {fileID: 1354315430}
+  - {fileID: 1025130636}
+  - {fileID: 439615645}
   - {fileID: 4788414468706829591}
   - {fileID: 553967133}
   - {fileID: 1940762176}
@@ -3022,3 +3240,4 @@ SceneRoots:
   - {fileID: 1133506659}
   - {fileID: 958302324}
   - {fileID: 352262970}
+  - {fileID: 968367677}

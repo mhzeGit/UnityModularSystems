@@ -2,7 +2,9 @@ using System;
 using UnityEngine;
 using ArgEvent;
 
-public class UsableItemBase : MonoBehaviour, IUsable
+namespace MHZE.UseSystem
+{
+    public class UsableItemBase : MonoBehaviour, IUsable
 {
     [Header("Use Settings")]
     [SerializeField] bool isUsable;
@@ -38,4 +40,5 @@ public class UsableItemBase : MonoBehaviour, IUsable
         OnUsedItemOnTarget?.Invoke(targetObject, useTargetname);
         OnUsedItemOnTargetEvent.Invoke();
     }
+}
 }

@@ -2,7 +2,7 @@
 
 using UnityEngine;
 
-namespace ModularSystems.FirstPersonController
+namespace MHZE.FirstPersonController
 {
     /// <summary>
     /// Abstracts the low-level movement mechanism behind a common interface.

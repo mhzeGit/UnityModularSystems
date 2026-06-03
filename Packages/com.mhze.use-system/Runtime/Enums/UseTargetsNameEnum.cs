@@ -1,6 +1,8 @@
 //Made By MHZE
 
-public enum UseTargetsName
+namespace MHZE.UseSystem
+{
+    public enum UseTargetsName
 {
     Default,
     PlantableSoil,
@@ -12,7 +14,5 @@ public enum UseTargetsName
     Rock,
     Bag,
     Crops,
-    
-
-
+    }
 }

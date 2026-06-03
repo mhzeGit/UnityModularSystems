@@ -5,8 +5,11 @@ using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
+using MHZE.UltimateDoorSystem;
 
-[CustomEditor(typeof(UltimateDoorController))]
+namespace MHZE.UltimateDoorSystem.Editor
+{
+    [CustomEditor(typeof(UltimateDoorController))]
     public class UltimateDoorControllerEditor : UnityEditor.Editor
     {
         private VisualElement _rotationSection;
@@ -210,14 +213,9 @@ using UnityEngine.UIElements;
             so.Update();
             hashField.value = hashProp.stringValue;
         }
-
-        private static void ApplyPassword(SerializedObject so, SerializedProperty hashProp, string password)
-        {
-            using (SHA256 sha256 = SHA256.Create())
-            {
-                byte[] bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
-                hashProp.stringValue = Convert.ToBase64String(bytes);
-            }
+    }
+}
+}
 
             so.ApplyModifiedProperties();
         }

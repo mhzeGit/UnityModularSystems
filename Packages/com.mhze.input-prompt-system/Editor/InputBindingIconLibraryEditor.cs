@@ -4,8 +4,10 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-[CustomEditor(typeof(InputBindingIconLibrary))]
-public class InputBindingIconLibraryEditor : Editor
+namespace MHZE.InputPromptSystem.Editor
+{
+    [CustomEditor(typeof(InputBindingIconLibrary))]
+    public class InputBindingIconLibraryEditor : Editor
 {
     private InputActionReference sourceAction;
     private int selectedBindingIndex;
@@ -151,4 +153,5 @@ public class InputBindingIconLibraryEditor : Editor
 
         return -1;
     }
+}
 }

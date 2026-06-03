@@ -5,7 +5,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using ArgEvent;
 
-public class UseTargetBase : MonoBehaviour, IUsableTarget
+namespace MHZE.UseSystem
+{
+    public class UseTargetBase : MonoBehaviour, IUsableTarget
 {
     [SerializeField] bool canUseAtTarget = true;
 
@@ -94,4 +96,5 @@ public class UseTargetBase : MonoBehaviour, IUsableTarget
     }
 
 
+}
 }

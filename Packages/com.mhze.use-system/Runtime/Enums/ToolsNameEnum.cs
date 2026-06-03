@@ -1,6 +1,8 @@
 //Made By MHZE
 
-public enum ToolsName
+namespace MHZE.UseSystem
+{
+    public enum ToolsName
 {
     Default,
     Hand,
@@ -11,6 +13,5 @@ public enum ToolsName
     Sickle,
     Crop,
     StrawBag,
-
-
+    }
 }

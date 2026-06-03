@@ -3,7 +3,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace ModularSystems.FirstPersonController
+namespace MHZE.FirstPersonController
 {
     [CreateAssetMenu(fileName = "FPCHeadbobSettings", menuName = "First Person Controller/Headbob Settings", order = 2)]
     public class FPCHeadbobSettings : ScriptableObject

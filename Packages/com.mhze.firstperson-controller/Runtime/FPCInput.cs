@@ -4,7 +4,7 @@ using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace ModularSystems.FirstPersonController
+namespace MHZE.FirstPersonController
 {
     /// <summary>
     /// Reads input actions and exposes clean polling values and edge-detect events.

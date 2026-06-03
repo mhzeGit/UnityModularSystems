@@ -1,5 +1,6 @@
 {
   "name": "com.mhze.ultimate-trigger-system.Editor",
+  "rootNamespace": "MHZE.UltimateTriggerSystem.Editor",
   "references": [
     "com.mhze.ultimate-trigger-system.Runtime"
   ],

@@ -5,7 +5,9 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class UseSystem : MonoBehaviour
+namespace MHZE.UseSystem
+{
+    public class UseSystem : MonoBehaviour
 {
     [Header("Inputs")]
     [SerializeField] InputActionReference UseInputAction;
@@ -197,4 +199,5 @@ public class UseSystem : MonoBehaviour
         currentUsableTarget.Used((currentHeldItem as MonoBehaviour)?.gameObject, toolNameToCheck, lastHitTargetResults);
         OnUseItemAtTarget?.Invoke(currentHeldItem, currentUsableTarget);
     }
+}
 }

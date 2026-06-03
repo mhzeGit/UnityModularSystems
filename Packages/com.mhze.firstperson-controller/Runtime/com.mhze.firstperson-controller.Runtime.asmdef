@@ -1,11 +1,10 @@
 {
-  "name": "com.modular.freeform-camera.Editor",
-  "rootNamespace": "ModularSystems.FreeformCamera.Editor",
+  "name": "com.mhze.firstperson-controller.Runtime",
+  "rootNamespace": "MHZE.FirstPersonController",
   "references": [
-    "com.modular.freeform-camera.Runtime",
     "Unity.InputSystem"
   ],
-  "includePlatforms": ["Editor"],
+  "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
   "overrideReferences": false,

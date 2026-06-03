@@ -1,6 +1,6 @@
 {
-  "name": "com.modular.freeform-camera.Runtime",
-  "rootNamespace": "ModularSystems.FreeformCamera",
+  "name": "com.mhze.freeform-camera.Runtime",
+  "rootNamespace": "MHZE.FreeformCamera",
   "references": [
     "Unity.InputSystem"
   ],

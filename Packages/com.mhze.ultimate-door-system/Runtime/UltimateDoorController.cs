@@ -5,7 +5,9 @@ using System.Text;
 using UnityEngine;
 using ArgEvent;
 
-public class UltimateDoorController : MonoBehaviour
+namespace MHZE.UltimateDoorSystem
+{
+    public class UltimateDoorController : MonoBehaviour
 {
     public enum DoorState { Open, Closed, Locked }
     public enum DoorMode { Rotating, Sliding }
@@ -436,4 +438,5 @@ public class UltimateDoorController : MonoBehaviour
             return Convert.ToBase64String(bytes);
         }
     }
+}
 }

@@ -1,6 +1,6 @@
 // Defines enums and a struct for tracking the player's current state. FPCGroundState tracks grounded/jumping/falling/landing. FPCPosture tracks standing/crouching/transitioning. FPCState bundles these together with movement flags and force-move/look indicators for event consumers.
 
-namespace ModularSystems.FirstPersonController
+namespace MHZE.FirstPersonController
 {
     public enum FPCGroundState
     {

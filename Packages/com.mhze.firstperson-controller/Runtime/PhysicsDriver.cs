@@ -2,7 +2,7 @@
 
 using UnityEngine;
 
-namespace ModularSystems.FirstPersonController
+namespace MHZE.FirstPersonController
 {
     public class PhysicsDriver : IFPCMovementDriver
     {

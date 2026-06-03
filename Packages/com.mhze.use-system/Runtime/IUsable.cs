@@ -2,7 +2,9 @@
 
 using UnityEngine;
 
-public interface IUsable
+namespace MHZE.UseSystem
+{
+    public interface IUsable
 {
 
     // Called when tool is used.
@@ -17,8 +19,5 @@ public interface IUsable
     float GetUseCooldown();
 
     void OnUsedOnTarget(GameObject targetObject, UseTargetsName useTargetname);
-   
-
-
-
+    }
 }

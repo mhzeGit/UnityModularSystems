@@ -2,7 +2,9 @@ using MHZE.InputPromptSystem;
 using UnityEditor;
 using UnityEngine;
 
-public static class InputPromptSetupWizard
+namespace MHZE.InputPromptSystem.Editor
+{
+    public static class InputPromptSetupWizard
 {
     [MenuItem("Tools/Input Prompt System/Setup Input Prompt", false, 100)]
     public static void SetupInputPrompt()
@@ -132,4 +134,5 @@ public static class InputPromptSetupWizard
         var path = AssetDatabase.GUIDToAssetPath(guids[0]);
         return AssetDatabase.LoadAssetAtPath<T>(path);
     }
+}
 }

@@ -1,5 +1,6 @@
 {
   "name": "com.mhze.use-system.Runtime",
+  "rootNamespace": "MHZE.UseSystem",
   "references": [
     "Unity.InputSystem",
     "com.mhze.argevent.Runtime"

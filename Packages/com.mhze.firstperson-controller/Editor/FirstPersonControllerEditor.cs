@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEngine;
 using System.IO;
 
-namespace ModularSystems.FirstPersonController.Editor
+namespace MHZE.FirstPersonController.Editor
 {
     [CustomEditor(typeof(FirstPersonController))]
     public class FirstPersonControllerEditor : UnityEditor.Editor

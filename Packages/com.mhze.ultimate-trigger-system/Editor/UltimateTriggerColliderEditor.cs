@@ -2,8 +2,11 @@ using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
+using MHZE.UltimateTriggerSystem;
 
-[CustomEditor(typeof(UltimateTriggerCollider))]
+namespace MHZE.UltimateTriggerSystem.Editor
+{
+    [CustomEditor(typeof(UltimateTriggerCollider))]
     public class UltimateTriggerColliderEditor : UnityEditor.Editor
     {
         public override VisualElement CreateInspectorGUI()
@@ -73,3 +76,4 @@ using UnityEngine.UIElements;
             });
         }
     }
+}

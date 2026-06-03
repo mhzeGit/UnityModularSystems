@@ -2,7 +2,7 @@
 
 using UnityEngine;
 
-namespace ModularSystems.FirstPersonController
+namespace MHZE.FirstPersonController
 {
     [CreateAssetMenu(fileName = "FPCSettings", menuName = "First Person Controller/Settings", order = 1)]
     public class FPCSettings : ScriptableObject

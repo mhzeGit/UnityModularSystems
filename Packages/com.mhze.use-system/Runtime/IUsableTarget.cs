@@ -3,7 +3,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public interface IUsableTarget
+namespace MHZE.UseSystem
+{
+    public interface IUsableTarget
 {
     bool GetCanUseAtTarget();
     void SetCanUseAtTarget(bool Bool);
@@ -12,4 +14,5 @@ public interface IUsableTarget
     UseTargetsName GetUseTargetName();
     string GetUsePromptPrefix(ToolsName toolname);
     string GetUsePromptSuffix(ToolsName toolname);
+}
 }

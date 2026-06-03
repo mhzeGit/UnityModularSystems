@@ -1,5 +1,6 @@
 {
   "name": "com.mhze.ultimate-door-system.Editor",
+  "rootNamespace": "MHZE.UltimateDoorSystem.Editor",
   "references": [
     "com.mhze.ultimate-door-system.Runtime"
   ],

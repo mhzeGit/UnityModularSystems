@@ -1,8 +1,11 @@
 using UnityEditor;
 using UnityEngine;
+using MHZE.UltimateTriggerSystem;
 
-[CustomPropertyDrawer(typeof(TagSelectorAttribute))]
-public class TagSelectorDrawer : PropertyDrawer
+namespace MHZE.UltimateTriggerSystem.Editor
+{
+    [CustomPropertyDrawer(typeof(TagSelectorAttribute))]
+    public class TagSelectorDrawer : PropertyDrawer
 {
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
     {
@@ -17,4 +20,5 @@ public class TagSelectorDrawer : PropertyDrawer
             EditorGUI.PropertyField(position, property, label);
         }
     }
+}
 }

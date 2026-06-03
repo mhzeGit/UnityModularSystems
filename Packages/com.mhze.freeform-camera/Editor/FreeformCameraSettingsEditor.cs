@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace ModularSystems.FreeformCamera.Editor
+namespace MHZE.FreeformCamera.Editor
 {
     public class FreeformCameraSettingsEditor : EditorWindow
     {

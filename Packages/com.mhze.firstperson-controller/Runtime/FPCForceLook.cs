@@ -2,7 +2,7 @@
 
 using UnityEngine;
 
-namespace ModularSystems.FirstPersonController
+namespace MHZE.FirstPersonController
 {
     /// <summary>
     /// Thin wrapper around FPCLook's force-look functionality with a simpler public API.
