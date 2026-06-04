@@ -10,6 +10,10 @@ namespace MHZE.PickupSystem
 
         public Transform PlayerArmBase;
         public Transform PickableObjectHolder;
+
+        [Header("Pickup Behaviour")]
+        [SerializeField] private bool dropOnPickup = false;
+
         [Header("Inputs")]
         [SerializeField] InputActionReference DropInputAction;
 
@@ -123,6 +127,13 @@ namespace MHZE.PickupSystem
 
             if (currentPickableItem != null)
             {
+                if (dropOnPickup)
+                {
+                    DropObject(currentPickedObject, currentPickableItem);
+                    PickupObject(interactedObject, pickable);
+                    return;
+                }
+
                 attemptedPickableItem = pickable;
                 attemptedPickableObject = interactedObject;
 
