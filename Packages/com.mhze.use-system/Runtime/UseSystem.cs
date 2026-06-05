@@ -36,7 +36,8 @@ namespace MHZE.UseSystem
 
         private void Awake()
         {
-            mainCamera = Camera.main;
+            if (mainCamera == null)
+                mainCamera = Camera.main;
         }
 
         private void Start()
@@ -50,7 +51,7 @@ namespace MHZE.UseSystem
             currentHeldItem = playerHand != null ? playerHand.GetComponentInChildren<IUsable>() : null;
         }
 
-        Camera mainCamera;
+        [SerializeField] Camera mainCamera;
 
         private void Update()
         {
