@@ -1,23 +1,17 @@
-//Made By MHZE
-
 using UnityEngine;
 
 namespace MHZE.UseSystem
 {
     public interface IUsable
-{
+    {
+        void OnUsed(GameObject targetObject, string targetId);
 
-    // Called when tool is used.
-    void OnUsed(GameObject targetObject, UseTargetsName useTargetname);
+        string GetToolId();
 
-    // Returns the type name of this tool
-    ToolsName GetToolName();
+        bool GetIsUsable();
+        float GetUseImpactDelay();
+        float GetUseCooldown();
 
-    // Returns if this tool usable or not
-    bool GetIsUsable();
-    float GetUseImpactDelay();
-    float GetUseCooldown();
-
-    void OnUsedOnTarget(GameObject targetObject, UseTargetsName useTargetname);
+        void OnUsedOnTarget(GameObject targetObject, string targetId);
     }
 }

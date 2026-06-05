@@ -1,5 +1,3 @@
-// Made By MHZE
-
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,93 +6,86 @@ using ArgEvent;
 namespace MHZE.UseSystem
 {
     public class UseTargetBase : MonoBehaviour, IUsableTarget
-{
-    [SerializeField] bool canUseAtTarget = true;
-
-    [System.Serializable]
-    public class ToolData
     {
-        public ToolsName acceptedToolName;
-        public string usePromptPrefix = "Press";
-        public string usePromptSuffix = "To Use!";
-    }
-    public UseTargetsName useTargetsName;
-    public List<ToolData> toolData;
+        [SerializeField] bool canUseAtTarget = true;
 
-    public ArgEventBinding OnUsedAtTargetEvent = new ArgEventBinding();
-    public event Action<GameObject, ToolsName, RaycastHit> OnUsedAtTarget;
-
-
-
-
-
-    List<ToolsName> cachedAcceptedToolNames;
-    bool isDirty = true;
-
-    void OnValidate()
-    {
-        isDirty = true;
-    }
-
-    void OnEnable()
-    {
-        isDirty = true;
-    }
-
-    public bool GetCanUseAtTarget() => canUseAtTarget;
-
-    public void SetCanUseAtTarget(bool Bool)
-    {
-        canUseAtTarget = Bool;
-    }
-
-    public IReadOnlyList<ToolsName> GetTargetAcceptedToolNames()
-    {
-        if (isDirty)
+        [System.Serializable]
+        public class ToolData
         {
-            cachedAcceptedToolNames ??= new List<ToolsName>();
-            cachedAcceptedToolNames.Clear();
-            foreach (ToolData data in toolData)
-            {
-                cachedAcceptedToolNames.Add(data.acceptedToolName);
-            }
-            isDirty = false;
+            public ToolId acceptedToolId;
+            public string usePromptPrefix = "Press";
+            public string usePromptSuffix = "To Use!";
         }
-        return cachedAcceptedToolNames;
-    }
+        public TargetId targetId;
+        public List<ToolData> toolData;
 
-    public string GetUsePromptPrefix(ToolsName toolname)
-    {
-        foreach (var data in toolData)
+        public ArgEventBinding OnUsedAtTargetEvent = new ArgEventBinding();
+        public event Action<GameObject, string, RaycastHit> OnUsedAtTarget;
+
+        List<string> cachedAcceptedToolIds;
+        bool isDirty = true;
+
+        void OnValidate()
         {
-            if (data.acceptedToolName == toolname)
-            {
-                return data.usePromptPrefix;
-            }
+            isDirty = true;
         }
-        return string.Empty;
-    }
 
-    public string GetUsePromptSuffix(ToolsName toolname)
-    {
-        foreach (var data in toolData)
+        void OnEnable()
         {
-            if (data.acceptedToolName == toolname)
-            {
-                return data.usePromptSuffix;
-            }
+            isDirty = true;
         }
-        return string.Empty;
+
+        public bool GetCanUseAtTarget() => canUseAtTarget;
+
+        public void SetCanUseAtTarget(bool Bool)
+        {
+            canUseAtTarget = Bool;
+        }
+
+        public IReadOnlyList<string> GetAcceptedToolIds()
+        {
+            if (isDirty)
+            {
+                cachedAcceptedToolIds ??= new List<string>();
+                cachedAcceptedToolIds.Clear();
+                foreach (ToolData data in toolData)
+                {
+                    cachedAcceptedToolIds.Add(data.acceptedToolId.value);
+                }
+                isDirty = false;
+            }
+            return cachedAcceptedToolIds;
+        }
+
+        public string GetUsePromptPrefix(string toolId)
+        {
+            foreach (var data in toolData)
+            {
+                if (data.acceptedToolId.value == toolId)
+                {
+                    return data.usePromptPrefix;
+                }
+            }
+            return string.Empty;
+        }
+
+        public string GetUsePromptSuffix(string toolId)
+        {
+            foreach (var data in toolData)
+            {
+                if (data.acceptedToolId.value == toolId)
+                {
+                    return data.usePromptSuffix;
+                }
+            }
+            return string.Empty;
+        }
+        public string GetTargetId() => targetId.value;
+
+        public virtual void Used(GameObject usedBy, string usedToolId, RaycastHit HitResults)
+        {
+            OnUsedAtTarget?.Invoke(usedBy, usedToolId, HitResults);
+            OnUsedAtTargetEvent.Invoke();
+        }
     }
-    public UseTargetsName GetUseTargetName() => useTargetsName;
-
-    public virtual void Used(GameObject usedBy, ToolsName usedToolName, RaycastHit HitResults)
-    {
-        OnUsedAtTarget?.Invoke(usedBy, usedToolName, HitResults);
-        OnUsedAtTargetEvent.Invoke();
-
-    }
-
-
-}
 }
