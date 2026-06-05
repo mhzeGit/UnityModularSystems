@@ -49,11 +49,11 @@ public class UseInputPromptMediator : MonoBehaviour
     {
         if (inputPromptManager == null || usePromptDefinition == null) return;
 
-        var toolName = useSystem.currentHeldItem != null
-            ? useSystem.currentHeldItem.GetToolName()
-            : ToolsName.Hand;
+        var toolId = useSystem.currentHeldItem != null
+            ? useSystem.currentHeldItem.GetToolId()
+            : "Hand";
 
-        ShowUsePrompt(target, toolName);
+        ShowUsePrompt(target, toolId);
     }
 
     private void HandleUsableTargetLost()
@@ -77,12 +77,12 @@ public class UseInputPromptMediator : MonoBehaviour
         HideUsePrompt();
     }
 
-    private void ShowUsePrompt(IUsableTarget target, ToolsName toolName)
+    private void ShowUsePrompt(IUsableTarget target, string toolId)
     {
         if (inputPromptManager == null || usePromptDefinition == null) return;
 
-        var prefix = ResolvePrefix(target, toolName, usePromptDefinition);
-        var suffix = ResolveSuffix(target, toolName, usePromptDefinition);
+        var prefix = ResolvePrefix(target, toolId, usePromptDefinition);
+        var suffix = ResolveSuffix(target, toolId, usePromptDefinition);
         inputPromptManager.ShowPrompt(usePromptDefinition.Key, usePromptDefinition.Key, prefix, suffix);
     }
 
@@ -94,17 +94,17 @@ public class UseInputPromptMediator : MonoBehaviour
         }
     }
 
-    private static string ResolvePrefix(IUsableTarget target, ToolsName toolName, InputPromptDefinition definition)
+    private static string ResolvePrefix(IUsableTarget target, string toolId, InputPromptDefinition definition)
     {
-        var prompt = target.GetUsePromptPrefix(toolName);
+        var prompt = target.GetUsePromptPrefix(toolId);
         if (string.IsNullOrEmpty(prompt))
             return definition.PrefixText;
         return prompt;
     }
 
-    private static string ResolveSuffix(IUsableTarget target, ToolsName toolName, InputPromptDefinition definition)
+    private static string ResolveSuffix(IUsableTarget target, string toolId, InputPromptDefinition definition)
     {
-        var prompt = target.GetUsePromptSuffix(toolName);
+        var prompt = target.GetUsePromptSuffix(toolId);
         if (string.IsNullOrEmpty(prompt))
             return definition.SuffixText;
         return prompt;
