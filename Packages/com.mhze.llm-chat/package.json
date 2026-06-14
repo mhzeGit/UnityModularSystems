@@ -1,0 +1,14 @@
+{
+  "name": "com.mhze.llm-chat",
+  "version": "1.0.0",
+  "displayName": "LLM Chat",
+  "description": "A modular LLM chat controller with agent rules system. Supports Ollama and other local LLM backends via HTTP.",
+  "unity": "2021.3",
+  "author": {
+    "name": "MHZE",
+    "url": "https://github.com/mhze"
+  },
+  "dependencies": {
+    "com.unity.nuget.newtonsoft-json": "3.0.2"
+  }
+}

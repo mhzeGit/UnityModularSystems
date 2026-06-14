@@ -50,6 +50,14 @@
         "com.mhze.argevent": "1.0.0"
       }
     },
+    "com.mhze.llm-chat": {
+      "version": "file:com.mhze.llm-chat",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.unity.nuget.newtonsoft-json": "3.0.2"
+      }
+    },
     "com.mhze.pickup-system": {
       "version": "file:com.mhze.pickup-system",
       "depth": 0,
@@ -117,6 +125,13 @@
       "source": "git",
       "dependencies": {},
       "hash": "8c15433a87e71811c878be2490360a84aed5fa26"
+    },
+    "com.mhze.unity-hierarchy-context-menu": {
+      "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Packages/com.mhze.unity-hierarchy-context-menu",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "4962abb89d3742b4bafb40ef9d47c61c507c6de1"
     },
     "com.mhze.use-system": {
       "version": "file:com.mhze.use-system",
