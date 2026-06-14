@@ -1,0 +1,14 @@
+{
+  "name": "com.mhze.llm-chat",
+  "version": "1.0.0",
+  "displayName": "LLM Chat",
+  "description": "Minimal Ollama API client with streaming and editor model detection.",
+  "unity": "2022.3",
+  "keywords": ["ollama", "llm", "chat", "ai"],
+  "author": {
+    "name": "MHZE",
+    "email": "",
+    "url": ""
+  },
+  "dependencies": {}
+}

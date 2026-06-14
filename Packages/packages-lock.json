@@ -50,6 +50,12 @@
         "com.mhze.argevent": "1.0.0"
       }
     },
+    "com.mhze.llm-chat": {
+      "version": "file:com.mhze.llm-chat",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
     "com.mhze.pickup-system": {
       "version": "file:com.mhze.pickup-system",
       "depth": 0,

@@ -1,0 +1,16 @@
+{
+  "name": "com.mhze.llm-chat.Editor",
+  "rootNamespace": "MHZE.LLMChat.Editor",
+  "references": [
+    "com.mhze.llm-chat.Runtime"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": []
+}
