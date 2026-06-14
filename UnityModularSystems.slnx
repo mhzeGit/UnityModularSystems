@@ -8,7 +8,6 @@
   <Project Path="com.mhze.input-prompt-system.Editor.csproj" />
   <Project Path="com.mhze.input-prompt-system.Runtime.csproj" />
   <Project Path="com.mhze.pickup-system.Runtime.csproj" />
-  <Project Path="com.mhze.llm-chat.Runtime.csproj" />
   <Project Path="com.mhze.ultimate-trigger-system.Editor.csproj" />
   <Project Path="com.mhze.freeform-camera.Runtime.csproj" />
   <Project Path="com.mhze.freeform-camera.Editor.csproj" />
