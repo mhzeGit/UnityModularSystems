@@ -12,6 +12,8 @@ namespace MHZE.FirstPersonController
         private float jumpTimer;
         private float landingTimer;
         private float landingMultiplier = 1f;
+        private Vector3 lastAppliedPositionOffset;
+        private Quaternion lastAppliedRotationOffset = Quaternion.identity;
 
         public FPCCameraEffects(Transform cameraTransform, FPCSettings settings)
         {
@@ -37,6 +39,9 @@ namespace MHZE.FirstPersonController
         {
             if (!settings.enableJumpLandEffects) return;
 
+            cameraTransform.localPosition -= lastAppliedPositionOffset;
+            cameraTransform.localRotation *= Quaternion.Inverse(lastAppliedRotationOffset);
+
             Vector3 posOffset = Vector3.zero;
             Vector3 rotOffset = Vector3.zero;
 
@@ -59,15 +64,19 @@ namespace MHZE.FirstPersonController
                     landingTimer = 0f;
             }
 
-            if (posOffset != Vector3.zero || rotOffset != Vector3.zero)
-            {
-                cameraTransform.localPosition += posOffset;
-                cameraTransform.localRotation *= Quaternion.Euler(rotOffset);
-            }
+            cameraTransform.localPosition += posOffset;
+            cameraTransform.localRotation *= Quaternion.Euler(rotOffset);
+
+            lastAppliedPositionOffset = posOffset;
+            lastAppliedRotationOffset = Quaternion.Euler(rotOffset);
         }
 
         public void Snap()
         {
+            cameraTransform.localPosition -= lastAppliedPositionOffset;
+            cameraTransform.localRotation *= Quaternion.Inverse(lastAppliedRotationOffset);
+            lastAppliedPositionOffset = Vector3.zero;
+            lastAppliedRotationOffset = Quaternion.identity;
             jumpTimer = 0f;
             landingTimer = 0f;
         }
