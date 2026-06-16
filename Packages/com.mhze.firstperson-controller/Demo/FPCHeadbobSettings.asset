@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b04f2a0a72bef8849ad17642ad7120e4, type: 3}
   m_Name: FPCHeadbobSettings
   m_EditorClassIdentifier: com.modular.firstperson-controller.Runtime::ModularSystems.FirstPersonController.FPCHeadbobSettings
-  enabled: 1
+  enabled: 0
   smoothing: 5
   minSpeed: 0.1
   debugLogging: 0
