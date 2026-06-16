@@ -10,9 +10,9 @@ namespace MHZE.UltimateTriggerSystem
         [SerializeField] private bool _useOnEnter = true;
         [SerializeField] private bool _useOnStay = true;
         [SerializeField] private bool _useOnExit = true;
-        public ArgEventBinding OnEnter= new ArgEventBinding();
-        public ArgEventBinding OnStay= new ArgEventBinding();
-        public ArgEventBinding OnExit= new ArgEventBinding();
+        public ArgEventBinding<Collider> OnEnter = new ArgEventBinding<Collider>();
+        public ArgEventBinding<Collider> OnStay = new ArgEventBinding<Collider>();
+        public ArgEventBinding<Collider> OnExit = new ArgEventBinding<Collider>();
 
         public event System.Action<Collider> OnTriggerEntered;
         public event System.Action<Collider> OnTriggerStayed;
@@ -70,7 +70,7 @@ namespace MHZE.UltimateTriggerSystem
             if (!_useOnEnter) return;
             if (!IsTagValid(other)) return;
             OnTriggerEntered?.Invoke(other);
-            OnEnter?.Invoke();
+            OnEnter?.Invoke(other);
         }
 
         private void OnTriggerStay(Collider other)
@@ -78,7 +78,7 @@ namespace MHZE.UltimateTriggerSystem
             if (!_useOnStay) return;
             if (!IsTagValid(other)) return;
             OnTriggerStayed?.Invoke(other);
-            OnStay?.Invoke();
+            OnStay?.Invoke(other);
         }
 
         private void OnTriggerExit(Collider other)
@@ -86,7 +86,7 @@ namespace MHZE.UltimateTriggerSystem
             if (!_useOnExit) return;
             if (!IsTagValid(other)) return;
             OnTriggerExited?.Invoke(other);
-            OnExit?.Invoke();
+            OnExit?.Invoke(other);
         }
 
         private bool IsTagValid(Collider other)
