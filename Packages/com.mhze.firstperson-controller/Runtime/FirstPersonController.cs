@@ -243,6 +243,13 @@ namespace MHZE.FirstPersonController
             cameraEffects?.Snap();
         }
 
+        public void EnableAllInputs(bool state) => input?.SetAllInputsEnabled(state);
+        public void EnableJump(bool state)       => input.jumpEnabled = state;
+        public void EnableMove(bool state)       => input.moveEnabled = state;
+        public void EnableRun(bool state)        => input.sprintEnabled = state;
+        public void EnableCrouch(bool state)     => input.crouchEnabled = state;
+        public void EnableLook(bool state)       => input.lookEnabled = state;
+
         // --- Cursor management ----------------------------------
 
         private static void LockCursor()

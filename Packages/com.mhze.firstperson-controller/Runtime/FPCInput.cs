@@ -47,6 +47,23 @@ namespace MHZE.FirstPersonController
         /// <summary>Crouch was released this frame.</summary>
         public bool CrouchReleased { get; private set; }
 
+        // --- Input lock flags ------------------------------------
+
+        public bool jumpEnabled = true;
+        public bool moveEnabled = true;
+        public bool lookEnabled = true;
+        public bool crouchEnabled = true;
+        public bool sprintEnabled = true;
+
+        public void SetAllInputsEnabled(bool enabled)
+        {
+            jumpEnabled = enabled;
+            moveEnabled = enabled;
+            lookEnabled = enabled;
+            crouchEnabled = enabled;
+            sprintEnabled = enabled;
+        }
+
         // --- Events ----------------------------------------------
 
         public event Action OnJumpPressed;
@@ -107,16 +124,15 @@ namespace MHZE.FirstPersonController
         public void Poll()
         {
             if (moveAction != null)
-                MoveInput = moveAction.action.ReadValue<Vector2>();
+                MoveInput = moveEnabled ? moveAction.action.ReadValue<Vector2>() : Vector2.zero;
 
             if (lookAction != null)
-                LookInput = lookAction.action.ReadValue<Vector2>();
+                LookInput = lookEnabled ? lookAction.action.ReadValue<Vector2>() : Vector2.zero;
 
             if (sprintAction != null)
-                SprintHeld = sprintAction.action.IsPressed();
+                SprintHeld = sprintEnabled && sprintAction.action.IsPressed();
 
-            // Edge-detect jump using the input system's built-in helpers
-            if (jumpAction != null)
+            if (jumpAction != null && jumpEnabled)
             {
                 if (jumpAction.action.WasPressedThisFrame())
                 {
@@ -127,9 +143,7 @@ namespace MHZE.FirstPersonController
                 JumpReleased = jumpAction.action.WasReleasedThisFrame();
             }
 
-            // Edge-detect crouch: the callbacks set CrouchHeld;
-            // we still need WasPressedThisFrame for the one-shot edge.
-            if (crouchAction != null)
+            if (crouchAction != null && crouchEnabled)
             {
                 if (crouchAction.action.WasPressedThisFrame())
                 {
@@ -166,12 +180,12 @@ namespace MHZE.FirstPersonController
 
         private void OnCrouchStarted(InputAction.CallbackContext context)
         {
-            CrouchHeld = true;
+            if (crouchEnabled) CrouchHeld = true;
         }
 
         private void OnCrouchCanceled(InputAction.CallbackContext context)
         {
-            CrouchHeld = false;
+            if (crouchEnabled) CrouchHeld = false;
         }
 
         private void ResetState()
