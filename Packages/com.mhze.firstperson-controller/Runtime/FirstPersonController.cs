@@ -358,6 +358,9 @@ namespace MHZE.FirstPersonController
 
             ApplyCameraSmoothing();
 
+            if (cameraEffects != null)
+                cameraEffects.Revert();
+
             if (headbob != null)
                 headbob.Update(actualHorizontalSpeed, movement.IsGrounded, Time.deltaTime);
 

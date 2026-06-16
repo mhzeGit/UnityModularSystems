@@ -35,12 +35,17 @@ namespace MHZE.FirstPersonController
                 settings.landingVelocityMaxMultiplier);
         }
 
+        public void Revert()
+        {
+            cameraTransform.localPosition -= lastAppliedPositionOffset;
+            cameraTransform.localRotation *= Quaternion.Inverse(lastAppliedRotationOffset);
+            lastAppliedPositionOffset = Vector3.zero;
+            lastAppliedRotationOffset = Quaternion.identity;
+        }
+
         public void Apply(float deltaTime)
         {
             if (!settings.enableJumpLandEffects) return;
-
-            cameraTransform.localPosition -= lastAppliedPositionOffset;
-            cameraTransform.localRotation *= Quaternion.Inverse(lastAppliedRotationOffset);
 
             Vector3 posOffset = Vector3.zero;
             Vector3 rotOffset = Vector3.zero;
@@ -73,10 +78,7 @@ namespace MHZE.FirstPersonController
 
         public void Snap()
         {
-            cameraTransform.localPosition -= lastAppliedPositionOffset;
-            cameraTransform.localRotation *= Quaternion.Inverse(lastAppliedRotationOffset);
-            lastAppliedPositionOffset = Vector3.zero;
-            lastAppliedRotationOffset = Quaternion.identity;
+            Revert();
             jumpTimer = 0f;
             landingTimer = 0f;
         }
