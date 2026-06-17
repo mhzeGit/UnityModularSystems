@@ -6,11 +6,6 @@ namespace MHZE.RoughnessDetection
     [ExecuteAlways]
     public class RoughnessDetector : MonoBehaviour
     {
-        [Header("Detection")]
-        [SerializeField] private float maxDistance = 5f;
-        [SerializeField] private LayerMask layerMask = -1;
-        [SerializeField] [Range(0.01f, 2f)] private float updateInterval = 0.1f;
-
         [Header("GPU Capture")]
         [SerializeField] private Shader roughnessOutputShader;
 
@@ -26,17 +21,18 @@ namespace MHZE.RoughnessDetection
         [SerializeField] private bool showGUI = true;
         [SerializeField] [Range(10, 40)] private int guiFontSize = 18;
 
-        private float m_LastUpdateTime;
-        private RaycastHit m_LastHit;
-        private float m_CurrentRoughness = -1f;
-        private bool m_HasHit;
         private RenderTexture m_CaptureRT;
         private bool m_ResourcesInitialized;
         private GUIStyle m_GuiStyle;
         private Texture2D m_GuiBgTex;
         private CommandBuffer m_Cmd;
 
-        public float CurrentRoughness => m_CurrentRoughness;
+        private Transform m_LastSourceTransform;
+        private RaycastHit m_LastHit;
+        private float m_LastRoughness = -1f;
+        private bool m_HasHit;
+
+        public float LastRoughness => m_LastRoughness;
         public bool HasHit => m_HasHit;
         public RaycastHit LastHit => m_LastHit;
 
@@ -85,33 +81,34 @@ namespace MHZE.RoughnessDetection
             m_ResourcesInitialized = false;
         }
 
-        private void Update()
+        public float DetectRoughness(Transform source)
         {
-            if (roughnessOutputShader == null) return;
-
-            if (Time.time - m_LastUpdateTime < updateInterval)
-                return;
-            m_LastUpdateTime = Time.time;
-
-            PerformDetection();
+            return DetectRoughness(source, 5f, -1);
         }
 
-        private void PerformDetection()
+        public float DetectRoughness(Transform source, float maxDistance, int layerMask = -1)
         {
-            var ray = new Ray(transform.position, transform.forward);
+            if (roughnessOutputShader == null || !m_ResourcesInitialized)
+                return -1f;
+
+            m_LastSourceTransform = source;
+
+            var ray = new Ray(source.position, source.forward);
             m_HasHit = Physics.Raycast(ray, out m_LastHit, maxDistance, layerMask);
 
             if (m_HasHit)
             {
-                m_CurrentRoughness = CaptureRoughnessGPU(m_LastHit);
+                m_LastRoughness = CaptureRoughnessGPU(m_LastHit);
 
-                if (m_CurrentRoughness < 0f)
-                    m_CurrentRoughness = CaptureRoughnessMaterial(m_LastHit);
+                if (m_LastRoughness < 0f)
+                    m_LastRoughness = CaptureRoughnessMaterial(m_LastHit);
             }
             else
             {
-                m_CurrentRoughness = -1f;
+                m_LastRoughness = -1f;
             }
+
+            return m_LastRoughness;
         }
 
         private float CaptureRoughnessGPU(RaycastHit hit)
@@ -254,8 +251,10 @@ namespace MHZE.RoughnessDetection
 
         private void DrawGizmos()
         {
-            var origin = transform.position;
-            var direction = transform.forward;
+            if (m_LastSourceTransform == null) return;
+
+            var origin = m_LastSourceTransform.position;
+            var direction = m_LastSourceTransform.forward;
 
             if (m_HasHit)
             {
@@ -275,9 +274,9 @@ namespace MHZE.RoughnessDetection
                 }
 
 #if UNITY_EDITOR
-                if (showRoughnessLabel && m_CurrentRoughness >= 0f)
+                if (showRoughnessLabel && m_LastRoughness >= 0f)
                 {
-                    var roughnessT = Mathf.Clamp01(m_CurrentRoughness);
+                    var roughnessT = Mathf.Clamp01(m_LastRoughness);
                     var labelColor = Color.Lerp(
                         new Color(0.2f, 0.6f, 1f),
                         new Color(1f, 0.3f, 0.1f),
@@ -292,8 +291,8 @@ namespace MHZE.RoughnessDetection
                         normal = { textColor = labelColor }
                     };
 
-                    var offset = (transform.position - m_LastHit.point).normalized * 0.2f + Vector3.up * 0.25f;
-                    UnityEditor.Handles.Label(m_LastHit.point + offset, $"R: {m_CurrentRoughness:F3}", style);
+                    var offset = (m_LastSourceTransform.position - m_LastHit.point).normalized * 0.2f + Vector3.up * 0.25f;
+                    UnityEditor.Handles.Label(m_LastHit.point + offset, $"R: {m_LastRoughness:F3}", style);
                 }
 #endif
             }
@@ -302,20 +301,20 @@ namespace MHZE.RoughnessDetection
                 if (showRay)
                 {
                     Gizmos.color = new Color(rayColor.r, rayColor.g, rayColor.b, 0.15f);
-                    Gizmos.DrawRay(origin, direction * maxDistance);
+                    Gizmos.DrawRay(origin, direction * (origin - m_LastSourceTransform.position).magnitude + direction * 5f);
                 }
             }
         }
 
         private void OnGUI()
         {
-            if (!showGUI || !Application.isPlaying || !m_HasHit || m_CurrentRoughness < 0f)
+            if (!showGUI || !Application.isPlaying || !m_HasHit || m_LastRoughness < 0f)
                 return;
 
             EnsureGuiStyle();
             m_GuiStyle.fontSize = guiFontSize;
 
-            var roughnessT = Mathf.Clamp01(m_CurrentRoughness);
+            var roughnessT = Mathf.Clamp01(m_LastRoughness);
             var labelColor = Color.Lerp(
                 new Color(0.2f, 0.6f, 1f),
                 new Color(1f, 0.3f, 0.1f),
@@ -324,7 +323,7 @@ namespace MHZE.RoughnessDetection
             m_GuiStyle.normal.textColor = labelColor;
 
             var rect = new Rect(12, 12, 240, 32);
-            GUI.Label(rect, $"R: {m_CurrentRoughness:F3}", m_GuiStyle);
+            GUI.Label(rect, $"R: {m_LastRoughness:F3}", m_GuiStyle);
         }
 
         private void EnsureGuiStyle()

@@ -7,9 +7,6 @@ namespace MHZE.RoughnessDetection.Editor
     [CanEditMultipleObjects]
     public class RoughnessDetectorEditor : UnityEditor.Editor
     {
-        private SerializedProperty m_MaxDistance;
-        private SerializedProperty m_LayerMask;
-        private SerializedProperty m_UpdateInterval;
         private SerializedProperty m_RoughnessOutputShader;
         private SerializedProperty m_ShowRay;
         private SerializedProperty m_RayColor;
@@ -22,9 +19,6 @@ namespace MHZE.RoughnessDetection.Editor
 
         private void OnEnable()
         {
-            m_MaxDistance = serializedObject.FindProperty("maxDistance");
-            m_LayerMask = serializedObject.FindProperty("layerMask");
-            m_UpdateInterval = serializedObject.FindProperty("updateInterval");
             m_RoughnessOutputShader = serializedObject.FindProperty("roughnessOutputShader");
             m_ShowRay = serializedObject.FindProperty("showRay");
             m_RayColor = serializedObject.FindProperty("rayColor");
@@ -46,7 +40,6 @@ namespace MHZE.RoughnessDetection.Editor
 
             EditorGUILayout.Space(4);
 
-            DrawDetectionSection();
             DrawGpuCaptureSection();
             DrawVisualizationSection();
             DrawGuiSection();
@@ -56,10 +49,10 @@ namespace MHZE.RoughnessDetection.Editor
 
         private void DrawRoughnessPreview(RoughnessDetector detector)
         {
-            var roughness = detector.CurrentRoughness;
+            var roughness = detector.LastRoughness;
             var hasHit = detector.HasHit;
 
-            var bgRect = EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             {
                 EditorGUILayout.LabelField("Roughness Output", EditorStyles.boldLabel);
 
@@ -68,7 +61,7 @@ namespace MHZE.RoughnessDetection.Editor
                     var t = Mathf.Clamp01(roughness);
                     var color = Color.Lerp(new Color(0.2f, 0.6f, 1f), new Color(1f, 0.3f, 0.1f), t);
 
-                    var progressRect = EditorGUILayout.BeginVertical();
+                    EditorGUILayout.BeginVertical();
                     EditorGUI.DrawRect(
                         EditorGUILayout.GetControlRect(false, 20),
                         new Color(0.15f, 0.15f, 0.15f)
@@ -94,32 +87,33 @@ namespace MHZE.RoughnessDetection.Editor
                     EditorGUILayout.LabelField("Rough", GUILayout.Width(50));
                     EditorGUILayout.EndHorizontal();
 
-                    if (GUILayout.Button("Capture Now", GUILayout.Height(28)))
+                    if (GUILayout.Button("Test Detect (self)", GUILayout.Height(28)))
                     {
                         foreach (var targetObj in targets)
                         {
-                            ((RoughnessDetector)targetObj).SendMessage("PerformDetection", SendMessageOptions.DontRequireReceiver);
+                            var d = (RoughnessDetector)targetObj;
+                            d.DetectRoughness(d.transform, 5f, -1);
                         }
                         SceneView.RepaintAll();
                         Repaint();
                     }
+
+                    EditorGUILayout.HelpBox(
+                        "This manager is passive. Attach a RoughnessProbe to any GameObject to send realtime detection orders.",
+                        MessageType.Info
+                    );
                 }
                 else
                 {
-                    EditorGUILayout.HelpBox("No hit detected. Position this GameObject so the forward ray intersects a surface.", MessageType.Info);
+                    EditorGUILayout.HelpBox(
+                        "No detection result yet. Call DetectRoughness(Transform, ...) from code or attach a RoughnessProbe to send realtime detection orders.",
+                        MessageType.Info
+                    );
                 }
 
                 EditorGUILayout.Space(2);
             }
             EditorGUILayout.EndVertical();
-        }
-
-        private void DrawDetectionSection()
-        {
-            EditorGUILayout.LabelField("Detection", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField(m_MaxDistance);
-            EditorGUILayout.PropertyField(m_LayerMask);
-            EditorGUILayout.PropertyField(m_UpdateInterval);
         }
 
         private void DrawGpuCaptureSection()
@@ -162,10 +156,10 @@ namespace MHZE.RoughnessDetection.Editor
         {
             var detector = (RoughnessDetector)target;
 
-            if (!detector.HasHit || detector.CurrentRoughness < 0f)
+            if (!detector.HasHit || detector.LastRoughness < 0f)
                 return;
 
-            var roughness = detector.CurrentRoughness;
+            var roughness = detector.LastRoughness;
             var t = Mathf.Clamp01(roughness);
             var color = Color.Lerp(new Color(0.2f, 0.6f, 1f), new Color(1f, 0.3f, 0.1f), t);
 
