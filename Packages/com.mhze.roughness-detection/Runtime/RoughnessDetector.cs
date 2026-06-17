@@ -107,7 +107,7 @@ namespace MHZE.RoughnessDetection
                 m_LastRoughness = CaptureRoughnessGPU(m_LastHit, m_LastUV, roughnessTexProperty, roughnessTexChannel, roughnessTexInverted);
 
                 if (m_LastRoughness < 0f)
-                    m_LastRoughness = CaptureRoughnessMaterial(m_LastHit, uv, roughnessTexProperty, roughnessTexChannel, roughnessTexInverted);
+                    m_LastRoughness = CaptureRoughnessMaterial(m_LastHit, m_LastUV, roughnessTexProperty, roughnessTexChannel, roughnessTexInverted);
             }
             else
             {
