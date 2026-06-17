@@ -2,74 +2,60 @@ Shader "Hidden/MHZE/RoughnessOutput"
 {
     Properties
     {
-        _MetallicGlossMap ("Metallic Smoothness Map", 2D) = "white" {}
-        _SpecGlossMap ("Specular Smoothness Map", 2D) = "white" {}
-        _BaseMap ("Base Map (for alpha smoothness)", 2D) = "white" {}
-        _Smoothness ("Smoothness", Range(0,1)) = 0.5
+        _RoughnessTex ("Roughness Texture", 2D) = "white" {}
+        _RoughnessTex_ST ("Roughness Tex ST", Vector) = (1,1,0,0)
+        _RoughnessParams ("Roughness Params", Vector) = (3,1,0,0)
+        _RoughnessFallback ("Roughness Fallback", Range(0,1)) = 0.5
         _SampleUV ("Sample UV", Vector) = (0,0,0,0)
     }
     SubShader
     {
         Pass
         {
-            Cull Off
-            ZTest Off
-            ZWrite Off
-            Blend Off
+            Cull Off ZTest Off ZWrite Off Blend Off
 
             HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
-            struct Attributes
-            {
-                uint vertexID : SV_VertexID;
-            };
+            struct Attributes { uint vertexID : SV_VertexID; };
+            struct Varyings { float4 positionCS : SV_POSITION; };
 
-            struct Varyings
-            {
-                float4 positionCS : SV_POSITION;
-            };
-
-            TEXTURE2D(_MetallicGlossMap); SAMPLER(sampler_MetallicGlossMap);
-            TEXTURE2D(_SpecGlossMap); SAMPLER(sampler_SpecGlossMap);
-            TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
-
+            TEXTURE2D(_RoughnessTex); SAMPLER(sampler_RoughnessTex);
+            float4 _RoughnessTex_ST;
+            float4 _RoughnessParams;
+            float _RoughnessFallback;
             float2 _SampleUV;
-            half _Smoothness;
-            float4 _BaseMap_ST;
-            half _SmoothnessTextureChannel;
-            half _WorkflowMode;
 
             Varyings vert(Attributes input)
             {
-                Varyings output;
+                Varyings o;
                 float2 pos = float2((input.vertexID << 1) & 2, input.vertexID & 2) * 2.0 - 1.0;
-                output.positionCS = float4(pos, 0, 1);
-                return output;
+                o.positionCS = float4(pos, 0, 1);
+                return o;
             }
 
             half4 frag(Varyings input) : SV_Target
             {
-                float2 uv = _SampleUV * _BaseMap_ST.xy + _BaseMap_ST.zw;
-                half smoothness = _Smoothness;
+                float2 uv = _SampleUV * _RoughnessTex_ST.xy + _RoughnessTex_ST.zw;
+                half value;
 
-                if (_SmoothnessTextureChannel > 0.5)
+                if (_RoughnessParams.z > 0.5)
                 {
-                    smoothness *= SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, uv).a;
-                }
-                else if (_WorkflowMode > 0.5)
-                {
-                    smoothness *= SAMPLE_TEXTURE2D(_MetallicGlossMap, sampler_MetallicGlossMap, uv).a;
+                    half4 texel = SAMPLE_TEXTURE2D(_RoughnessTex, sampler_RoughnessTex, uv);
+                    half c = _RoughnessParams.x;
+                    value = c < 0.5 ? texel.r : c < 1.5 ? texel.g : c < 2.5 ? texel.b : texel.a;
                 }
                 else
                 {
-                    smoothness *= SAMPLE_TEXTURE2D(_SpecGlossMap, sampler_SpecGlossMap, uv).a;
+                    value = _RoughnessFallback;
                 }
 
-                half roughness = 1.0h - saturate(smoothness);
-                return half4(roughness, roughness, roughness, 1);
+                if (_RoughnessParams.y > 0.5)
+                    value = 1.0h - value;
+
+                return half4(saturate(value), saturate(value), saturate(value), 1);
             }
             ENDHLSL
         }

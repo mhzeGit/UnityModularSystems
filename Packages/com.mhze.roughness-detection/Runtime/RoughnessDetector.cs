@@ -83,10 +83,12 @@ namespace MHZE.RoughnessDetection
 
         public float DetectRoughness(Transform source)
         {
-            return DetectRoughness(source, 5f, -1, 0);
+            return DetectRoughness(source, 5f, -1, 0, "_MetallicGlossMap", 3, true);
         }
 
-        public float DetectRoughness(Transform source, float maxDistance, int layerMask = -1, int uvChannel = 0)
+        public float DetectRoughness(
+            Transform source, float maxDistance, int layerMask = -1, int uvChannel = 0,
+            string roughnessTexProperty = "_MetallicGlossMap", int roughnessTexChannel = 3, bool roughnessTexInverted = true)
         {
             if (roughnessOutputShader == null || !m_ResourcesInitialized)
                 return -1f;
@@ -99,10 +101,10 @@ namespace MHZE.RoughnessDetection
             if (m_HasHit)
             {
                 var uv = GetUVAtChannel(m_LastHit, uvChannel);
-                m_LastRoughness = CaptureRoughnessGPU(m_LastHit, uv);
+                m_LastRoughness = CaptureRoughnessGPU(m_LastHit, uv, roughnessTexProperty, roughnessTexChannel, roughnessTexInverted);
 
                 if (m_LastRoughness < 0f)
-                    m_LastRoughness = CaptureRoughnessMaterial(m_LastHit, uv);
+                    m_LastRoughness = CaptureRoughnessMaterial(m_LastHit, uv, roughnessTexProperty, roughnessTexChannel, roughnessTexInverted);
             }
             else
             {
@@ -157,7 +159,9 @@ namespace MHZE.RoughnessDetection
             return uv[i0] * bary.x + uv[i1] * bary.y + uv[i2] * bary.z;
         }
 
-        private float CaptureRoughnessGPU(RaycastHit hit, Vector2 uv)
+        private float CaptureRoughnessGPU(
+            RaycastHit hit, Vector2 uv,
+            string roughnessTexProperty, int roughnessTexChannel, bool roughnessTexInverted)
         {
             if (roughnessOutputShader == null || m_CaptureRT == null)
                 return -1f;
@@ -178,15 +182,24 @@ namespace MHZE.RoughnessDetection
             {
                 var sampleMat = new Material(roughnessOutputShader);
 
-                sampleMat.SetTexture("_MetallicGlossMap", material.HasProperty("_MetallicGlossMap") ? material.GetTexture("_MetallicGlossMap") : null);
-                sampleMat.SetTexture("_SpecGlossMap", material.HasProperty("_SpecGlossMap") ? material.GetTexture("_SpecGlossMap") : null);
-                sampleMat.SetTexture("_BaseMap", material.HasProperty("_BaseMap") ? material.GetTexture("_BaseMap") : null);
+                var texProperty = roughnessTexProperty;
+                Texture roughnessTex = material.HasProperty(texProperty) ? material.GetTexture(texProperty) : null;
+                sampleMat.SetTexture("_RoughnessTex", roughnessTex);
 
-                sampleMat.SetFloat("_Smoothness", material.HasProperty("_Smoothness") ? material.GetFloat("_Smoothness") : 0.5f);
-                sampleMat.SetVector("_BaseMap_ST", material.HasProperty("_BaseMap_ST") ? material.GetVector("_BaseMap_ST") : new Vector4(1, 1, 0, 0));
-                sampleMat.SetFloat("_SmoothnessTextureChannel", material.HasProperty("_SmoothnessTextureChannel") ? material.GetFloat("_SmoothnessTextureChannel") : 0f);
-                sampleMat.SetFloat("_WorkflowMode", material.HasProperty("_WorkflowMode") ? material.GetFloat("_WorkflowMode") : 1f);
+                string stProperty = texProperty + "_ST";
+                Vector4 st = material.HasProperty(stProperty)
+                    ? material.GetVector(stProperty)
+                    : material.HasProperty("_BaseMap_ST")
+                        ? material.GetVector("_BaseMap_ST")
+                        : new Vector4(1, 1, 0, 0);
+                sampleMat.SetVector("_RoughnessTex_ST", st);
 
+                float fallback = 0.5f;
+                if (material.HasProperty("_Smoothness"))
+                    fallback = 1f - material.GetFloat("_Smoothness");
+
+                sampleMat.SetFloat("_RoughnessFallback", fallback);
+                sampleMat.SetVector("_RoughnessParams", new Vector4(roughnessTexChannel, roughnessTexInverted ? 1f : 0f, roughnessTex != null ? 1f : 0f, 0));
                 sampleMat.SetVector("_SampleUV", new Vector4(uv.x, uv.y, 0, 0));
 
                 m_Cmd.Clear();
@@ -216,7 +229,9 @@ namespace MHZE.RoughnessDetection
             }
         }
 
-        private float CaptureRoughnessMaterial(RaycastHit hit, Vector2 uv)
+        private float CaptureRoughnessMaterial(
+            RaycastHit hit, Vector2 uv,
+            string roughnessTexProperty, int roughnessTexChannel, bool roughnessTexInverted)
         {
             var renderer = hit.collider.GetComponent<Renderer>();
             if (renderer == null) return -1f;
@@ -232,18 +247,24 @@ namespace MHZE.RoughnessDetection
             var material = sharedMaterials[submeshIndex];
             if (material == null) return -1f;
 
-            var smoothness = 0.5f;
+            float value = 0.5f;
 
             if (material.HasProperty("_Smoothness"))
-                smoothness = material.GetFloat("_Smoothness");
+                value = 1f - material.GetFloat("_Smoothness");
 
-            var metallicGlossMap = material.GetTexture("_MetallicGlossMap");
-            if (metallicGlossMap is Texture2D tex2D && tex2D != null)
+            var roughnessTex = material.GetTexture(roughnessTexProperty);
+            if (roughnessTex is Texture2D tex2D && tex2D != null)
             {
                 try
                 {
-                    var scale = material.GetTextureScale("_MetallicGlossMap");
-                    var offset = material.GetTextureOffset("_MetallicGlossMap");
+                    var stProperty = roughnessTexProperty + "_ST";
+                    Vector2 scale = material.HasProperty(stProperty)
+                        ? material.GetTextureScale(roughnessTexProperty)
+                        : Vector2.one;
+                    Vector2 offset = material.HasProperty(stProperty)
+                        ? material.GetTextureOffset(roughnessTexProperty)
+                        : Vector2.zero;
+
                     var sampledUV = new Vector2(
                         uv.x * scale.x + offset.x,
                         uv.y * scale.y + offset.y
@@ -256,7 +277,10 @@ namespace MHZE.RoughnessDetection
                     if (readable != null)
                     {
                         var sample = readable.GetPixelBilinear(sampledUV.x, sampledUV.y);
-                        smoothness *= sample.a;
+                        float channelValue = roughnessTexChannel == 0 ? sample.r :
+                                             roughnessTexChannel == 1 ? sample.g :
+                                             roughnessTexChannel == 2 ? sample.b : sample.a;
+                        value = roughnessTexInverted ? 1f - channelValue : channelValue;
                     }
                 }
                 catch
@@ -264,7 +288,7 @@ namespace MHZE.RoughnessDetection
                 }
             }
 
-            return 1f - Mathf.Clamp01(smoothness);
+            return Mathf.Clamp01(value);
         }
 
         private static Texture2D CreateReadableCopy(Texture2D source)
