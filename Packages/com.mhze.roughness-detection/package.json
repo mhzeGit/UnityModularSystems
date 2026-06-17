@@ -1,0 +1,15 @@
+{
+  "name": "com.mhze.roughness-detection",
+  "version": "1.0.0",
+  "displayName": "Roughness Detection",
+  "description": "GPU-based surface roughness detector with raycast sampling. Captures the exact per-pixel roughness from any material's metallic/specular gloss maps at any 3D point, considering textures and shader properties as rendered.",
+  "unity": "2021.3",
+  "keywords": ["roughness", "smoothness", "pbr", "surface", "detector", "debug"],
+  "author": {
+    "name": "MHZE",
+    "url": "https://github.com/mhze"
+  },
+  "dependencies": {
+    "com.unity.render-pipelines.universal": "17.4.0"
+  }
+}

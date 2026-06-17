@@ -1,0 +1,14 @@
+{
+  "name": "com.mhze.roughness-detection.Editor",
+  "rootNamespace": "MHZE.RoughnessDetection.Editor",
+  "references": [
+    "com.mhze.roughness-detection.Runtime"
+  ],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": []
+}

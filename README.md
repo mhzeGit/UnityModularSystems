@@ -76,6 +76,14 @@ https://github.com/mhzeGit/UnityModularSystems.git?path=/Packages/com.mhze.ultim
 
 Configurable trigger zone with tag-based filtering (selectable via dropdown), UnityEvent bindings, and built-in collider debug previews. Supports enter/stay/exit events with box/sphere/capsule/mesh collider visualisation.
 
+### Roughness Detection
+
+```
+https://github.com/mhzeGit/UnityModularSystems.git?path=/Packages/com.mhze.roughness-detection
+```
+
+GPU-based surface roughness detector that raycasts forward from any GameObject and samples the exact per-pixel roughness from the material's metallic/specular gloss maps at the hit point. Features a custom inspector with live roughness preview bar, Scene view ray + colored label visualization, and a runtime GUI overlay.
+
 ## Mediator Scripts
 
 Mediator scripts in `Assets/Scripts/` connect standalone packages together. Attach these to a GameObject in your scene and assign the relevant system references in the Inspector.

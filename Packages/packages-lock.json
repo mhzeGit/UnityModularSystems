@@ -65,6 +65,14 @@
         "com.mhze.argevent": "1.0.0"
       }
     },
+    "com.mhze.roughness-detection": {
+      "version": "file:com.mhze.roughness-detection",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.unity.render-pipelines.universal": "17.4.0"
+      }
+    },
     "com.mhze.throw-system": {
       "version": "file:com.mhze.throw-system",
       "depth": 0,
