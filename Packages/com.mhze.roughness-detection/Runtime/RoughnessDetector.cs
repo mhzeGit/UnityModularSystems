@@ -128,7 +128,7 @@ namespace MHZE.RoughnessDetection
             if (uv != Vector2.zero)
                 return uv;
 
-            var id = hit.collider.GetInstanceID();
+            var id = hit.collider.GetHashCode();
             if (s_WarnedColliders.Add(id))
             {
                 Debug.LogWarning(
