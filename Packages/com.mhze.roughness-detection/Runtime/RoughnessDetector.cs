@@ -31,13 +31,16 @@ namespace MHZE.RoughnessDetection
         private RaycastHit m_LastHit;
         private float m_LastRoughness = -1f;
         private bool m_HasHit;
+        private Vector2 m_LastUV;
 
         public float LastRoughness => m_LastRoughness;
         public bool HasHit => m_HasHit;
         public RaycastHit LastHit => m_LastHit;
+        public Vector2 LastUV => m_LastUV;
 
         private void OnEnable()
         {
+            s_WarnedColliders.Clear();
             InitializeResources();
         }
 
@@ -100,8 +103,8 @@ namespace MHZE.RoughnessDetection
 
             if (m_HasHit)
             {
-                var uv = GetUVAtChannel(m_LastHit, uvChannel);
-                m_LastRoughness = CaptureRoughnessGPU(m_LastHit, uv, roughnessTexProperty, roughnessTexChannel, roughnessTexInverted);
+                m_LastUV = GetUVAtChannel(m_LastHit, uvChannel);
+                m_LastRoughness = CaptureRoughnessGPU(m_LastHit, m_LastUV, roughnessTexProperty, roughnessTexChannel, roughnessTexInverted);
 
                 if (m_LastRoughness < 0f)
                     m_LastRoughness = CaptureRoughnessMaterial(m_LastHit, uv, roughnessTexProperty, roughnessTexChannel, roughnessTexInverted);
@@ -114,25 +117,52 @@ namespace MHZE.RoughnessDetection
             return m_LastRoughness;
         }
 
+        private static readonly System.Collections.Generic.HashSet<int> s_WarnedColliders = new System.Collections.Generic.HashSet<int>();
+
         private static Vector2 GetUVAtChannel(RaycastHit hit, int channel)
         {
-            switch (channel)
+            if (channel <= 1)
+                return channel == 0 ? hit.textureCoord : hit.textureCoord2;
+
+            var uv = InterpolateMeshUV(hit, channel);
+            if (uv != Vector2.zero)
+                return uv;
+
+            var id = hit.collider.GetInstanceID();
+            if (s_WarnedColliders.Add(id))
             {
-                case 0: return hit.textureCoord;
-                case 1: return hit.textureCoord2;
-                case 2: return InterpolateMeshUV(hit, 2);
-                case 3: return InterpolateMeshUV(hit, 3);
-                default: return hit.textureCoord;
+                Debug.LogWarning(
+                    $"[RoughnessDetector] Cannot read UV{channel} from '{hit.collider.gameObject.name}'. " +
+                    $"Collider type '{hit.collider.GetType().Name}' has no accessible UV{channel} data. " +
+                    "Falling back to UV0. Add a MeshCollider or ensure the mesh has UV data on the selected channel.",
+                    hit.collider
+                );
             }
+            return hit.textureCoord;
         }
 
         private static Vector2 InterpolateMeshUV(RaycastHit hit, int channel)
         {
-            var meshCollider = hit.collider as MeshCollider;
-            if (meshCollider == null || meshCollider.sharedMesh == null)
+            Mesh mesh = null;
+
+            if (hit.collider is MeshCollider mc && mc.sharedMesh != null)
+                mesh = mc.sharedMesh;
+
+            if (mesh == null)
+            {
+                var renderer = hit.collider.GetComponent<Renderer>();
+                if (renderer != null)
+                {
+                    if (renderer is SkinnedMeshRenderer smr)
+                        mesh = smr.sharedMesh;
+                    else if (renderer.TryGetComponent<MeshFilter>(out var mf))
+                        mesh = mf.sharedMesh;
+                }
+            }
+
+            if (mesh == null)
                 return Vector2.zero;
 
-            var mesh = meshCollider.sharedMesh;
             var uv = channel switch
             {
                 2 => mesh.uv2,
@@ -360,7 +390,11 @@ namespace MHZE.RoughnessDetection
                     };
 
                     var offset = (m_LastSourceTransform.position - m_LastHit.point).normalized * 0.2f + Vector3.up * 0.25f;
-                    UnityEditor.Handles.Label(m_LastHit.point + offset, $"R: {m_LastRoughness:F3}", style);
+                    var labelText = $"R: {m_LastRoughness:F3}\nUV({m_LastUV.x:F3}, {m_LastUV.y:F3})";
+
+                    var smallStyle = new GUIStyle(style) { fontSize = 10, fontStyle = FontStyle.Normal };
+                    UnityEditor.Handles.Label(m_LastHit.point + offset, labelText, style);
+                    UnityEditor.Handles.Label(m_LastHit.point + offset + Vector3.down * 0.18f, $"UV({m_LastUV.x:F3}, {m_LastUV.y:F3})", smallStyle);
                 }
 #endif
             }
@@ -390,8 +424,8 @@ namespace MHZE.RoughnessDetection
             );
             m_GuiStyle.normal.textColor = labelColor;
 
-            var rect = new Rect(12, 12, 240, 32);
-            GUI.Label(rect, $"R: {m_LastRoughness:F3}", m_GuiStyle);
+            var rect = new Rect(12, 12, 300, 32);
+            GUI.Label(rect, $"R: {m_LastRoughness:F3}  UV({m_LastUV.x:F3},{m_LastUV.y:F3})", m_GuiStyle);
         }
 
         private void EnsureGuiStyle()

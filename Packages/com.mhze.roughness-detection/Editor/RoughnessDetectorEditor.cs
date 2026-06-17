@@ -176,8 +176,12 @@ namespace MHZE.RoughnessDetection.Editor
                 normal = { textColor = color }
             };
 
+            var uv = detector.LastUV;
             var labelPos = hit.point + hit.normal * 0.25f;
             Handles.Label(labelPos, $"Roughness: {roughness:F3}", style);
+
+            var smallStyle = new GUIStyle(style) { fontSize = 11, fontStyle = FontStyle.Normal };
+            Handles.Label(labelPos + Vector3.down * 0.2f, $"UV({uv.x:F3}, {uv.y:F3})", smallStyle);
 
             Handles.color = new Color(color.r, color.g, color.b, 0.4f);
             Handles.DrawLine(hit.point, hit.point + hit.normal * 0.25f);
