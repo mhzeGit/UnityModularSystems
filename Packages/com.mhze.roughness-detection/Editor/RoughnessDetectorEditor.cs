@@ -92,7 +92,7 @@ namespace MHZE.RoughnessDetection.Editor
                         foreach (var targetObj in targets)
                         {
                             var d = (RoughnessDetector)targetObj;
-                            d.DetectRoughness(d.transform, 5f, -1);
+                            d.DetectRoughness(d.transform, 5f, -1, 0);
                         }
                         SceneView.RepaintAll();
                         Repaint();

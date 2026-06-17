@@ -9,6 +9,7 @@ namespace MHZE.RoughnessDetection
         [SerializeField] private float maxDistance = 5f;
         [SerializeField] private LayerMask layerMask = -1;
         [SerializeField] [Range(0.01f, 2f)] private float updateInterval = 0.1f;
+        [SerializeField] [Range(0, 3)] private int uvChannel = 0;
 
         [Header("References")]
         [SerializeField] private RoughnessDetector roughnessDetector;
@@ -38,7 +39,7 @@ namespace MHZE.RoughnessDetection
                 return;
             m_LastUpdateTime = Time.time;
 
-            m_CurrentRoughness = roughnessDetector.DetectRoughness(transform, maxDistance, layerMask);
+            m_CurrentRoughness = roughnessDetector.DetectRoughness(transform, maxDistance, layerMask, uvChannel);
         }
     }
 }

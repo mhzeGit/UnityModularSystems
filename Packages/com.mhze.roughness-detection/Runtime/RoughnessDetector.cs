@@ -83,10 +83,10 @@ namespace MHZE.RoughnessDetection
 
         public float DetectRoughness(Transform source)
         {
-            return DetectRoughness(source, 5f, -1);
+            return DetectRoughness(source, 5f, -1, 0);
         }
 
-        public float DetectRoughness(Transform source, float maxDistance, int layerMask = -1)
+        public float DetectRoughness(Transform source, float maxDistance, int layerMask = -1, int uvChannel = 0)
         {
             if (roughnessOutputShader == null || !m_ResourcesInitialized)
                 return -1f;
@@ -98,10 +98,11 @@ namespace MHZE.RoughnessDetection
 
             if (m_HasHit)
             {
-                m_LastRoughness = CaptureRoughnessGPU(m_LastHit);
+                var uv = GetUVAtChannel(m_LastHit, uvChannel);
+                m_LastRoughness = CaptureRoughnessGPU(m_LastHit, uv);
 
                 if (m_LastRoughness < 0f)
-                    m_LastRoughness = CaptureRoughnessMaterial(m_LastHit);
+                    m_LastRoughness = CaptureRoughnessMaterial(m_LastHit, uv);
             }
             else
             {
@@ -111,7 +112,52 @@ namespace MHZE.RoughnessDetection
             return m_LastRoughness;
         }
 
-        private float CaptureRoughnessGPU(RaycastHit hit)
+        private static Vector2 GetUVAtChannel(RaycastHit hit, int channel)
+        {
+            switch (channel)
+            {
+                case 0: return hit.textureCoord;
+                case 1: return hit.textureCoord2;
+                case 2: return InterpolateMeshUV(hit, 2);
+                case 3: return InterpolateMeshUV(hit, 3);
+                default: return hit.textureCoord;
+            }
+        }
+
+        private static Vector2 InterpolateMeshUV(RaycastHit hit, int channel)
+        {
+            var meshCollider = hit.collider as MeshCollider;
+            if (meshCollider == null || meshCollider.sharedMesh == null)
+                return Vector2.zero;
+
+            var mesh = meshCollider.sharedMesh;
+            var uv = channel switch
+            {
+                2 => mesh.uv2,
+                3 => mesh.uv3,
+                _ => mesh.uv
+            };
+
+            if (uv == null || uv.Length == 0)
+                return Vector2.zero;
+
+            var triangles = mesh.triangles;
+            var triIndex = hit.triangleIndex;
+            if (triIndex < 0 || triIndex * 3 + 2 >= triangles.Length)
+                return Vector2.zero;
+
+            var i0 = triangles[triIndex * 3];
+            var i1 = triangles[triIndex * 3 + 1];
+            var i2 = triangles[triIndex * 3 + 2];
+
+            if (i0 >= uv.Length || i1 >= uv.Length || i2 >= uv.Length)
+                return Vector2.zero;
+
+            var bary = hit.barycentricCoordinate;
+            return uv[i0] * bary.x + uv[i1] * bary.y + uv[i2] * bary.z;
+        }
+
+        private float CaptureRoughnessGPU(RaycastHit hit, Vector2 uv)
         {
             if (roughnessOutputShader == null || m_CaptureRT == null)
                 return -1f;
@@ -141,7 +187,6 @@ namespace MHZE.RoughnessDetection
                 sampleMat.SetFloat("_SmoothnessTextureChannel", material.HasProperty("_SmoothnessTextureChannel") ? material.GetFloat("_SmoothnessTextureChannel") : 0f);
                 sampleMat.SetFloat("_WorkflowMode", material.HasProperty("_WorkflowMode") ? material.GetFloat("_WorkflowMode") : 1f);
 
-                var uv = hit.textureCoord;
                 sampleMat.SetVector("_SampleUV", new Vector4(uv.x, uv.y, 0, 0));
 
                 m_Cmd.Clear();
@@ -171,7 +216,7 @@ namespace MHZE.RoughnessDetection
             }
         }
 
-        private float CaptureRoughnessMaterial(RaycastHit hit)
+        private float CaptureRoughnessMaterial(RaycastHit hit, Vector2 uv)
         {
             var renderer = hit.collider.GetComponent<Renderer>();
             if (renderer == null) return -1f;
@@ -197,7 +242,6 @@ namespace MHZE.RoughnessDetection
             {
                 try
                 {
-                    var uv = hit.textureCoord;
                     var scale = material.GetTextureScale("_MetallicGlossMap");
                     var offset = material.GetTextureOffset("_MetallicGlossMap");
                     var sampledUV = new Vector2(
