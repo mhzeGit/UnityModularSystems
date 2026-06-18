@@ -16,7 +16,7 @@ namespace MHZE.UseSystem
 
         [Header("References")]
         public UseSystemDefinitions definitions;
-        public GameObject playerHand;
+        public Transform playerHand;
         [HideInInspector] public IUsableTarget currentUsableTarget;
         [HideInInspector] public IUsable currentHeldItem;
         [HideInInspector] public GameObject currentTargetObject;
