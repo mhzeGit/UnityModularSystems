@@ -49,16 +49,15 @@ namespace MHZE.RoughnessDetection.Editor
 
         private void DrawRoughnessPreview(RoughnessDetector detector)
         {
-            var roughness = detector.LastRoughness;
-            var hasHit = detector.HasHit;
+            var result = detector.LastResult;
 
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             {
                 EditorGUILayout.LabelField("Roughness Output", EditorStyles.boldLabel);
 
-                if (hasHit && roughness >= 0f)
+                if (result.IsValid)
                 {
-                    var t = Mathf.Clamp01(roughness);
+                    var t = Mathf.Clamp01(result.roughness);
                     var color = Color.Lerp(new Color(0.2f, 0.6f, 1f), new Color(1f, 0.3f, 0.1f), t);
 
                     EditorGUILayout.BeginVertical();
@@ -78,7 +77,7 @@ namespace MHZE.RoughnessDetection.Editor
 
                     EditorGUILayout.BeginHorizontal();
                     EditorGUILayout.LabelField("Smooth", GUILayout.Width(50));
-                    EditorGUILayout.LabelField($"{roughness:F3}", new GUIStyle(EditorStyles.boldLabel)
+                    EditorGUILayout.LabelField($"{result.roughness:F3}", new GUIStyle(EditorStyles.boldLabel)
                     {
                         fontSize = 16,
                         normal = { textColor = color },
@@ -155,15 +154,15 @@ namespace MHZE.RoughnessDetection.Editor
         private void OnSceneGUI()
         {
             var detector = (RoughnessDetector)target;
+            var result = detector.LastResult;
 
-            if (!detector.HasHit || detector.LastRoughness < 0f)
+            if (!result.IsValid)
                 return;
 
-            var roughness = detector.LastRoughness;
-            var t = Mathf.Clamp01(roughness);
+            var t = Mathf.Clamp01(result.roughness);
             var color = Color.Lerp(new Color(0.2f, 0.6f, 1f), new Color(1f, 0.3f, 0.1f), t);
 
-            var hit = detector.LastHit;
+            var hit = result.hit;
 
             Handles.color = color;
             Handles.DrawSolidDisc(hit.point, hit.normal, 0.06f);
@@ -176,9 +175,9 @@ namespace MHZE.RoughnessDetection.Editor
                 normal = { textColor = color }
             };
 
-            var uv = detector.LastUV;
+            var uv = result.uv;
             var labelPos = hit.point + hit.normal * 0.25f;
-            Handles.Label(labelPos, $"Roughness: {roughness:F3}", style);
+            Handles.Label(labelPos, $"Roughness: {result.roughness:F3}", style);
 
             var smallStyle = new GUIStyle(style) { fontSize = 11, fontStyle = FontStyle.Normal };
             Handles.Label(labelPos + Vector3.down * 0.2f, $"UV({uv.x:F3}, {uv.y:F3})", smallStyle);

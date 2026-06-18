@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace MHZE.RoughnessDetection
@@ -22,13 +23,45 @@ namespace MHZE.RoughnessDetection
         [Header("References")]
         [SerializeField] private RoughnessDetector roughnessDetector;
 
-        private float m_LastUpdateTime;
-        private float m_CurrentRoughness = -1f;
+        [Header("Debug Visualization")]
+        [SerializeField] private bool showDebug = true;
+        [SerializeField] private Color debugRayColor = new Color(1f, 0.8f, 0f);
+        [SerializeField] private Color debugHitColor = Color.red;
 
-        public float CurrentRoughness => m_CurrentRoughness;
+        [Header("GUI Overlay")]
+        [SerializeField] private bool showGUI = true;
+        [SerializeField] [Range(10, 40)] private int guiFontSize = 18;
+
+        private float m_LastUpdateTime;
+        private RoughnessResult m_LastResult;
+
+        private static readonly List<RoughnessProbe> s_ActiveProbes = new List<RoughnessProbe>();
+        private GUIStyle m_GuiStyle;
+        private Texture2D m_GuiBgTex;
+
+        public float CurrentRoughness => m_LastResult.roughness;
+        public RoughnessResult LastResult => m_LastResult;
+
+        public bool ShowDebug
+        {
+            get => showDebug;
+            set => showDebug = value;
+        }
+        public Color DebugRayColor
+        {
+            get => debugRayColor;
+            set => debugRayColor = value;
+        }
+        public Color DebugHitColor
+        {
+            get => debugHitColor;
+            set => debugHitColor = value;
+        }
 
         private void OnEnable()
         {
+            s_ActiveProbes.Add(this);
+
             if (roughnessDetector == null)
                 roughnessDetector = FindFirstObjectByType<RoughnessDetector>();
 
@@ -39,6 +72,16 @@ namespace MHZE.RoughnessDetection
             }
         }
 
+        private void OnDisable()
+        {
+            s_ActiveProbes.Remove(this);
+        }
+
+        private void OnDestroy()
+        {
+            s_ActiveProbes.Remove(this);
+        }
+
         private void Update()
         {
             if (roughnessDetector == null) return;
@@ -47,10 +90,115 @@ namespace MHZE.RoughnessDetection
                 return;
             m_LastUpdateTime = Time.time;
 
-            m_CurrentRoughness = roughnessDetector.DetectRoughness(
+            m_LastResult = roughnessDetector.DetectRoughness(
                 transform, maxDistance, layerMask, uvChannel,
                 roughnessTexProperty, roughnessTexChannel, roughnessTexInverted
             );
+        }
+
+        private void OnDrawGizmos()
+        {
+            if (!showDebug) return;
+            DrawGizmos();
+        }
+
+        private void DrawGizmos()
+        {
+            if (!m_LastResult.IsValid)
+            {
+                if (roughnessDetector != null)
+                {
+                    Gizmos.color = new Color(debugRayColor.r, debugRayColor.g, debugRayColor.b, 0.15f);
+                    Gizmos.DrawRay(transform.position, transform.forward * maxDistance);
+                }
+                return;
+            }
+
+            var origin = transform.position;
+            var direction = transform.forward;
+            var hit = m_LastResult.hit;
+
+            Gizmos.color = debugRayColor;
+            Gizmos.DrawRay(origin, direction * hit.distance);
+            Gizmos.DrawLine(hit.point, hit.point + hit.normal * 0.2f);
+
+            Gizmos.color = debugHitColor;
+            Gizmos.DrawSphere(hit.point, 0.08f);
+
+#if UNITY_EDITOR
+            if (m_LastResult.roughness >= 0f)
+            {
+                var roughnessT = Mathf.Clamp01(m_LastResult.roughness);
+                var labelColor = Color.Lerp(
+                    new Color(0.2f, 0.6f, 1f),
+                    new Color(1f, 0.3f, 0.1f),
+                    roughnessT
+                );
+
+                var style = new GUIStyle
+                {
+                    fontSize = 13,
+                    fontStyle = FontStyle.Bold,
+                    alignment = TextAnchor.MiddleCenter,
+                    normal = { textColor = labelColor }
+                };
+
+                var offset = (transform.position - hit.point).normalized * 0.2f + Vector3.up * 0.25f;
+                UnityEditor.Handles.Label(hit.point + offset, $"R: {m_LastResult.roughness:F3}", style);
+
+                var smallStyle = new GUIStyle(style) { fontSize = 10, fontStyle = FontStyle.Normal };
+                UnityEditor.Handles.Label(
+                    hit.point + offset + Vector3.down * 0.18f,
+                    $"UV({m_LastResult.uv.x:F3}, {m_LastResult.uv.y:F3})",
+                    smallStyle
+                );
+            }
+#endif
+        }
+
+        private void OnGUI()
+        {
+            if (!showGUI || !Application.isPlaying || !m_LastResult.IsValid)
+                return;
+
+            EnsureGuiStyle();
+            m_GuiStyle.fontSize = guiFontSize;
+
+            var roughnessT = Mathf.Clamp01(m_LastResult.roughness);
+            var labelColor = Color.Lerp(
+                new Color(0.2f, 0.6f, 1f),
+                new Color(1f, 0.3f, 0.1f),
+                roughnessT
+            );
+            m_GuiStyle.normal.textColor = labelColor;
+
+            var index = s_ActiveProbes.IndexOf(this);
+            if (index < 0) index = 0;
+
+            var rect = new Rect(12, 12 + index * 36, 400, 32);
+            GUI.Label(rect, $"[{gameObject.name}] R: {m_LastResult.roughness:F3}  UV({m_LastResult.uv.x:F3},{m_LastResult.uv.y:F3})", m_GuiStyle);
+        }
+
+        private void EnsureGuiStyle()
+        {
+            if (m_GuiStyle != null) return;
+
+            m_GuiBgTex = new Texture2D(1, 1);
+            m_GuiBgTex.SetPixel(0, 0, new Color(0f, 0f, 0f, 0.55f));
+            m_GuiBgTex.Apply();
+
+            m_GuiStyle = new GUIStyle
+            {
+                fontSize = guiFontSize,
+                fontStyle = FontStyle.Bold,
+                alignment = TextAnchor.MiddleLeft,
+                normal =
+                {
+                    textColor = Color.white,
+                    background = m_GuiBgTex
+                },
+                padding = new RectOffset(8, 8, 4, 4)
+            };
         }
     }
 }

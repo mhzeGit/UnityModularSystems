@@ -22,21 +22,16 @@ namespace MHZE.RoughnessDetection
         [SerializeField] [Range(10, 40)] private int guiFontSize = 18;
 
         private RenderTexture m_CaptureRT;
+        private Texture2D m_CaptureTex;
         private bool m_ResourcesInitialized;
         private GUIStyle m_GuiStyle;
         private Texture2D m_GuiBgTex;
         private CommandBuffer m_Cmd;
+        private Material m_SampleMat;
+        private Shader m_SampleMatShader;
 
-        private Transform m_LastSourceTransform;
-        private RaycastHit m_LastHit;
-        private float m_LastRoughness = -1f;
-        private bool m_HasHit;
-        private Vector2 m_LastUV;
-
-        public float LastRoughness => m_LastRoughness;
-        public bool HasHit => m_HasHit;
-        public RaycastHit LastHit => m_LastHit;
-        public Vector2 LastUV => m_LastUV;
+        private RoughnessResult m_LastResult;
+        public RoughnessResult LastResult => m_LastResult;
 
         private void OnEnable()
         {
@@ -59,6 +54,11 @@ namespace MHZE.RoughnessDetection
             };
             m_CaptureRT.Create();
 
+            m_CaptureTex = new Texture2D(1, 1, TextureFormat.RGBA32, false)
+            {
+                hideFlags = HideFlags.DontSave
+            };
+
             m_Cmd = new CommandBuffer { name = "RoughnessCapture" };
 
             m_ResourcesInitialized = true;
@@ -74,8 +74,14 @@ namespace MHZE.RoughnessDetection
                 DestroyImmediate(m_CaptureRT);
             }
 
+            if (m_CaptureTex != null)
+                DestroyImmediate(m_CaptureTex);
+
             if (m_Cmd != null)
                 m_Cmd.Release();
+
+            if (m_SampleMat != null)
+                DestroyImmediate(m_SampleMat);
 
             if (m_GuiBgTex != null)
                 DestroyImmediate(m_GuiBgTex);
@@ -84,37 +90,39 @@ namespace MHZE.RoughnessDetection
             m_ResourcesInitialized = false;
         }
 
-        public float DetectRoughness(Transform source)
+        public RoughnessResult DetectRoughness(Transform source)
         {
             return DetectRoughness(source, 5f, -1, 0, "_MetallicGlossMap", 3, true);
         }
 
-        public float DetectRoughness(
+        public RoughnessResult DetectRoughness(
             Transform source, float maxDistance, int layerMask = -1, int uvChannel = 0,
             string roughnessTexProperty = "_MetallicGlossMap", int roughnessTexChannel = 3, bool roughnessTexInverted = true)
         {
+            m_LastResult = RoughnessResult.Invalid;
+
             if (roughnessOutputShader == null || !m_ResourcesInitialized)
-                return -1f;
+                return m_LastResult;
 
-            m_LastSourceTransform = source;
-
+            var result = new RoughnessResult();
             var ray = new Ray(source.position, source.forward);
-            m_HasHit = Physics.Raycast(ray, out m_LastHit, maxDistance, layerMask);
+            result.hasHit = Physics.Raycast(ray, out result.hit, maxDistance, layerMask);
 
-            if (m_HasHit)
+            if (result.hasHit)
             {
-                m_LastUV = GetUVAtChannel(m_LastHit, uvChannel);
-                m_LastRoughness = CaptureRoughnessGPU(m_LastHit, m_LastUV, roughnessTexProperty, roughnessTexChannel, roughnessTexInverted);
+                result.uv = GetUVAtChannel(result.hit, uvChannel);
+                result.roughness = CaptureRoughnessGPU(result.hit, result.uv, roughnessTexProperty, roughnessTexChannel, roughnessTexInverted);
 
-                if (m_LastRoughness < 0f)
-                    m_LastRoughness = CaptureRoughnessMaterial(m_LastHit, m_LastUV, roughnessTexProperty, roughnessTexChannel, roughnessTexInverted);
+                if (result.roughness < 0f)
+                    result.roughness = CaptureRoughnessMaterial(result.hit, result.uv, roughnessTexProperty, roughnessTexChannel, roughnessTexInverted);
             }
             else
             {
-                m_LastRoughness = -1f;
+                result.roughness = -1f;
             }
 
-            return m_LastRoughness;
+            m_LastResult = result;
+            return result;
         }
 
         private static readonly System.Collections.Generic.HashSet<int> s_WarnedColliders = new System.Collections.Generic.HashSet<int>();
@@ -219,11 +227,12 @@ namespace MHZE.RoughnessDetection
 
             try
             {
-                var sampleMat = new Material(roughnessOutputShader);
+                EnsureSampleMaterial();
+                if (m_SampleMat == null) return -1f;
 
                 var texProperty = roughnessTexProperty;
                 Texture roughnessTex = material.HasProperty(texProperty) ? material.GetTexture(texProperty) : null;
-                sampleMat.SetTexture("_RoughnessTex", roughnessTex);
+                m_SampleMat.SetTexture("_RoughnessTex", roughnessTex);
 
                 string stProperty = texProperty + "_ST";
                 Vector4 st = material.HasProperty(stProperty)
@@ -231,41 +240,52 @@ namespace MHZE.RoughnessDetection
                     : material.HasProperty("_BaseMap_ST")
                         ? material.GetVector("_BaseMap_ST")
                         : new Vector4(1, 1, 0, 0);
-                sampleMat.SetVector("_RoughnessTex_ST", st);
+                m_SampleMat.SetVector("_RoughnessTex_ST", st);
 
                 float fallback = 0.5f;
                 if (material.HasProperty("_Smoothness"))
                     fallback = 1f - material.GetFloat("_Smoothness");
 
-                sampleMat.SetFloat("_RoughnessFallback", fallback);
-                sampleMat.SetVector("_RoughnessParams", new Vector4(roughnessTexChannel, roughnessTexInverted ? 1f : 0f, roughnessTex != null ? 1f : 0f, 0));
-                sampleMat.SetVector("_SampleUV", new Vector4(uv.x, uv.y, 0, 0));
+                m_SampleMat.SetFloat("_RoughnessFallback", fallback);
+                m_SampleMat.SetVector("_RoughnessParams", new Vector4(roughnessTexChannel, roughnessTexInverted ? 1f : 0f, roughnessTex != null ? 1f : 0f, 0));
+                m_SampleMat.SetVector("_SampleUV", new Vector4(uv.x, uv.y, 0, 0));
 
                 m_Cmd.Clear();
                 m_Cmd.SetRenderTarget(m_CaptureRT);
                 m_Cmd.ClearRenderTarget(true, true, Color.clear);
-                m_Cmd.DrawProcedural(Matrix4x4.identity, sampleMat, 0, MeshTopology.Triangles, 3);
+                m_Cmd.DrawProcedural(Matrix4x4.identity, m_SampleMat, 0, MeshTopology.Triangles, 3);
                 Graphics.ExecuteCommandBuffer(m_Cmd);
 
                 var prevRT = RenderTexture.active;
                 RenderTexture.active = m_CaptureRT;
 
-                var tex = new Texture2D(1, 1, TextureFormat.RGBA32, false);
-                tex.ReadPixels(new Rect(0, 0, 1, 1), 0, 0);
-                tex.Apply();
+                m_CaptureTex.ReadPixels(new Rect(0, 0, 1, 1), 0, 0);
+                m_CaptureTex.Apply();
 
                 RenderTexture.active = prevRT;
 
-                var pixel = tex.GetPixel(0, 0);
-                DestroyImmediate(tex);
-                DestroyImmediate(sampleMat);
-
+                var pixel = m_CaptureTex.GetPixel(0, 0);
                 return pixel.r;
             }
             catch
             {
                 return -1f;
             }
+        }
+
+        private void EnsureSampleMaterial()
+        {
+            if (m_SampleMat != null && m_SampleMatShader == roughnessOutputShader)
+                return;
+
+            if (m_SampleMat != null)
+                DestroyImmediate(m_SampleMat);
+
+            m_SampleMat = new Material(roughnessOutputShader)
+            {
+                hideFlags = HideFlags.DontSave
+            };
+            m_SampleMatShader = roughnessOutputShader;
         }
 
         private float CaptureRoughnessMaterial(
@@ -358,74 +378,71 @@ namespace MHZE.RoughnessDetection
 
         private void DrawGizmos()
         {
-            if (m_LastSourceTransform == null) return;
-
-            var origin = m_LastSourceTransform.position;
-            var direction = m_LastSourceTransform.forward;
-
-            if (m_HasHit)
+            if (!m_LastResult.IsValid)
             {
-                if (showRay)
-                {
-                    Gizmos.color = rayColor;
-                    Gizmos.DrawRay(origin, direction * m_LastHit.distance);
-
-                    var end = m_LastHit.point;
-                    Gizmos.DrawLine(end, end + m_LastHit.normal * 0.2f);
-                }
-
-                if (showHitPoint)
-                {
-                    Gizmos.color = hitPointColor;
-                    Gizmos.DrawSphere(m_LastHit.point, hitPointRadius);
-                }
-
-#if UNITY_EDITOR
-                if (showRoughnessLabel && m_LastRoughness >= 0f)
-                {
-                    var roughnessT = Mathf.Clamp01(m_LastRoughness);
-                    var labelColor = Color.Lerp(
-                        new Color(0.2f, 0.6f, 1f),
-                        new Color(1f, 0.3f, 0.1f),
-                        roughnessT
-                    );
-
-                    var style = new GUIStyle
-                    {
-                        fontSize = 14,
-                        fontStyle = FontStyle.Bold,
-                        alignment = TextAnchor.MiddleCenter,
-                        normal = { textColor = labelColor }
-                    };
-
-                    var offset = (m_LastSourceTransform.position - m_LastHit.point).normalized * 0.2f + Vector3.up * 0.25f;
-                    var labelText = $"R: {m_LastRoughness:F3}\nUV({m_LastUV.x:F3}, {m_LastUV.y:F3})";
-
-                    var smallStyle = new GUIStyle(style) { fontSize = 10, fontStyle = FontStyle.Normal };
-                    UnityEditor.Handles.Label(m_LastHit.point + offset, labelText, style);
-                    UnityEditor.Handles.Label(m_LastHit.point + offset + Vector3.down * 0.18f, $"UV({m_LastUV.x:F3}, {m_LastUV.y:F3})", smallStyle);
-                }
-#endif
-            }
-            else
-            {
-                if (showRay)
+                if (showRay && roughnessOutputShader != null)
                 {
                     Gizmos.color = new Color(rayColor.r, rayColor.g, rayColor.b, 0.15f);
-                    Gizmos.DrawRay(origin, direction * (origin - m_LastSourceTransform.position).magnitude + direction * 5f);
+                    Gizmos.DrawRay(transform.position, transform.forward * 5f);
                 }
+                return;
             }
+
+            var origin = transform.position;
+            var direction = transform.forward;
+
+            if (showRay)
+            {
+                Gizmos.color = rayColor;
+                Gizmos.DrawRay(origin, direction * m_LastResult.hit.distance);
+
+                var end = m_LastResult.hit.point;
+                Gizmos.DrawLine(end, end + m_LastResult.hit.normal * 0.2f);
+            }
+
+            if (showHitPoint)
+            {
+                Gizmos.color = hitPointColor;
+                Gizmos.DrawSphere(m_LastResult.hit.point, hitPointRadius);
+            }
+
+#if UNITY_EDITOR
+            if (showRoughnessLabel && m_LastResult.roughness >= 0f)
+            {
+                var roughnessT = Mathf.Clamp01(m_LastResult.roughness);
+                var labelColor = Color.Lerp(
+                    new Color(0.2f, 0.6f, 1f),
+                    new Color(1f, 0.3f, 0.1f),
+                    roughnessT
+                );
+
+                var style = new GUIStyle
+                {
+                    fontSize = 14,
+                    fontStyle = FontStyle.Bold,
+                    alignment = TextAnchor.MiddleCenter,
+                    normal = { textColor = labelColor }
+                };
+
+                var offset = (transform.position - m_LastResult.hit.point).normalized * 0.2f + Vector3.up * 0.25f;
+
+                UnityEditor.Handles.Label(m_LastResult.hit.point + offset, $"R: {m_LastResult.roughness:F3}", style);
+
+                var smallStyle = new GUIStyle(style) { fontSize = 10, fontStyle = FontStyle.Normal };
+                UnityEditor.Handles.Label(m_LastResult.hit.point + offset + Vector3.down * 0.18f, $"UV({m_LastResult.uv.x:F3}, {m_LastResult.uv.y:F3})", smallStyle);
+            }
+#endif
         }
 
         private void OnGUI()
         {
-            if (!showGUI || !Application.isPlaying || !m_HasHit || m_LastRoughness < 0f)
+            if (!showGUI || !Application.isPlaying || !m_LastResult.IsValid)
                 return;
 
             EnsureGuiStyle();
             m_GuiStyle.fontSize = guiFontSize;
 
-            var roughnessT = Mathf.Clamp01(m_LastRoughness);
+            var roughnessT = Mathf.Clamp01(m_LastResult.roughness);
             var labelColor = Color.Lerp(
                 new Color(0.2f, 0.6f, 1f),
                 new Color(1f, 0.3f, 0.1f),
@@ -434,7 +451,7 @@ namespace MHZE.RoughnessDetection
             m_GuiStyle.normal.textColor = labelColor;
 
             var rect = new Rect(12, 12, 300, 32);
-            GUI.Label(rect, $"R: {m_LastRoughness:F3}  UV({m_LastUV.x:F3},{m_LastUV.y:F3})", m_GuiStyle);
+            GUI.Label(rect, $"R: {m_LastResult.roughness:F3}  UV({m_LastResult.uv.x:F3},{m_LastResult.uv.y:F3})", m_GuiStyle);
         }
 
         private void EnsureGuiStyle()
