@@ -121,12 +121,12 @@ namespace MHZE.RoughnessDetection
 
         private static Vector2 GetUVAtChannel(RaycastHit hit, int channel)
         {
+            var instanceUV = InterpolateMeshUV(hit, channel);
+            if (instanceUV != Vector2.zero)
+                return instanceUV;
+
             if (channel <= 1)
                 return channel == 0 ? hit.textureCoord : hit.textureCoord2;
-
-            var uv = InterpolateMeshUV(hit, channel);
-            if (uv != Vector2.zero)
-                return uv;
 
             var id = hit.collider.GetHashCode();
             if (s_WarnedColliders.Add(id))
@@ -143,31 +143,40 @@ namespace MHZE.RoughnessDetection
 
         private static Vector2 InterpolateMeshUV(RaycastHit hit, int channel)
         {
-            Mesh mesh = null;
-
-            if (hit.collider is MeshCollider mc && mc.sharedMesh != null)
-                mesh = mc.sharedMesh;
-
-            if (mesh == null)
+            var renderer = hit.collider.GetComponent<Renderer>();
+            if (renderer == null)
             {
-                var renderer = hit.collider.GetComponent<Renderer>();
-                if (renderer != null)
-                {
-                    if (renderer is SkinnedMeshRenderer smr)
-                        mesh = smr.sharedMesh;
-                    else if (renderer.TryGetComponent<MeshFilter>(out var mf))
-                        mesh = mf.sharedMesh;
-                }
+                if (hit.collider is MeshCollider mc && mc.sharedMesh != null)
+                    return InterpolateUVFromMesh(mc.sharedMesh, hit, channel);
+                return Vector2.zero;
             }
 
-            if (mesh == null)
-                return Vector2.zero;
+            if (renderer is SkinnedMeshRenderer smr)
+            {
+                var mesh = smr.sharedMesh;
+                if (mesh == null) return Vector2.zero;
+                return InterpolateUVFromMesh(mesh, hit, channel);
+            }
 
+            if (renderer.TryGetComponent<MeshFilter>(out var mf))
+            {
+                var mesh = mf.mesh;
+                if (mesh == null) return Vector2.zero;
+                return InterpolateUVFromMesh(mesh, hit, channel);
+            }
+
+            return Vector2.zero;
+        }
+
+        private static Vector2 InterpolateUVFromMesh(Mesh mesh, RaycastHit hit, int channel)
+        {
             var uv = channel switch
             {
-                2 => mesh.uv2,
-                3 => mesh.uv3,
-                _ => mesh.uv
+                0 => mesh.uv,
+                1 => mesh.uv2,
+                2 => mesh.uv3,
+                3 => mesh.uv4,
+                _ => null
             };
 
             if (uv == null || uv.Length == 0)
@@ -199,13 +208,13 @@ namespace MHZE.RoughnessDetection
             var renderer = hit.collider.GetComponent<Renderer>();
             if (renderer == null) return -1f;
 
-            var sharedMaterials = renderer.sharedMaterials;
-            if (sharedMaterials == null || sharedMaterials.Length == 0) return -1f;
+            var instanceMaterials = renderer.materials;
+            if (instanceMaterials == null || instanceMaterials.Length == 0) return -1f;
 
             var submeshIndex = hit.triangleIndex / 3;
-            if (submeshIndex >= sharedMaterials.Length) submeshIndex = 0;
+            if (submeshIndex >= instanceMaterials.Length) submeshIndex = 0;
 
-            var material = sharedMaterials[submeshIndex];
+            var material = instanceMaterials[submeshIndex];
             if (material == null) return -1f;
 
             try
@@ -266,15 +275,15 @@ namespace MHZE.RoughnessDetection
             var renderer = hit.collider.GetComponent<Renderer>();
             if (renderer == null) return -1f;
 
-            var sharedMaterials = renderer.sharedMaterials;
-            if (sharedMaterials == null || sharedMaterials.Length == 0)
+            var instanceMaterials = renderer.materials;
+            if (instanceMaterials == null || instanceMaterials.Length == 0)
                 return -1f;
 
             var submeshIndex = hit.triangleIndex / 3;
-            if (submeshIndex >= sharedMaterials.Length)
+            if (submeshIndex >= instanceMaterials.Length)
                 submeshIndex = 0;
 
-            var material = sharedMaterials[submeshIndex];
+            var material = instanceMaterials[submeshIndex];
             if (material == null) return -1f;
 
             float value = 0.5f;

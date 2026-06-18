@@ -30,7 +30,7 @@ namespace MHZE.RoughnessDetection
         private void OnEnable()
         {
             if (roughnessDetector == null)
-                roughnessDetector = FindObjectOfType<RoughnessDetector>();
+                roughnessDetector = FindFirstObjectByType<RoughnessDetector>();
 
             if (roughnessDetector == null)
             {
