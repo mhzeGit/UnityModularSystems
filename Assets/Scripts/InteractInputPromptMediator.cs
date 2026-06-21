@@ -67,15 +67,7 @@ public class InteractInputPromptMediator : MonoBehaviour
     {
         if (inputPromptManager == null) return;
 
-        if (interactPromptDefinition != null)
-        {
-            inputPromptManager.HidePrompt(interactPromptDefinition.Key);
-        }
-
-        if (holdPromptDefinition != null)
-        {
-            inputPromptManager.HidePrompt(holdPromptDefinition.Key);
-        }
+        RefreshPrompt();
     }
 
     private void HandleCurrentInteractableUpdated()
@@ -147,12 +139,7 @@ public class InteractInputPromptMediator : MonoBehaviour
         if (interactable != null && interactable.OneTimeInteract)
         {
             interactable.SetInteractedOnce(true);
-
-            if (interactPromptDefinition != null)
-                inputPromptManager.HidePrompt(interactPromptDefinition.Key);
-
-            if (holdPromptDefinition != null)
-                inputPromptManager.HidePrompt(holdPromptDefinition.Key);
+            RefreshPrompt();
         }
     }
 
@@ -181,12 +168,20 @@ public class InteractInputPromptMediator : MonoBehaviour
 
     private void RefreshPrompt()
     {
-        if (inputPromptManager == null || interactPromptDefinition == null) return;
+        if (inputPromptManager == null) return;
 
         var interactable = interactSystem.CurrentInteractable;
-        if (interactable != null && interactable.IsInteractable && interactable.AllowPrompt && !ShouldSuppressPrompt(interactable))
+        if (interactable != null && interactable.IsInteractable && interactable.AllowPrompt && !ShouldSuppressPrompt(interactable) && interactPromptDefinition != null)
         {
             ShowInteractPrompt(interactable);
+        }
+        else
+        {
+            if (interactPromptDefinition != null)
+                inputPromptManager.HidePrompt(interactPromptDefinition.Key);
+
+            if (holdPromptDefinition != null)
+                inputPromptManager.HidePrompt(holdPromptDefinition.Key);
         }
     }
 

@@ -10,6 +10,8 @@ public class UseInputPromptMediator : MonoBehaviour
     [Header("Prompt Definitions")]
     [SerializeField] private InputPromptDefinition usePromptDefinition;
 
+    private IUsableTarget currentTarget;
+
     private void OnEnable()
     {
         if (useSystem == null)
@@ -49,6 +51,8 @@ public class UseInputPromptMediator : MonoBehaviour
     {
         if (inputPromptManager == null || usePromptDefinition == null) return;
 
+        currentTarget = target;
+
         var toolId = useSystem.currentHeldItem != null
             ? useSystem.currentHeldItem.GetToolId()
             : "Hand";
@@ -60,21 +64,23 @@ public class UseInputPromptMediator : MonoBehaviour
     {
         if (inputPromptManager == null) return;
 
-        HideUsePrompt();
+        currentTarget = null;
+
+        RefreshPrompt();
     }
 
     private void HandleUseItem(IUsable usable)
     {
         if (inputPromptManager == null) return;
 
-        HideUsePrompt();
+        RefreshPrompt();
     }
 
     private void HandleUseItemAtTarget(IUsable usable, IUsableTarget target)
     {
         if (inputPromptManager == null) return;
 
-        HideUsePrompt();
+        RefreshPrompt();
     }
 
     private void ShowUsePrompt(IUsableTarget target, string toolId)
@@ -86,9 +92,19 @@ public class UseInputPromptMediator : MonoBehaviour
         inputPromptManager.ShowPrompt(usePromptDefinition.Key, usePromptDefinition.Key, prefix, suffix);
     }
 
-    private void HideUsePrompt()
+    private void RefreshPrompt()
     {
-        if (usePromptDefinition != null)
+        if (inputPromptManager == null || usePromptDefinition == null) return;
+
+        if (currentTarget != null)
+        {
+            var toolId = useSystem.currentHeldItem != null
+                ? useSystem.currentHeldItem.GetToolId()
+                : "Hand";
+
+            ShowUsePrompt(currentTarget, toolId);
+        }
+        else
         {
             inputPromptManager.HidePrompt(usePromptDefinition.Key);
         }
