@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -17,7 +18,7 @@ namespace MHZE.UseSystem
         [Header("References")]
         public UseSystemDefinitions definitions;
         public Transform playerHand;
-        [HideInInspector] public IUsableTarget currentUsableTarget;
+        [HideInInspector] public List<IUsableTarget> currentUsableTargets = new List<IUsableTarget>();
         [HideInInspector] public IUsable currentHeldItem;
         [HideInInspector] public GameObject currentTargetObject;
         string foundTargetId;
@@ -107,7 +108,7 @@ namespace MHZE.UseSystem
 
             if (!currentHeldItem.GetIsUsable()) return;
 
-            foundTargetId = currentUsableTarget?.GetTargetId() ?? "Default";
+            foundTargetId = currentUsableTargets.Count > 0 ? currentUsableTargets[0].GetTargetId() : "Default";
             currentHeldItem.OnUsed(currentTargetObject, foundTargetId);
 
             CancelDelayedUse();
@@ -136,9 +137,15 @@ namespace MHZE.UseSystem
         }
         public void CheckTargetObjectCanBeUsedOn(GameObject objectFound)
         {
-            IUsableTarget usableTarget = objectFound?.GetComponent<IUsableTarget>();
+            if (objectFound == null)
+            {
+                OnLostObjectPerformed();
+                return;
+            }
 
-            if (usableTarget == null)
+            IUsableTarget[] allTargets = objectFound.GetComponents<IUsableTarget>();
+
+            if (allTargets.Length == 0)
             {
                 OnLostObjectPerformed();
                 return;
@@ -146,26 +153,43 @@ namespace MHZE.UseSystem
 
             toolIdToCheck = currentHeldItem != null ? currentHeldItem.GetToolId() : "Hand";
 
-            if (usableTarget == currentUsableTarget)
+            List<IUsableTarget> validTargets = new List<IUsableTarget>();
+            foreach (IUsableTarget target in allTargets)
             {
-                return;
+                if (!target.GetCanUseAtTarget()) continue;
+                if (!target.GetAcceptedToolIds().Contains(toolIdToCheck)) continue;
+                validTargets.Add(target);
             }
 
-            if (!usableTarget.GetCanUseAtTarget())
-            {
-                OnLostObjectPerformed();
-                return;
-            }
-
-            if (!usableTarget.GetAcceptedToolIds().Contains(toolIdToCheck))
+            if (validTargets.Count == 0)
             {
                 OnLostObjectPerformed();
                 return;
             }
 
-            currentUsableTarget = usableTarget;
+            if (currentTargetObject == objectFound && TargetsEqual(currentUsableTargets, validTargets))
+            {
+                return;
+            }
+
+            currentUsableTargets.Clear();
+            currentUsableTargets.AddRange(validTargets);
             currentTargetObject = objectFound;
-            OnUsableTargetFound?.Invoke(currentUsableTarget);
+
+            foreach (IUsableTarget target in currentUsableTargets)
+            {
+                OnUsableTargetFound?.Invoke(target);
+            }
+        }
+
+        static bool TargetsEqual(List<IUsableTarget> a, List<IUsableTarget> b)
+        {
+            if (a.Count != b.Count) return false;
+            for (int i = 0; i < a.Count; i++)
+            {
+                if (a[i] != b[i]) return false;
+            }
+            return true;
         }
 
         void CancelDelayedUse()
@@ -179,10 +203,10 @@ namespace MHZE.UseSystem
 
         public void OnLostObjectPerformed()
         {
-            if (currentUsableTarget != null)
+            if (currentUsableTargets.Count > 0)
             {
                 CancelDelayedUse();
-                currentUsableTarget = null;
+                currentUsableTargets.Clear();
                 currentTargetObject = null;
                 OnUsableTargetLost?.Invoke();
             }
@@ -190,14 +214,19 @@ namespace MHZE.UseSystem
 
         void UseTheToolOnTarget()
         {
-            if (currentUsableTarget == null) return;
+            if (currentUsableTargets.Count == 0) return;
             if (currentTargetObject == null) return;
-            if (!currentUsableTarget.GetCanUseAtTarget()) return;
-            if (!currentUsableTarget.GetAcceptedToolIds().Contains(toolIdToCheck)) return;
 
             currentHeldItem.OnUsedOnTarget(currentTargetObject, foundTargetId);
-            currentUsableTarget.Used((currentHeldItem as MonoBehaviour)?.gameObject, toolIdToCheck, lastHitTargetResults);
-            OnUseItemAtTarget?.Invoke(currentHeldItem, currentUsableTarget);
+
+            foreach (IUsableTarget target in currentUsableTargets)
+            {
+                if (!target.GetCanUseAtTarget()) continue;
+                if (!target.GetAcceptedToolIds().Contains(toolIdToCheck)) continue;
+
+                target.Used((currentHeldItem as MonoBehaviour)?.gameObject, toolIdToCheck, lastHitTargetResults);
+                OnUseItemAtTarget?.Invoke(currentHeldItem, target);
+            }
         }
     }
 }

@@ -57,7 +57,7 @@ public class InteractInputPromptMediator : MonoBehaviour
     {
         if (inputPromptManager == null || interactPromptDefinition == null) return;
 
-        if (interactable.AllowPrompt && !ShouldSuppressPrompt(interactable))
+        if (interactable.IsInteractable && interactable.AllowPrompt && !ShouldSuppressPrompt(interactable))
         {
             ShowInteractPrompt(interactable);
         }
@@ -83,7 +83,7 @@ public class InteractInputPromptMediator : MonoBehaviour
         if (inputPromptManager == null) return;
 
         var interactable = interactSystem.CurrentInteractable;
-        if (interactable != null && interactable.AllowPrompt && !ShouldSuppressPrompt(interactable))
+        if (interactable != null && interactable.IsInteractable && interactable.AllowPrompt && !ShouldSuppressPrompt(interactable))
         {
             if (interactPromptDefinition != null)
             {
@@ -184,7 +184,7 @@ public class InteractInputPromptMediator : MonoBehaviour
         if (inputPromptManager == null || interactPromptDefinition == null) return;
 
         var interactable = interactSystem.CurrentInteractable;
-        if (interactable != null && interactable.AllowPrompt && !ShouldSuppressPrompt(interactable))
+        if (interactable != null && interactable.IsInteractable && interactable.AllowPrompt && !ShouldSuppressPrompt(interactable))
         {
             ShowInteractPrompt(interactable);
         }
