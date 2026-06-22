@@ -6,7 +6,8 @@
   "unity": "2022.3",
   "author": {
     "name": "MHZE",
-    "url": "https://github.com/mhze"
+    "email": "mhze.uk@gmail.com",
+    "url": "https://github.com/mhzeGit/"
   },
   "dependencies": {
     "com.unity.inputsystem": "1.7.0"

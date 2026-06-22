@@ -7,8 +7,8 @@
   "keywords": ["camera", "freeform", "editor", "fly", "scene"],
   "author": {
     "name": "MHZE",
-    "email": "",
-    "url": ""
+    "email": "mhze.uk@gmail.com",
+    "url": "https://github.com/mhzeGit/"
   },
   "dependencies": {
     "com.unity.inputsystem": "1.7.0"
