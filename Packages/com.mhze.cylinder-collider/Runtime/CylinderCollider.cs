@@ -165,10 +165,23 @@ namespace MHZE.CylinderCollider
             }
         }
 
-        private void OnEnable()
+        private void Awake()
         {
             EnsureCollider();
             RebuildIfNeeded();
+        }
+
+        private void OnEnable()
+        {
+            if (m_ColliderGO == null)
+            {
+                EnsureCollider();
+                RebuildIfNeeded();
+            }
+            else if (m_MeshCollider != null)
+            {
+                m_MeshCollider.enabled = true;
+            }
         }
 
         private void OnDisable()
@@ -232,13 +245,20 @@ namespace MHZE.CylinderCollider
             if (m_ColliderGO != null)
             {
                 if (m_MeshCollider == null)
+                {
                     m_MeshCollider = m_ColliderGO.AddComponent<MeshCollider>();
+                    m_MeshCollider.convex = true;
+                    m_MeshCollider.cookingOptions = MeshColliderCookingOptions.CookForFasterSimulation
+                        | MeshColliderCookingOptions.EnableMeshCleaning
+                        | MeshColliderCookingOptions.WeldColocatedVertices;
+                }
                 m_MeshCollider.enabled = true;
                 return;
             }
 
             m_ColliderGO = new GameObject("CylinderCollider");
             m_ColliderGO.hideFlags = HideFlags.HideAndDontSave;
+            m_ColliderGO.layer = gameObject.layer;
             m_ColliderGO.transform.SetParent(transform);
             m_ColliderGO.transform.localPosition = Vector3.zero;
             m_ColliderGO.transform.localRotation = Quaternion.identity;
@@ -247,7 +267,9 @@ namespace MHZE.CylinderCollider
             m_MeshCollider = m_ColliderGO.AddComponent<MeshCollider>();
             m_MeshCollider.hideFlags = HideFlags.HideAndDontSave;
             m_MeshCollider.convex = true;
-            m_MeshCollider.cookingOptions = MeshColliderCookingOptions.CookForFasterSimulation;
+            m_MeshCollider.cookingOptions = MeshColliderCookingOptions.CookForFasterSimulation
+                | MeshColliderCookingOptions.EnableMeshCleaning
+                | MeshColliderCookingOptions.WeldColocatedVertices;
             m_MeshCollider.providesContacts = m_ProvidesContacts;
             m_MeshCollider.layerOverridePriority = m_LayerOverridePriority;
             m_MeshCollider.includeLayers = m_IncludeLayers;
@@ -281,15 +303,23 @@ namespace MHZE.CylinderCollider
             if (m_MeshCollider == null)
                 EnsureCollider();
 
+            if (m_ColliderGO != null && m_ColliderGO.layer != gameObject.layer)
+                m_ColliderGO.layer = gameObject.layer;
+
             ReleaseMesh();
             m_Mesh = GenerateCylinderMesh();
             m_MeshCollider.sharedMesh = m_Mesh;
+            m_MeshCollider.convex = true;
+            m_MeshCollider.cookingOptions = MeshColliderCookingOptions.CookForFasterSimulation
+                | MeshColliderCookingOptions.EnableMeshCleaning
+                | MeshColliderCookingOptions.WeldColocatedVertices;
             m_MeshCollider.isTrigger = m_IsTrigger;
             m_MeshCollider.providesContacts = m_ProvidesContacts;
             m_MeshCollider.layerOverridePriority = m_LayerOverridePriority;
             m_MeshCollider.includeLayers = m_IncludeLayers;
             m_MeshCollider.excludeLayers = m_ExcludeLayers;
             m_MeshCollider.sharedMaterial = m_Material;
+            m_MeshCollider.enabled = true;
 
             m_PrevCenter = m_Center;
             m_PrevRadius = m_Radius;
