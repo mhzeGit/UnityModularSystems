@@ -23,12 +23,36 @@ namespace MHZE.CylinderCollider.Editor
         private static readonly string[] m_DirectionNames = { "X-Axis", "Y-Axis", "Z-Axis" };
         private static readonly int[] m_DirectionValues = { 0, 1, 2 };
 
+        private static Texture2D s_Icon;
+        private static bool s_IconLoaded;
+
         private bool m_Editing;
         private bool m_ShowLayerOverrides = true;
+
+        private bool m_DraggingHeight;
+        private Vector3 m_DragStartCenter;
+        private float m_DragStartHeight;
+        private bool m_DragLastAltState;
+        private bool m_DragUndoRecorded;
+        private bool m_DragIsTopHandle;
 
         private void OnEnable()
         {
             m_Target = (CylinderCollider)target;
+
+            if (!s_IconLoaded)
+            {
+                s_Icon = AssetDatabase.LoadAssetAtPath<Texture2D>(
+                    "Packages/com.mhze.cylinder-collider/d_CylinderColliderIcon.png");
+                s_IconLoaded = true;
+            }
+
+            if (s_Icon != null)
+            {
+                var currentIcon = EditorGUIUtility.GetIconForObject(target);
+                if (currentIcon != s_Icon)
+                    EditorGUIUtility.SetIconForObject(target, s_Icon);
+            }
 
             m_Center = serializedObject.FindProperty("m_Center");
             m_Radius = serializedObject.FindProperty("m_Radius");
@@ -46,6 +70,7 @@ namespace MHZE.CylinderCollider.Editor
         private void OnDisable()
         {
             m_Editing = false;
+            m_DraggingHeight = false;
         }
 
         public override void OnInspectorGUI()
@@ -143,28 +168,65 @@ namespace MHZE.CylinderCollider.Editor
             {
                 Handles.DrawDottedLine(topPos, botPos, 2f);
 
+                if (m_DraggingHeight && GUIUtility.hotControl == 0)
+                    m_DraggingHeight = false;
+
                 EditorGUI.BeginChangeCheck();
                 Vector3 newTop = Handles.Slider(topPos, axisLS, 0.015f, Handles.DotHandleCap, 0f);
                 Vector3 newBot = Handles.Slider(botPos, -axisLS, 0.015f, Handles.DotHandleCap, 0f);
-                if (EditorGUI.EndChangeCheck())
-                {
-                    Undo.RecordObject(m_Target, "Change Cylinder Height");
-                    float newTopDist = Vector3.Dot(newTop - m_Target.center, axisLS);
-                    float newBotDist = Vector3.Dot(m_Target.center - newBot, axisLS);
+                bool changed = EditorGUI.EndChangeCheck();
 
-                    if (!Mathf.Approximately(newTopDist, halfH))
+                bool altHeld = (Event.current.modifiers & EventModifiers.Alt) != 0;
+                bool altChanged = m_DraggingHeight && altHeld != m_DragLastAltState;
+
+                if (changed || altChanged)
+                {
+                    if (!m_DraggingHeight)
                     {
-                        newTopDist = Mathf.Max(newTopDist, 0.001f - halfH);
-                        m_Target.center += axisLS * (newTopDist - halfH) * 0.5f;
-                        m_Target.height = newTopDist + halfH;
+                        m_DraggingHeight = true;
+                        m_DragStartCenter = m_Target.center;
+                        m_DragStartHeight = m_Target.height;
+                        m_DragUndoRecorded = false;
+
+                        float hh = m_DragStartHeight * 0.5f;
+                        float td = Vector3.Dot(newTop - m_DragStartCenter, axisLS);
+                        float bd = Vector3.Dot(m_DragStartCenter - newBot, axisLS);
+                        m_DragIsTopHandle = !Mathf.Approximately(td, hh);
                     }
-                    else if (!Mathf.Approximately(newBotDist, halfH))
+
+                    if (changed && !m_DragUndoRecorded)
                     {
-                        newBotDist = Mathf.Max(newBotDist, 0.001f - halfH);
-                        m_Target.center -= axisLS * (newBotDist - halfH) * 0.5f;
-                        m_Target.height = halfH + newBotDist;
+                        Undo.RecordObject(m_Target, "Change Cylinder Height");
+                        m_DragUndoRecorded = true;
                     }
+
+                    float initialHalfH = m_DragStartHeight * 0.5f;
+                    float dist = m_DragIsTopHandle
+                        ? Vector3.Dot(newTop - m_DragStartCenter, axisLS)
+                        : Vector3.Dot(m_DragStartCenter - newBot, axisLS);
+
+                    float clamped = Mathf.Max(dist, 0.001f - initialHalfH);
+                    if (altHeld)
+                    {
+                        m_Target.center = m_DragStartCenter;
+                        m_Target.height = clamped * 2f;
+                    }
+                    else if (m_DragIsTopHandle)
+                    {
+                        m_Target.center = m_DragStartCenter + axisLS * (clamped - initialHalfH) * 0.5f;
+                        m_Target.height = clamped + initialHalfH;
+                    }
+                    else
+                    {
+                        m_Target.center = m_DragStartCenter - axisLS * (clamped - initialHalfH) * 0.5f;
+                        m_Target.height = initialHalfH + clamped;
+                    }
+
+                    if (!changed)
+                        SceneView.RepaintAll();
                 }
+
+                m_DragLastAltState = altHeld;
             }
 
             using (new Handles.DrawingScope(new Color(0.4f, 1f, 0.4f, 0.5f), matrix))

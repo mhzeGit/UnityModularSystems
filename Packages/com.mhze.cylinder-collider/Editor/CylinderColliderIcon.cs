@@ -8,17 +8,11 @@ namespace MHZE.CylinderCollider.Editor
     {
         static CylinderColliderIcon()
         {
-            // Don't use delayCall here — domain reload is fine
-            // if the icon hasn't been set yet (single reimport only).
-            AssignIcon();
+            ClearIcon();
         }
 
-        private static void AssignIcon()
+        private static void ClearIcon()
         {
-            var tex = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.mhze.cylinder-collider/d_CylinderColliderIcon.png");
-            if (tex == null)
-                return;
-
             var guids = AssetDatabase.FindAssets("t:MonoScript CylinderCollider");
             foreach (var guid in guids)
             {
@@ -27,16 +21,9 @@ namespace MHZE.CylinderCollider.Editor
                 if (script != null && script.GetClass() == typeof(CylinderCollider))
                 {
                     var importer = AssetImporter.GetAtPath(path) as MonoImporter;
-                    if (importer != null)
+                    if (importer != null && importer.GetIcon() != null)
                     {
-                        var currentIcon = importer.GetIcon();
-                        if (currentIcon != null)
-                        {
-                            var currentPath = AssetDatabase.GetAssetPath(currentIcon);
-                            if (currentPath == "Packages/com.mhze.cylinder-collider/d_CylinderColliderIcon.png")
-                                return;
-                        }
-                        importer.SetIcon(tex);
+                        importer.SetIcon(null);
                         importer.SaveAndReimport();
                     }
                     return;

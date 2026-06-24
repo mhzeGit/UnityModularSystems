@@ -131,6 +131,40 @@ namespace MHZE.CylinderCollider
 
         public MeshCollider meshCollider => m_MeshCollider;
 
+        private void Reset()
+        {
+            var meshFilter = GetComponent<MeshFilter>();
+            if (meshFilter != null && meshFilter.sharedMesh != null)
+            {
+                var bounds = meshFilter.sharedMesh.bounds;
+
+                m_Center = bounds.center;
+
+                float rX = bounds.extents.x;
+                float rY = bounds.extents.y;
+                float rZ = bounds.extents.z;
+
+                switch (m_Direction)
+                {
+                    case 0:
+                        m_Height = bounds.size.x;
+                        m_Radius = Mathf.Max(rY, rZ);
+                        break;
+                    case 2:
+                        m_Height = bounds.size.z;
+                        m_Radius = Mathf.Max(rX, rY);
+                        break;
+                    default:
+                        m_Height = bounds.size.y;
+                        m_Radius = Mathf.Max(rX, rZ);
+                        break;
+                }
+
+                m_Radius = Mathf.Max(0.001f, m_Radius);
+                m_Height = Mathf.Max(0.001f, m_Height);
+            }
+        }
+
         private void OnEnable()
         {
             EnsureCollider();
