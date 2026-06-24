@@ -83,6 +83,17 @@ namespace MHZE.GearSystem
             };
         }
 
+        private void Start()
+        {
+            if (m_GearB != null)
+            {
+                int toothCount = GetToothCount(m_RadiusB);
+                float halfToothAngle = Mathf.PI / toothCount;
+                Vector3 axis = m_GearB.transform.rotation * GetAxisVector();
+                m_GearB.transform.rotation = Quaternion.AngleAxis(halfToothAngle * Mathf.Rad2Deg, axis) * m_GearB.transform.rotation;
+            }
+        }
+
         private void OnDrawGizmos()
         {
             if (!m_DebugDraw) return;
