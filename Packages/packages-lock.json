@@ -5,17 +5,30 @@
       "depth": 0,
       "source": "git",
       "dependencies": {
+        "com.unity.modules.animation": "1.0.0",
+        "com.unity.modules.imageconversion": "1.0.0",
+        "com.unity.modules.physics": "1.0.0",
+        "com.unity.modules.physics2d": "1.0.0",
+        "com.unity.modules.uielements": "1.0.0",
+        "com.unity.modules.screencapture": "1.0.0",
+        "com.unity.modules.unitywebrequest": "1.0.0",
         "com.unity.nuget.newtonsoft-json": "3.0.2",
         "com.unity.test-framework": "1.1.31"
       },
-      "hash": "78ee5418415953b79c358bfe6355fcc3fde7912b"
+      "hash": "85c101f5329ec1b0c6f70cba44614166dd78f53c"
     },
     "com.mhze.argevent": {
       "version": "https://github.com/mhzeGit/ArgEventSystem.git?path=Packages/com.mhze.argevent",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "0130a632bc8e1639b4fade1f90d7d4a1820a5a49"
+      "hash": "ee369b692f0d70296324f5db5c5a0fcb91e97512"
+    },
+    "com.mhze.cylinder-collider": {
+      "version": "file:com.mhze.cylinder-collider",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
     },
     "com.mhze.firstperson-controller": {
       "version": "file:com.mhze.firstperson-controller",
@@ -102,42 +115,42 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "8c15433a87e71811c878be2490360a84aed5fa26"
+      "hash": "be166c9d4a6ed1116b751312aaa6fc54487ec2f5"
     },
     "com.mhze.unity-editor-visual-tweaks": {
       "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Packages/com.mhze.unity-editor-visual-tweaks",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "8c15433a87e71811c878be2490360a84aed5fa26"
+      "hash": "be166c9d4a6ed1116b751312aaa6fc54487ec2f5"
     },
     "com.mhze.unity-fast-play-button": {
       "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Packages/com.mhze.unity-fast-play-button",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "8c15433a87e71811c878be2490360a84aed5fa26"
+      "hash": "be166c9d4a6ed1116b751312aaa6fc54487ec2f5"
     },
     "com.mhze.unity-folder-colorizer": {
       "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Packages/com.mhze.unity-folder-colorizer",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "8c15433a87e71811c878be2490360a84aed5fa26"
+      "hash": "be166c9d4a6ed1116b751312aaa6fc54487ec2f5"
     },
     "com.mhze.unity-git-integration": {
       "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Packages/com.mhze.unity-git-integration",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "8c15433a87e71811c878be2490360a84aed5fa26"
+      "hash": "be166c9d4a6ed1116b751312aaa6fc54487ec2f5"
     },
     "com.mhze.unity-hierarchy-context-menu": {
       "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Packages/com.mhze.unity-hierarchy-context-menu",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "c225f1df2586b2604fe02cdfecbf6660e6fdc6b4"
+      "hash": "be166c9d4a6ed1116b751312aaa6fc54487ec2f5"
     },
     "com.mhze.use-system": {
       "version": "file:com.mhze.use-system",
@@ -253,7 +266,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "8c15433a87e71811c878be2490360a84aed5fa26"
+      "hash": "be166c9d4a6ed1116b751312aaa6fc54487ec2f5"
     },
     "com.unity.quick-texture-tools": {
       "version": "https://github.com/mhzeGit/unity-quick-texture-tools.git",
