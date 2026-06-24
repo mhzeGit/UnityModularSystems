@@ -7,8 +7,6 @@ namespace MHZE.GearSystem
     [AddComponentMenu("Mechanical/Gear Constraint")]
     public class GearConstraint : MonoBehaviour
     {
-        private static bool s_HasStepped;
-        private Quaternion m_BaseRotation;
         [SerializeField] private GearAxis m_Axis = GearAxis.Y;
         [SerializeField] private float m_Radius = 0.5f;
         [SerializeField] private float m_ToothDensity = 5f;
@@ -75,32 +73,14 @@ namespace MHZE.GearSystem
             set => m_Dependencies = value;
         }
 
-        private void Awake()
+        public Vector3 GetAxisVector()
         {
-            m_BaseRotation = transform.localRotation;
-        }
-
-        private void FixedUpdate()
-        {
-            if (!s_HasStepped)
-            {
-                s_HasStepped = true;
-                GearPhysicsSolver.Step(Time.fixedDeltaTime);
-            }
-
-            var axisVec = m_Axis switch
+            return m_Axis switch
             {
                 GearAxis.X => Vector3.right,
                 GearAxis.Z => Vector3.forward,
                 _ => Vector3.up
             };
-            var gearRotation = Quaternion.AngleAxis(m_CurrentAngle * Mathf.Rad2Deg, axisVec);
-            transform.localRotation = m_BaseRotation * gearRotation;
-        }
-
-        private void Update()
-        {
-            s_HasStepped = false;
         }
 
         private void OnDrawGizmos()
