@@ -25,12 +25,12 @@ namespace MHZE.GearSystem
         [Header("Physics")]
         [SerializeField]
         [Range(0f, 100f)]
-        [Tooltip("Viscous damping applied per-gear. Dissipates energy proportional to angular velocity.")]
+        [Tooltip("Viscous damping applied per-gear.")]
         private float m_Damping = 0f;
 
         [SerializeField]
         [Range(0.001f, 1f)]
-        [Tooltip("Baumgarte stabilization factor. Higher values correct positional drift faster but may cause oscillation.")]
+        [Tooltip("Baumgarte stabilization factor.")]
         private float m_PositionCorrection = 0.2f;
 
         [SerializeField]
@@ -39,7 +39,7 @@ namespace MHZE.GearSystem
 
         [SerializeField]
         [Range(0.01f, 1f)]
-        [Tooltip("Transmission efficiency. 1 = perfect transfer, 0.5 = 50% efficiency. Reduces torque to the driven gear.")]
+        [Tooltip("Transmission efficiency.")]
         private float m_Efficiency = 1f;
 
         [SerializeField]
@@ -47,12 +47,38 @@ namespace MHZE.GearSystem
         private bool m_IgnoreCollisionBetweenGears = true;
 
         [SerializeField]
-        [Tooltip("Angular velocity below which the constraint enters sleep after cooldown frames.")]
+        [Tooltip("Angular velocity below which the constraint can sleep.")]
         private float m_SleepThreshold = 0.01f;
 
+        [SerializeField]
+        [Tooltip("Detect rotation applied via Transform (e.g. Animator).")]
+        private bool m_DetectTransformRotation = true;
+
+        [SerializeField]
+        [Tooltip("Log debug values to console when enabled.")]
+        private bool m_DebugLog;
+
+        // --- Runtime state ---
         private float m_PositionError;
         private int m_SleepCounter;
-        private bool m_Initialized;
+        private int m_FrameCount;
+
+        // Transform-rotation tracking
+        private Quaternion m_PrevRotA = Quaternion.identity;
+        private Quaternion m_PrevRotB = Quaternion.identity;
+        private bool m_HasPrevRotA;
+        private bool m_HasPrevRotB;
+
+        // Cached debug values for last frame
+        private float m_LastOmegaA;
+        private float m_LastOmegaB;
+        private float m_LastVelError;
+        private float m_LastContactForce;
+        private float m_LastTauA;
+        private float m_LastTauB;
+        private float m_LastInvIA;
+        private float m_LastInvIB;
+        private bool m_LastSlept;
 
         // --------------------------------------------------------------------------------
         // Public Properties
@@ -139,6 +165,18 @@ namespace MHZE.GearSystem
             set => m_SleepThreshold = Mathf.Max(0f, value);
         }
 
+        public bool detectTransformRotation
+        {
+            get => m_DetectTransformRotation;
+            set => m_DetectTransformRotation = value;
+        }
+
+        public bool debugLog
+        {
+            get => m_DebugLog;
+            set => m_DebugLog = value;
+        }
+
         public Vector3 GetAxisVector()
         {
             return m_Axis switch
@@ -157,14 +195,15 @@ namespace MHZE.GearSystem
 
         private void OnEnable()
         {
-            m_Initialized = false;
             m_PositionError = 0f;
             m_SleepCounter = 0;
+            m_FrameCount = 0;
+            m_HasPrevRotA = false;
+            m_HasPrevRotB = false;
         }
 
         private void Start()
         {
-            // Offset Gear B by half a tooth so teeth interlock instead of overlapping.
             if (m_GearB != null)
             {
                 int toothCount = GetToothCount(m_RadiusB);
@@ -197,55 +236,58 @@ namespace MHZE.GearSystem
             float dt = Time.fixedDeltaTime;
             if (dt <= 0f) return;
 
-            if (!m_Initialized)
-            {
-                m_PositionError = 0f;
-                m_Initialized = true;
-            }
-
-            // --- Gather per-gear state ---
+            m_FrameCount++;
+            m_LastSlept = false;
 
             Vector3 localAxis = GetAxisVector();
             Vector3 axisA = m_GearA.transform.rotation * localAxis;
             Vector3 axisB = m_GearB.transform.rotation * localAxis;
 
-            float omegaA = Vector3.Dot(m_GearA.angularVelocity, axisA);
-            float omegaB = Vector3.Dot(m_GearB.angularVelocity, axisB);
+            float omegaA = GetEffectiveAngularVelocity(m_GearA, axisA, ref m_PrevRotA, ref m_HasPrevRotA, dt);
+            float omegaB = GetEffectiveAngularVelocity(m_GearB, axisB, ref m_PrevRotB, ref m_HasPrevRotB, dt);
+
+            m_LastOmegaA = omegaA;
+            m_LastOmegaB = omegaB;
 
             float rA = m_RadiusA;
             float rB = m_RadiusB;
 
-            // Constraint velocity error (should be zero for an ideal rigid connection)
-            // C(theta_A, theta_B) = r_A * theta_A + r_B * theta_B  = 0
-            // dC/dt               = r_A * omega_A  + r_B * omega_B  = 0
             float velError = omegaA * rA + omegaB * rB;
+            m_LastVelError = velError;
 
-            // Inverse rotational inertia about the constraint axis
-            float invIA = GetInverseInertiaAboutAxis(m_GearA, axisA);
+            float invIA = m_IsDriver ? 0f : GetInverseInertiaAboutAxis(m_GearA, axisA);
             float invIB = GetInverseInertiaAboutAxis(m_GearB, axisB);
 
-            // Effective inverse mass of the constraint (seconds-squared per kg-m^2)
+            m_LastInvIA = invIA;
+            m_LastInvIB = invIB;
+
             float invMass = invIA * rA * rA + invIB * rB * rB;
+            if (invMass < 1e-12f)
+            {
+                if (m_DebugLog && m_FrameCount <= 3)
+                    Debug.Log($"[GearConstraint] Frame {m_FrameCount}: invMass={invMass:e} is zero. Both gears kinematic? invIA={invIA} invIB={invIB}");
+                return;
+            }
 
-            if (invMass < 1e-12f) return; // both gears are effectively massless / kinematic
-
-            // Accumulate position-level constraint violation (integral of velocity error)
             m_PositionError += velError * dt;
 
             // --- Sleep heuristic ---
-            float speedA = Mathf.Abs(omegaA);
+            // Only sleep when the constraint is ALREADY satisfied (velError is tiny).
+            // Never sleep while there is an active velocity mismatch.
+            float absVelError = Mathf.Abs(velError);
             float speedB = Mathf.Abs(omegaB);
+            bool gearBIsSlow = speedB < m_SleepThreshold;
+            bool constraintSatisfied = absVelError < m_SleepThreshold * 0.1f;
 
-            if (m_SleepThreshold > 0f && speedA < m_SleepThreshold && speedB < m_SleepThreshold)
+            if (gearBIsSlow && constraintSatisfied && (m_IsDriver || Mathf.Abs(omegaA) < m_SleepThreshold))
             {
                 m_SleepCounter++;
                 if (m_SleepCounter > 10)
                 {
-                    // Sleep: gently bring angular velocity to zero
-                    m_GearA.angularVelocity = Vector3.MoveTowards(
-                        m_GearA.angularVelocity, Vector3.zero, m_SleepThreshold * 0.5f);
-                    m_GearB.angularVelocity = Vector3.MoveTowards(
-                        m_GearB.angularVelocity, Vector3.zero, m_SleepThreshold * 0.5f);
+                    m_LastSlept = true;
+                    m_GearB.angularVelocity = Vector3.MoveTowards(m_GearB.angularVelocity, Vector3.zero, m_SleepThreshold * 0.1f);
+                    if (!m_IsDriver)
+                        m_GearA.angularVelocity = Vector3.MoveTowards(m_GearA.angularVelocity, Vector3.zero, m_SleepThreshold * 0.1f);
                     return;
                 }
             }
@@ -254,92 +296,130 @@ namespace MHZE.GearSystem
                 m_SleepCounter = 0;
             }
 
-            // --- Compute constraint force (Lagrange multiplier) ---
-            //
-            // Derivation (ForceMode.Force):
-            //   tau_A = r_A * lambda       (torque on A from contact force lambda)
-            //   delta_omega_A = tau_A * dt / I_A = r_A * lambda * dt / I_A
-            //
-            // Velocity error after applying constraint:
-            //   e_new = e + r_A * delta_omega_A + r_B * delta_omega_B
-            //         = e + lambda * dt * invMass
-            //
-            // Target: e_new = -beta * posError / dt   (Baumgarte stabilization)
-            //
-            //   lambda = -(e + beta * posError / dt) / (dt * invMass)
-
+            // --- Compute constraint force ---
             float beta = m_PositionCorrection;
             float contactForce = -(velError + beta * m_PositionError / dt) / (invMass * dt);
+
+            m_LastContactForce = contactForce;
 
             float tauA = contactForce * rA;
             float tauB = contactForce * rB;
 
-            // --- Efficiency: load-dependent losses ---
-            //
-            // Determine power-flow direction.
-            //   P_A = omega_A * tau_A:
-            //     P_A > 0  =>  A is receiving power (being driven)
-            //     P_A < 0  =>  A is outputting power  (driving)
-            //
-            // For a lossy gear mesh, the driven gear receives eta * ideal_torque.
-            // The constraint compensates in subsequent frames, causing the driver
-            // to feel proportionally more resistance.
+            // Efficiency
             if (m_Efficiency < 1f)
             {
-                float powA = omegaA * tauA;
-
-                if (Mathf.Abs(powA) > 1e-6f)
+                if (m_IsDriver)
                 {
-                    if (powA < 0f)      tauB *= m_Efficiency;   // A drives, B receives less
-                    else                 tauA *= m_Efficiency;   // B drives, A receives less
+                    tauB *= m_Efficiency;
+                }
+                else
+                {
+                    float powA = omegaA * tauA;
+                    if (Mathf.Abs(powA) > 1e-6f)
+                    {
+                        if (powA < 0f) tauB *= m_Efficiency;
+                        else           tauA *= m_Efficiency;
+                    }
                 }
             }
 
-            // --- Damping: viscous friction (bearing losses, independent of load) ---
+            // Damping
             if (m_Damping > 0f)
             {
-                float iA = 1f / Mathf.Max(invIA, 1e-8f);
+                if (!m_IsDriver)
+                {
+                    float iA = 1f / Mathf.Max(invIA, 1e-8f);
+                    tauA -= m_Damping * omegaA * iA;
+                }
                 float iB = 1f / Mathf.Max(invIB, 1e-8f);
-                tauA -= m_Damping * omegaA * iA;
                 tauB -= m_Damping * omegaB * iB;
             }
 
-            // --- Torque limiting (optional safety clamp) ---
+            // Torque limiting
             if (m_MaxTorque > 0f)
             {
                 tauA = Mathf.Clamp(tauA, -m_MaxTorque, m_MaxTorque);
                 tauB = Mathf.Clamp(tauB, -m_MaxTorque, m_MaxTorque);
             }
 
-            // --- Apply ---
-            m_GearA.AddTorque(axisA * tauA, ForceMode.Force);
+            m_LastTauA = tauA;
+            m_LastTauB = tauB;
+
+            // Apply
+            if (!m_IsDriver)
+                m_GearA.AddTorque(axisA * tauA, ForceMode.Force);
             m_GearB.AddTorque(axisB * tauB, ForceMode.Force);
 
-            // --- Decay position error to prevent integral windup ---
+            // Decay position error
             m_PositionError *= Mathf.Clamp01(1f - beta * 0.1f);
             m_PositionError = Mathf.Clamp(m_PositionError, -10f, 10f);
+
+            // Debug log every 60 frames
+            if (m_DebugLog && m_FrameCount % 60 == 0)
+            {
+                Debug.Log(
+                    $"[GearConstraint] F{m_FrameCount} " +
+                    $"omegaA={omegaA:F4} omegaB={omegaB:F4} " +
+                    $"velErr={velError:F4} force={contactForce:F2} " +
+                    $"tauA={tauA:F2} tauB={tauB:F2} " +
+                    $"invIA={invIA:F4} invIB={invIB:F4} " +
+                    $"posErr={m_PositionError:F4} slept={m_LastSlept}");
+            }
         }
 
         // --------------------------------------------------------------------------------
         // Helpers
         // --------------------------------------------------------------------------------
 
-        /// <summary>
-        /// Returns the inverse rotational inertia of <paramref name="rb"/> about
-        /// <paramref name="worldAxis"/>, or 0 if the body is kinematic / has zero inertia.
-        /// </summary>
+        private float GetEffectiveAngularVelocity(
+            Rigidbody rb, Vector3 worldAxis,
+            ref Quaternion prevRot, ref bool hasPrev, float dt)
+        {
+            float rigidOmega = Vector3.Dot(rb.angularVelocity, worldAxis);
+
+            if (!m_DetectTransformRotation)
+                return rigidOmega;
+
+            Quaternion current = rb.transform.rotation;
+            float transformOmega = 0f;
+
+            if (hasPrev)
+            {
+                // Delta rotation since last FixedUpdate
+                Quaternion delta = Quaternion.Inverse(prevRot) * current;
+                float angleDiff = Quaternion.Angle(prevRot, current);
+
+                if (angleDiff > 0.0001f)
+                {
+                    delta.ToAngleAxis(out float angleDeg, out Vector3 rotAxis);
+                    float projectedDeg = angleDeg * Vector3.Dot(rotAxis, worldAxis);
+                    transformOmega = projectedDeg * Mathf.Deg2Rad / dt;
+                }
+            }
+
+            prevRot = current;
+            hasPrev = true;
+
+            float absRigid = Mathf.Abs(rigidOmega);
+            float absTrans = Mathf.Abs(transformOmega);
+
+            if (rb.isKinematic && absTrans > absRigid)
+                return transformOmega;
+
+            if (absRigid < 1e-4f && absTrans > 1e-4f)
+                return transformOmega;
+
+            return rigidOmega;
+        }
+
         private static float GetInverseInertiaAboutAxis(Rigidbody rb, Vector3 worldAxis)
         {
             if (rb == null || rb.isKinematic) return 0f;
 
-            // Transform world axis into the inertia-tensor's local-diagonal space.
             Vector3 localAxis = Quaternion.Inverse(rb.inertiaTensorRotation) * worldAxis;
             localAxis.Normalize();
 
             Vector3 i = rb.inertiaTensor;
-
-            // I_axis = diag(ix,iy,iz) · (localAxis²)   (since the tensor is diagonal in
-            // its principal-axis frame)
             float I = localAxis.x * localAxis.x * i.x
                     + localAxis.y * localAxis.y * i.y
                     + localAxis.z * localAxis.z * i.z;
