@@ -83,9 +83,12 @@ namespace MHZE.CylinderCollider.Editor
             btnStyle.margin = new RectOffset(0, 0, 0, 0);
             btnStyle.padding = new RectOffset(0, 0, 0, 0);
 
+            var labelStyle = new GUIStyle(EditorStyles.label);
+            labelStyle.padding.top = -6;
+
             GUILayout.Space(1);
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.PrefixLabel("Edit Collider");
+            EditorGUILayout.PrefixLabel(new GUIContent("Edit Collider"), EditorStyles.label, labelStyle);
 
             var prevBg = GUI.backgroundColor;
             if (!m_Editing)
