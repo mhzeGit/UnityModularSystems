@@ -20,6 +20,14 @@ https://github.com/mhzeGit/UnityModularSystems.git?path=/Packages/com.mhze.freef
 
 Free-fly camera controller with WASD movement, mouse look, speed control, and optional collision. Editor & development build only.
 
+### Gear System
+
+```
+https://github.com/mhzeGit/UnityModularSystems.git?path=/Packages/com.mhze.gear-system
+```
+
+Modular gear system for rotating mechanisms, mechanical linkages, and drive train simulations.
+
 ### Input Prompt System
 
 ```
