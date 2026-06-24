@@ -25,6 +25,10 @@ namespace MHZE.CylinderCollider
         private int m_PrevSides;
         private int m_PrevDirection;
 
+#if UNITY_EDITOR
+        private bool m_PendingOnValidateRebuild;
+#endif
+
         private MeshCollider m_MeshCollider;
         private Mesh m_Mesh;
 
@@ -160,8 +164,23 @@ namespace MHZE.CylinderCollider
             if (!isActiveAndEnabled)
                 return;
 
+#if UNITY_EDITOR
+            if (!Application.isPlaying && !m_PendingOnValidateRebuild)
+            {
+                m_PendingOnValidateRebuild = true;
+                UnityEditor.EditorApplication.delayCall += () =>
+                {
+                    m_PendingOnValidateRebuild = false;
+                    if (this == null || !isActiveAndEnabled)
+                        return;
+                    EnsureCollider();
+                    RebuildIfNeeded();
+                };
+            }
+#else
             EnsureCollider();
             RebuildIfNeeded();
+#endif
         }
 
         private void Update()
@@ -347,47 +366,43 @@ namespace MHZE.CylinderCollider
             return GenerateCylinderMesh(m_Center, m_Radius, m_Height, m_Sides, m_Direction);
         }
 
+        private static void DrawCircle(Vector3 center, Vector3 b1, Vector3 b2, float radius, int segments)
+        {
+            Vector3 prev = center + b1 * radius;
+            for (int i = 1; i <= segments; i++)
+            {
+                float angle = 2f * Mathf.PI * i / segments;
+                Vector3 dir = b1 * Mathf.Cos(angle) + b2 * Mathf.Sin(angle);
+                Vector3 curr = center + dir * radius;
+                Gizmos.DrawLine(prev, curr);
+                prev = curr;
+            }
+        }
+
         private void DrawWireframe()
         {
-            int n = Mathf.Min(m_Sides, 32);
             float halfH = m_Height * 0.5f;
 
-            Vector3 axis;
-            Vector3 b1;
-            Vector3 b2;
+            Vector3 axis, b1, b2;
             switch (m_Direction)
             {
-                case 0:
-                    axis = Vector3.right; b1 = Vector3.up; b2 = Vector3.forward;
-                    break;
-                case 2:
-                    axis = Vector3.forward; b1 = Vector3.right; b2 = Vector3.up;
-                    break;
-                default:
-                    axis = Vector3.up; b1 = Vector3.right; b2 = Vector3.forward;
-                    break;
+                case 0: axis = Vector3.right; b1 = Vector3.up; b2 = Vector3.forward; break;
+                case 2: axis = Vector3.forward; b1 = Vector3.right; b2 = Vector3.up; break;
+                default: axis = Vector3.up; b1 = Vector3.right; b2 = Vector3.forward; break;
             }
 
             Vector3 topCenter = m_Center + axis * halfH;
             Vector3 botCenter = m_Center - axis * halfH;
 
-            Vector3 prevTop = topCenter + b1 * m_Radius;
-            Vector3 prevBot = botCenter + b1 * m_Radius;
+            int circleSegments = Mathf.Min(m_Sides, 24);
+            DrawCircle(topCenter, b1, b2, m_Radius, circleSegments);
+            DrawCircle(botCenter, b1, b2, m_Radius, circleSegments);
 
-            for (int i = 1; i <= n; i++)
+            for (int i = 0; i < 4; i++)
             {
-                float angle = 2f * Mathf.PI * i / n;
+                float angle = 2f * Mathf.PI * i / 4;
                 Vector3 dir = b1 * Mathf.Cos(angle) + b2 * Mathf.Sin(angle);
-
-                Vector3 currTop = topCenter + dir * m_Radius;
-                Vector3 currBot = botCenter + dir * m_Radius;
-
-                Gizmos.DrawLine(prevTop, currTop);
-                Gizmos.DrawLine(prevBot, currBot);
-                Gizmos.DrawLine(prevTop, prevBot);
-
-                prevTop = currTop;
-                prevBot = currBot;
+                Gizmos.DrawLine(topCenter + dir * m_Radius, botCenter + dir * m_Radius);
             }
         }
 

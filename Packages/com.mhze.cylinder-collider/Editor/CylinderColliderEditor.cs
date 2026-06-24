@@ -145,24 +145,14 @@ namespace MHZE.CylinderCollider.Editor
                 Vector3 topCenter = m_Target.center + axisLS * halfH;
                 Vector3 botCenter = m_Target.center - axisLS * halfH;
 
-                int n = Mathf.Min(m_Target.sides, 24);
-                Vector3 prevTop = topCenter + b1 * m_Target.radius;
-                Vector3 prevBot = botCenter + b1 * m_Target.radius;
+                Handles.DrawWireDisc(topCenter, axisLS, m_Target.radius);
+                Handles.DrawWireDisc(botCenter, axisLS, m_Target.radius);
 
-                for (int i = 1; i <= n; i++)
+                for (int i = 0; i < 4; i++)
                 {
-                    float angle = 2f * Mathf.PI * i / n;
+                    float angle = 2f * Mathf.PI * i / 4;
                     Vector3 dir = b1 * Mathf.Cos(angle) + b2 * Mathf.Sin(angle);
-
-                    Vector3 currTop = topCenter + dir * m_Target.radius;
-                    Vector3 currBot = botCenter + dir * m_Target.radius;
-
-                    Handles.DrawLine(prevTop, currTop);
-                    Handles.DrawLine(prevBot, currBot);
-                    Handles.DrawLine(prevTop, prevBot);
-
-                    prevTop = currTop;
-                    prevBot = currBot;
+                    Handles.DrawLine(topCenter + dir * m_Target.radius, botCenter + dir * m_Target.radius);
                 }
             }
 
