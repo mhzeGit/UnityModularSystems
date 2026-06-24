@@ -20,7 +20,11 @@ namespace MHZE.CylinderCollider.Editor
         private SerializedProperty m_IncludeLayers;
         private SerializedProperty m_ExcludeLayers;
 
+        private static readonly string[] m_DirectionNames = { "X-Axis", "Y-Axis", "Z-Axis" };
+        private static readonly int[] m_DirectionValues = { 0, 1, 2 };
+
         private bool m_Editing;
+        private bool m_ShowLayerOverrides = true;
 
         private void OnEnable()
         {
@@ -56,10 +60,16 @@ namespace MHZE.CylinderCollider.Editor
             EditorGUILayout.PropertyField(m_Center);
             EditorGUILayout.PropertyField(m_Radius);
             EditorGUILayout.PropertyField(m_Height);
-            EditorGUILayout.PropertyField(m_Direction);
-            EditorGUILayout.PropertyField(m_LayerOverridePriority);
-            EditorGUILayout.PropertyField(m_IncludeLayers);
-            EditorGUILayout.PropertyField(m_ExcludeLayers);
+            m_Direction.intValue = EditorGUILayout.IntPopup("Direction", m_Direction.intValue, m_DirectionNames, m_DirectionValues);
+            m_ShowLayerOverrides = EditorGUILayout.Foldout(m_ShowLayerOverrides, "Layer Overrides", true);
+            if (m_ShowLayerOverrides)
+            {
+                EditorGUI.indentLevel++;
+                EditorGUILayout.PropertyField(m_LayerOverridePriority);
+                EditorGUILayout.PropertyField(m_IncludeLayers);
+                EditorGUILayout.PropertyField(m_ExcludeLayers);
+                EditorGUI.indentLevel--;
+            }
 
             serializedObject.ApplyModifiedProperties();
         }
@@ -69,6 +79,11 @@ namespace MHZE.CylinderCollider.Editor
             var icon = EditorGUIUtility.IconContent("EditCollider");
             icon.tooltip = "Edit Collider";
 
+            var btnStyle = new GUIStyle("Button");
+            btnStyle.margin = new RectOffset(0, 0, 0, 0);
+            btnStyle.padding = new RectOffset(0, 0, 0, 0);
+
+            GUILayout.Space(1);
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.PrefixLabel("Edit Collider");
 
@@ -76,13 +91,14 @@ namespace MHZE.CylinderCollider.Editor
             if (!m_Editing)
                 GUI.backgroundColor = new Color32(0x14, 0x14, 0x14, 0xFF);
 
-            m_Editing = GUILayout.Toggle(m_Editing, icon, "Button", GUILayout.Width(34), GUILayout.Height(21));
+            m_Editing = GUILayout.Toggle(m_Editing, icon, btnStyle, GUILayout.Width(34), GUILayout.Height(21));
             if (GUI.changed)
                 SceneView.RepaintAll();
 
             GUI.backgroundColor = prevBg;
 
             EditorGUILayout.EndHorizontal();
+            GUILayout.Space(3);
         }
 
         private void OnSceneGUI()
