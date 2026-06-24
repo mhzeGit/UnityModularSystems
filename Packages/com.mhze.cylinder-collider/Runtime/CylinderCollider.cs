@@ -29,6 +29,7 @@ namespace MHZE.CylinderCollider
         private bool m_PendingOnValidateRebuild;
 #endif
 
+        private GameObject m_ColliderGO;
         private MeshCollider m_MeshCollider;
         private Mesh m_Mesh;
 
@@ -145,12 +146,13 @@ namespace MHZE.CylinderCollider
         private void OnDestroy()
         {
             ReleaseMesh();
-            if (m_MeshCollider != null)
+            if (m_ColliderGO != null)
             {
                 if (Application.isPlaying)
-                    Destroy(m_MeshCollider);
+                    Destroy(m_ColliderGO);
                 else
-                    DestroyImmediate(m_MeshCollider);
+                    DestroyImmediate(m_ColliderGO);
+                m_ColliderGO = null;
                 m_MeshCollider = null;
             }
         }
@@ -193,17 +195,23 @@ namespace MHZE.CylinderCollider
 
         private void EnsureCollider()
         {
-            if (m_MeshCollider != null)
+            if (m_ColliderGO != null)
             {
+                if (m_MeshCollider == null)
+                    m_MeshCollider = m_ColliderGO.AddComponent<MeshCollider>();
                 m_MeshCollider.enabled = true;
                 return;
             }
 
-            m_MeshCollider = GetComponent<MeshCollider>();
-            if (m_MeshCollider == null)
-                m_MeshCollider = gameObject.AddComponent<MeshCollider>();
+            m_ColliderGO = new GameObject("CylinderCollider");
+            m_ColliderGO.hideFlags = HideFlags.HideAndDontSave;
+            m_ColliderGO.transform.SetParent(transform);
+            m_ColliderGO.transform.localPosition = Vector3.zero;
+            m_ColliderGO.transform.localRotation = Quaternion.identity;
+            m_ColliderGO.transform.localScale = Vector3.one;
 
-            m_MeshCollider.hideFlags = HideFlags.HideInInspector;
+            m_MeshCollider = m_ColliderGO.AddComponent<MeshCollider>();
+            m_MeshCollider.hideFlags = HideFlags.HideAndDontSave;
             m_MeshCollider.convex = true;
             m_MeshCollider.cookingOptions = MeshColliderCookingOptions.CookForFasterSimulation;
             m_MeshCollider.providesContacts = m_ProvidesContacts;
@@ -394,9 +402,9 @@ namespace MHZE.CylinderCollider
             Vector3 topCenter = m_Center + axis * halfH;
             Vector3 botCenter = m_Center - axis * halfH;
 
-            int circleSegments = Mathf.Min(m_Sides, 24);
-            DrawCircle(topCenter, b1, b2, m_Radius, circleSegments);
-            DrawCircle(botCenter, b1, b2, m_Radius, circleSegments);
+            int segments = Mathf.Min(m_Sides, 32);
+            DrawCircle(topCenter, b1, b2, m_Radius, segments);
+            DrawCircle(botCenter, b1, b2, m_Radius, segments);
 
             for (int i = 0; i < 4; i++)
             {
@@ -412,7 +420,7 @@ namespace MHZE.CylinderCollider
             var prevMatrix = Gizmos.matrix;
 
             Gizmos.matrix = transform.localToWorldMatrix;
-            Gizmos.color = new Color(0f, 0.8f, 0.2f, 0.6f);
+            Gizmos.color = new Color(0f, 0.8f, 0.2f, 0.8f);
 
             DrawWireframe();
 
