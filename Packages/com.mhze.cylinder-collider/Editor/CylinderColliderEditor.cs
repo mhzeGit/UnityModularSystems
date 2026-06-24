@@ -48,7 +48,7 @@ namespace MHZE.CylinderCollider.Editor
         {
             serializedObject.Update();
 
-            DrawHeaderEditButton();
+            DrawEditColliderField();
 
             EditorGUILayout.PropertyField(m_IsTrigger);
             EditorGUILayout.PropertyField(m_ProvidesContacts);
@@ -64,25 +64,24 @@ namespace MHZE.CylinderCollider.Editor
             serializedObject.ApplyModifiedProperties();
         }
 
-        private void DrawHeaderEditButton()
+        private void DrawEditColliderField()
         {
             var icon = EditorGUIUtility.IconContent("EditCollider");
             icon.tooltip = "Edit Collider";
 
             EditorGUILayout.BeginHorizontal();
-            GUILayout.FlexibleSpace();
+            EditorGUILayout.PrefixLabel("Edit Collider");
 
             var prevBg = GUI.backgroundColor;
             if (!m_Editing)
                 GUI.backgroundColor = new Color32(0x14, 0x14, 0x14, 0xFF);
 
-            m_Editing = GUILayout.Toggle(m_Editing, icon, "Button", GUILayout.Width(44), GUILayout.Height(22));
+            m_Editing = GUILayout.Toggle(m_Editing, icon, "Button", GUILayout.Width(34), GUILayout.Height(21));
             if (GUI.changed)
                 SceneView.RepaintAll();
 
             GUI.backgroundColor = prevBg;
 
-            GUILayout.FlexibleSpace();
             EditorGUILayout.EndHorizontal();
         }
 
