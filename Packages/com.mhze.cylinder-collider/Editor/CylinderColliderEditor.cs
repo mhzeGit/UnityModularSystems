@@ -15,6 +15,10 @@ namespace MHZE.CylinderCollider.Editor
         private SerializedProperty m_Direction;
         private SerializedProperty m_Material;
         private SerializedProperty m_IsTrigger;
+        private SerializedProperty m_ProvidesContacts;
+        private SerializedProperty m_LayerOverridePriority;
+        private SerializedProperty m_IncludeLayers;
+        private SerializedProperty m_ExcludeLayers;
 
         private bool m_Editing;
 
@@ -29,6 +33,10 @@ namespace MHZE.CylinderCollider.Editor
             m_Direction = serializedObject.FindProperty("m_Direction");
             m_Material = serializedObject.FindProperty("m_Material");
             m_IsTrigger = serializedObject.FindProperty("m_IsTrigger");
+            m_ProvidesContacts = serializedObject.FindProperty("m_ProvidesContacts");
+            m_LayerOverridePriority = serializedObject.FindProperty("m_LayerOverridePriority");
+            m_IncludeLayers = serializedObject.FindProperty("m_IncludeLayers");
+            m_ExcludeLayers = serializedObject.FindProperty("m_ExcludeLayers");
         }
 
         private void OnDisable()
@@ -42,19 +50,16 @@ namespace MHZE.CylinderCollider.Editor
 
             DrawHeaderEditButton();
 
-            EditorGUILayout.LabelField("Shape", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(m_IsTrigger);
+            EditorGUILayout.PropertyField(m_ProvidesContacts);
+            EditorGUILayout.PropertyField(m_Material);
             EditorGUILayout.PropertyField(m_Center);
             EditorGUILayout.PropertyField(m_Radius);
             EditorGUILayout.PropertyField(m_Height);
-            EditorGUILayout.PropertyField(m_Sides);
-
-            EditorGUILayout.Space(4f);
-            EditorGUILayout.PropertyField(m_Direction, new GUIContent("Direction"));
-
-            EditorGUILayout.Space(8f);
-            EditorGUILayout.LabelField("Collision", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField(m_Material);
-            EditorGUILayout.PropertyField(m_IsTrigger);
+            EditorGUILayout.PropertyField(m_Direction);
+            EditorGUILayout.PropertyField(m_LayerOverridePriority);
+            EditorGUILayout.PropertyField(m_IncludeLayers);
+            EditorGUILayout.PropertyField(m_ExcludeLayers);
 
             serializedObject.ApplyModifiedProperties();
         }

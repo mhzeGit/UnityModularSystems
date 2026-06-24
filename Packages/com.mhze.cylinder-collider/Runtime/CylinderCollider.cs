@@ -6,16 +6,18 @@ namespace MHZE.CylinderCollider
     [AddComponentMenu("Physics/Cylinder Collider")]
     public class CylinderCollider : MonoBehaviour
     {
-        [Header("Shape")]
         [SerializeField] private Vector3 m_Center = Vector3.zero;
         [SerializeField] private float m_Radius = 0.5f;
         [SerializeField] private float m_Height = 2f;
         [SerializeField] [Range(3, 64)] private int m_Sides = 16;
         [SerializeField] private int m_Direction = 1;
 
-        [Header("Collision")]
         [SerializeField] private PhysicsMaterial m_Material;
         [SerializeField] private bool m_IsTrigger;
+        [SerializeField] private bool m_ProvidesContacts;
+        [SerializeField] private int m_LayerOverridePriority;
+        [SerializeField] private LayerMask m_IncludeLayers;
+        [SerializeField] private LayerMask m_ExcludeLayers;
 
         private Vector3 m_PrevCenter;
         private float m_PrevRadius;
@@ -75,6 +77,50 @@ namespace MHZE.CylinderCollider
                 m_IsTrigger = value;
                 if (m_MeshCollider != null)
                     m_MeshCollider.isTrigger = m_IsTrigger;
+            }
+        }
+
+        public bool providesContacts
+        {
+            get => m_ProvidesContacts;
+            set
+            {
+                m_ProvidesContacts = value;
+                if (m_MeshCollider != null)
+                    m_MeshCollider.providesContacts = m_ProvidesContacts;
+            }
+        }
+
+        public int layerOverridePriority
+        {
+            get => m_LayerOverridePriority;
+            set
+            {
+                m_LayerOverridePriority = value;
+                if (m_MeshCollider != null)
+                    m_MeshCollider.layerOverridePriority = m_LayerOverridePriority;
+            }
+        }
+
+        public LayerMask includeLayers
+        {
+            get => m_IncludeLayers;
+            set
+            {
+                m_IncludeLayers = value;
+                if (m_MeshCollider != null)
+                    m_MeshCollider.includeLayers = m_IncludeLayers;
+            }
+        }
+
+        public LayerMask excludeLayers
+        {
+            get => m_ExcludeLayers;
+            set
+            {
+                m_ExcludeLayers = value;
+                if (m_MeshCollider != null)
+                    m_MeshCollider.excludeLayers = m_ExcludeLayers;
             }
         }
 
@@ -141,6 +187,10 @@ namespace MHZE.CylinderCollider
             m_MeshCollider.hideFlags = HideFlags.HideInInspector;
             m_MeshCollider.convex = true;
             m_MeshCollider.cookingOptions = MeshColliderCookingOptions.CookForFasterSimulation;
+            m_MeshCollider.providesContacts = m_ProvidesContacts;
+            m_MeshCollider.layerOverridePriority = m_LayerOverridePriority;
+            m_MeshCollider.includeLayers = m_IncludeLayers;
+            m_MeshCollider.excludeLayers = m_ExcludeLayers;
             m_MeshCollider.enabled = true;
         }
 
@@ -174,6 +224,10 @@ namespace MHZE.CylinderCollider
             m_Mesh = GenerateCylinderMesh();
             m_MeshCollider.sharedMesh = m_Mesh;
             m_MeshCollider.isTrigger = m_IsTrigger;
+            m_MeshCollider.providesContacts = m_ProvidesContacts;
+            m_MeshCollider.layerOverridePriority = m_LayerOverridePriority;
+            m_MeshCollider.includeLayers = m_IncludeLayers;
+            m_MeshCollider.excludeLayers = m_ExcludeLayers;
             m_MeshCollider.sharedMaterial = m_Material;
 
             m_PrevCenter = m_Center;
