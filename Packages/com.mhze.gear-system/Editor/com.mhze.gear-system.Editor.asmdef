@@ -1,0 +1,12 @@
+{
+  "name": "com.mhze.gear-system.Editor",
+  "rootNamespace": "MHZE.GearSystem.Editor",
+  "references": [],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": []
+}

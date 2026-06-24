@@ -1,0 +1,13 @@
+{
+  "name": "com.mhze.gear-system",
+  "version": "1.0.0",
+  "displayName": "Gear System",
+  "description": "Modular gear system for rotating mechanisms, mechanical linkages, and drive train simulations.",
+  "unity": "2022.3",
+  "keywords": ["gear", "mechanical", "rotation", "drive", "system"],
+  "author": {
+    "name": "MHZE",
+    "email": "mhze.uk@gmail.com",
+    "url": "https://github.com/mhzeGit/"
+  }
+}

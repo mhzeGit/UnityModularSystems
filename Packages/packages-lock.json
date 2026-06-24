@@ -46,6 +46,12 @@
         "com.unity.inputsystem": "1.7.0"
       }
     },
+    "com.mhze.gear-system": {
+      "version": "file:com.mhze.gear-system",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
     "com.mhze.input-prompt-system": {
       "version": "file:com.mhze.input-prompt-system",
       "depth": 0,
