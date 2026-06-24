@@ -92,7 +92,7 @@ namespace MHZE.CylinderCollider.Editor
 
             var prevBg = GUI.backgroundColor;
             if (!m_Editing)
-                GUI.backgroundColor = new Color32(0x14, 0x14, 0x14, 0xFF);
+                GUI.backgroundColor = new Color32(14, 14, 14, 0xFF);
 
             m_Editing = GUILayout.Toggle(m_Editing, icon, btnStyle, GUILayout.Width(34), GUILayout.Height(21));
             if (GUI.changed)
