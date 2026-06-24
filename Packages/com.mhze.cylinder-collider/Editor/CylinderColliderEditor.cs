@@ -60,6 +60,7 @@ namespace MHZE.CylinderCollider.Editor
             EditorGUILayout.PropertyField(m_Center);
             EditorGUILayout.PropertyField(m_Radius);
             EditorGUILayout.PropertyField(m_Height);
+            EditorGUILayout.PropertyField(m_Sides);
             m_Direction.intValue = EditorGUILayout.IntPopup("Direction", m_Direction.intValue, m_DirectionNames, m_DirectionValues);
             m_ShowLayerOverrides = EditorGUILayout.Foldout(m_ShowLayerOverrides, "Layer Overrides", true);
             if (m_ShowLayerOverrides)
@@ -130,9 +131,9 @@ namespace MHZE.CylinderCollider.Editor
                 Handles.DrawWireDisc(topPos, axisLS, m_Target.radius);
                 Handles.DrawWireDisc(botPos, axisLS, m_Target.radius);
 
-                for (int i = 0; i < 4; i++)
+                for (int i = 0; i < m_Target.sides; i++)
                 {
-                    float angle = 2f * Mathf.PI * i / 4;
+                    float angle = 2f * Mathf.PI * i / m_Target.sides;
                     Vector3 dir = b1 * Mathf.Cos(angle) + b2 * Mathf.Sin(angle);
                     Handles.DrawLine(topPos + dir * m_Target.radius, botPos + dir * m_Target.radius);
                 }
@@ -153,15 +154,15 @@ namespace MHZE.CylinderCollider.Editor
 
                     if (!Mathf.Approximately(newTopDist, halfH))
                     {
-                        float height = Mathf.Max(0.001f, newTopDist + halfH);
+                        newTopDist = Mathf.Max(newTopDist, 0.001f - halfH);
                         m_Target.center += axisLS * (newTopDist - halfH) * 0.5f;
-                        m_Target.height = height;
+                        m_Target.height = newTopDist + halfH;
                     }
                     else if (!Mathf.Approximately(newBotDist, halfH))
                     {
-                        float height = Mathf.Max(0.001f, halfH + newBotDist);
+                        newBotDist = Mathf.Max(newBotDist, 0.001f - halfH);
                         m_Target.center -= axisLS * (newBotDist - halfH) * 0.5f;
-                        m_Target.height = height;
+                        m_Target.height = halfH + newBotDist;
                     }
                 }
             }

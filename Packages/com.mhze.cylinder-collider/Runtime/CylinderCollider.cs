@@ -406,9 +406,9 @@ namespace MHZE.CylinderCollider
             DrawCircle(topCenter, b1, b2, m_Radius, segments);
             DrawCircle(botCenter, b1, b2, m_Radius, segments);
 
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < m_Sides; i++)
             {
-                float angle = 2f * Mathf.PI * i / 4;
+                float angle = 2f * Mathf.PI * i / m_Sides;
                 Vector3 dir = b1 * Mathf.Cos(angle) + b2 * Mathf.Sin(angle);
                 Gizmos.DrawLine(topCenter + dir * m_Radius, botCenter + dir * m_Radius);
             }
