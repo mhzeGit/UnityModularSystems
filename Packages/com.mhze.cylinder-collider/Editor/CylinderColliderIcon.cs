@@ -15,11 +15,7 @@ namespace MHZE.CylinderCollider.Editor
 
         private static void AssignIcon()
         {
-            var content = EditorGUIUtility.IconContent("d_PreMatCylinder");
-            if (content?.image == null)
-                return;
-
-            var tex = content.image as Texture2D;
+            var tex = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.mhze.cylinder-collider/d_CylinderColliderIcon.png");
             if (tex == null)
                 return;
 
@@ -31,8 +27,15 @@ namespace MHZE.CylinderCollider.Editor
                 if (script != null && script.GetClass() == typeof(CylinderCollider))
                 {
                     var importer = AssetImporter.GetAtPath(path) as MonoImporter;
-                    if (importer != null && importer.GetIcon() == null)
+                    if (importer != null)
                     {
+                        var currentIcon = importer.GetIcon();
+                        if (currentIcon != null)
+                        {
+                            var currentPath = AssetDatabase.GetAssetPath(currentIcon);
+                            if (currentPath == "Packages/com.mhze.cylinder-collider/d_CylinderColliderIcon.png")
+                                return;
+                        }
                         importer.SetIcon(tex);
                         importer.SaveAndReimport();
                     }

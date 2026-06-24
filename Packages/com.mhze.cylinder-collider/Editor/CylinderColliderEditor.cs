@@ -67,17 +67,15 @@ namespace MHZE.CylinderCollider.Editor
             EditorGUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
 
-            var prevColor = GUI.backgroundColor;
-            if (m_Editing)
-                GUI.backgroundColor = new Color(0.55f, 0.65f, 1f, 1f);
+            var prevBg = GUI.backgroundColor;
+            if (!m_Editing)
+                GUI.backgroundColor = new Color32(0x14, 0x14, 0x14, 0xFF);
 
-            if (GUILayout.Button(icon, GUILayout.Width(22), GUILayout.Height(22)))
-            {
-                m_Editing = !m_Editing;
+            m_Editing = GUILayout.Toggle(m_Editing, icon, "Button", GUILayout.Width(44), GUILayout.Height(22));
+            if (GUI.changed)
                 SceneView.RepaintAll();
-            }
 
-            GUI.backgroundColor = prevColor;
+            GUI.backgroundColor = prevBg;
 
             GUILayout.FlexibleSpace();
             EditorGUILayout.EndHorizontal();
