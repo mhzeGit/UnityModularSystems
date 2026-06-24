@@ -111,79 +111,70 @@ namespace MHZE.CylinderCollider.Editor
 
             var transform = m_Target.transform;
 
-            Vector3 axisLS;
-            Quaternion radiusRotLS;
+            Vector3 axisLS, b1, b2;
             switch (m_Target.direction)
             {
-                case 0:
-                    axisLS = Vector3.right;
-                    radiusRotLS = Quaternion.LookRotation(Vector3.right, Vector3.forward);
-                    break;
-                case 2:
-                    axisLS = Vector3.forward;
-                    radiusRotLS = Quaternion.LookRotation(Vector3.forward, Vector3.up);
-                    break;
-                default:
-                    axisLS = Vector3.up;
-                    radiusRotLS = Quaternion.LookRotation(Vector3.up, Vector3.forward);
-                    break;
-            }
-
-            Vector3 b1, b2;
-            switch (m_Target.direction)
-            {
-                case 0: b1 = Vector3.up; b2 = Vector3.forward; break;
-                case 2: b1 = Vector3.right; b2 = Vector3.up; break;
-                default: b1 = Vector3.right; b2 = Vector3.forward; break;
+                case 0: axisLS = Vector3.right; b1 = Vector3.up; b2 = Vector3.forward; break;
+                case 2: axisLS = Vector3.forward; b1 = Vector3.right; b2 = Vector3.up; break;
+                default: axisLS = Vector3.up; b1 = Vector3.right; b2 = Vector3.forward; break;
             }
 
             var matrix = transform.localToWorldMatrix;
 
-            using (new Handles.DrawingScope(new Color(0f, 1f, 0.2f, 0.4f), matrix))
-            {
-                float halfH = m_Target.height * 0.5f;
-                Vector3 topCenter = m_Target.center + axisLS * halfH;
-                Vector3 botCenter = m_Target.center - axisLS * halfH;
+            float halfH = m_Target.height * 0.5f;
+            Vector3 topPos = m_Target.center + axisLS * halfH;
+            Vector3 botPos = m_Target.center - axisLS * halfH;
 
-                Handles.DrawWireDisc(topCenter, axisLS, m_Target.radius);
-                Handles.DrawWireDisc(botCenter, axisLS, m_Target.radius);
+            using (new Handles.DrawingScope(new Color(0f, 1f, 0.2f, 0.2f), matrix))
+            {
+                Handles.DrawWireDisc(topPos, axisLS, m_Target.radius);
+                Handles.DrawWireDisc(botPos, axisLS, m_Target.radius);
 
                 for (int i = 0; i < 4; i++)
                 {
                     float angle = 2f * Mathf.PI * i / 4;
                     Vector3 dir = b1 * Mathf.Cos(angle) + b2 * Mathf.Sin(angle);
-                    Handles.DrawLine(topCenter + dir * m_Target.radius, botCenter + dir * m_Target.radius);
+                    Handles.DrawLine(topPos + dir * m_Target.radius, botPos + dir * m_Target.radius);
                 }
             }
 
-            using (new Handles.DrawingScope(new Color(0f, 1f, 0.2f, 0.8f), matrix))
+            using (new Handles.DrawingScope(new Color(0.4f, 1f, 0.4f, 0.5f), matrix))
             {
-                EditorGUI.BeginChangeCheck();
-                float newRadius = Handles.RadiusHandle(radiusRotLS, m_Target.center, m_Target.radius);
-                if (EditorGUI.EndChangeCheck())
-                {
-                    Undo.RecordObject(m_Target, "Change Cylinder Radius");
-                    m_Target.radius = Mathf.Max(0.001f, newRadius);
-                }
-            }
-
-            using (new Handles.DrawingScope(new Color(0f, 1f, 0.2f, 1f), matrix))
-            {
-                float halfH = m_Target.height * 0.5f;
-                Vector3 topPos = m_Target.center + axisLS * halfH;
-                Vector3 botPos = m_Target.center - axisLS * halfH;
-
                 Handles.DrawDottedLine(topPos, botPos, 2f);
 
                 EditorGUI.BeginChangeCheck();
-                Vector3 newTop = Handles.Slider(topPos, axisLS, 0.05f, Handles.SphereHandleCap, 0f);
-                Vector3 newBot = Handles.Slider(botPos, -axisLS, 0.05f, Handles.SphereHandleCap, 0f);
+                Vector3 newTop = Handles.Slider(topPos, axisLS, 0.015f, Handles.DotHandleCap, 0f);
+                Vector3 newBot = Handles.Slider(botPos, -axisLS, 0.015f, Handles.DotHandleCap, 0f);
                 if (EditorGUI.EndChangeCheck())
                 {
                     Undo.RecordObject(m_Target, "Change Cylinder Height");
-                    float topDist = Vector3.Dot(newTop - m_Target.center, axisLS);
-                    float botDist = Vector3.Dot(m_Target.center - newBot, axisLS);
-                    m_Target.height = Mathf.Max(0.001f, topDist + botDist);
+                    float newTopDist = Vector3.Dot(newTop - m_Target.center, axisLS);
+                    float newBotDist = Vector3.Dot(m_Target.center - newBot, axisLS);
+
+                    if (!Mathf.Approximately(newTopDist, halfH))
+                    {
+                        float height = Mathf.Max(0.001f, newTopDist + halfH);
+                        m_Target.center += axisLS * (newTopDist - halfH) * 0.5f;
+                        m_Target.height = height;
+                    }
+                    else if (!Mathf.Approximately(newBotDist, halfH))
+                    {
+                        float height = Mathf.Max(0.001f, halfH + newBotDist);
+                        m_Target.center -= axisLS * (newBotDist - halfH) * 0.5f;
+                        m_Target.height = height;
+                    }
+                }
+            }
+
+            using (new Handles.DrawingScope(new Color(0.4f, 1f, 0.4f, 0.5f), matrix))
+            {
+                Vector3 radiusPos = m_Target.center + b1 * m_Target.radius;
+                EditorGUI.BeginChangeCheck();
+                Vector3 newRadiusPos = Handles.Slider(radiusPos, b1, 0.015f, Handles.DotHandleCap, 0f);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    Undo.RecordObject(m_Target, "Change Cylinder Radius");
+                    m_Target.radius = Mathf.Max(0.001f, Vector3.Dot(newRadiusPos - m_Target.center, b1));
                 }
             }
         }
