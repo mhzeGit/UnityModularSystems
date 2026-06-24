@@ -1,0 +1,12 @@
+{
+  "name": "com.mhze.cylinder-collider.Editor",
+  "rootNamespace": "MHZE.CylinderCollider.Editor",
+  "references": ["com.mhze.cylinder-collider.Runtime"],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": []
+}

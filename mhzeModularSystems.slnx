@@ -10,8 +10,10 @@
   <Project Path="com.mhze.pickup-system.Runtime.csproj" />
   <Project Path="com.mhze.ultimate-trigger-system.Editor.csproj" />
   <Project Path="com.mhze.freeform-camera.Runtime.csproj" />
+  <Project Path="com.mhze.cylinder-collider.Editor.csproj" />
   <Project Path="com.mhze.freeform-camera.Editor.csproj" />
   <Project Path="com.mhze.ultimate-trigger-system.Runtime.csproj" />
+  <Project Path="com.mhze.cylinder-collider.Runtime.csproj" />
   <Project Path="com.mhze.llm-chat.Runtime.csproj" />
   <Project Path="com.mhze.firstperson-controller.Editor.csproj" />
   <Project Path="com.mhze.roughness-detection.Runtime.csproj" />

@@ -1,0 +1,13 @@
+{
+  "name": "com.mhze.cylinder-collider",
+  "version": "1.0.0",
+  "displayName": "Cylinder Collider",
+  "description": "Procedural cylinder collider component with radius, height, and configurable subdivision. Uses a convex MeshCollider internally for optimal PhysX performance.",
+  "unity": "2022.3",
+  "keywords": ["cylinder", "collider", "physics", "mesh", "procedural"],
+  "author": {
+    "name": "MHZE",
+    "email": "mhze.uk@gmail.com",
+    "url": "https://github.com/mhzeGit/"
+  }
+}
