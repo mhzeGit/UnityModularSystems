@@ -1,0 +1,12 @@
+{
+  "name": "com.mhze.gear-system.Runtime",
+  "rootNamespace": "MHZE.GearSystem",
+  "references": [],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": []
+}

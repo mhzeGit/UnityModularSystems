@@ -13,20 +13,22 @@ namespace MHZE.GearSystem.Editor
 
         private static void ClearIcon()
         {
-            var guids = AssetDatabase.FindAssets("t:Texture2D d_GearSystemIcon");
-            foreach (var guid in guids)
+            var iconGuids = AssetDatabase.FindAssets("d_GearIcon t:Texture2D");
+            foreach (var iconGuid in iconGuids)
             {
-                var path = AssetDatabase.GUIDToAssetPath(guid);
-                var icon = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-                if (icon != null)
+                var iconPath = AssetDatabase.GUIDToAssetPath(iconGuid);
+                var icon = AssetDatabase.LoadAssetAtPath<Texture2D>(iconPath);
+                if (icon == null) continue;
+
+                var scriptGuids = AssetDatabase.FindAssets("t:MonoScript GearConstraint");
+                foreach (var scriptGuid in scriptGuids)
                 {
-                    var scriptGuids = AssetDatabase.FindAssets("t:MonoScript GearSystem");
-                    foreach (var scriptGuid in scriptGuids)
+                    var scriptPath = AssetDatabase.GUIDToAssetPath(scriptGuid);
+                    var script = AssetDatabase.LoadAssetAtPath<MonoScript>(scriptPath);
+                    if (script != null && script.GetClass() == typeof(GearConstraint))
                     {
-                        var scriptPath = AssetDatabase.GUIDToAssetPath(scriptGuid);
-                        var script = AssetDatabase.LoadAssetAtPath<MonoScript>(scriptPath);
                         var importer = AssetImporter.GetAtPath(scriptPath) as MonoImporter;
-                        if (importer != null)
+                        if (importer != null && importer.GetIcon() != icon)
                         {
                             importer.SetIcon(icon);
                             importer.SaveAndReimport();
