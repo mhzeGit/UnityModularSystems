@@ -6,19 +6,19 @@ namespace MHZE.GearSystem
     {
         public static void Draw(GearConstraint gear)
         {
-            DrawGear(gear);
-            DrawDependencies(gear);
+            if (gear.gearA != null) DrawGear(gear, gear.gearA.transform, gear.radiusA);
+            if (gear.gearB != null) DrawGear(gear, gear.gearB.transform, gear.radiusB);
         }
 
-        private static void DrawGear(GearConstraint gear)
+        private static void DrawGear(GearConstraint gear, Transform targetTransform, float radius)
         {
-            if (gear.radius <= 0f) return;
+            if (radius <= 0f) return;
 
             GetAxes(gear.axis, out var axis, out var b1, out var b2);
 
-            float outerRadius = gear.radius + gear.toothHeight;
+            float outerRadius = radius + gear.toothHeight;
             float halfDepth = 0.05f;
-            int segments = Mathf.Clamp(gear.toothCount * 2, 16, 128);
+            int segments = Mathf.Clamp(gear.GetToothCount(radius) * 2, 16, 128);
 
             Vector3 topCenter = axis * halfDepth;
             Vector3 botCenter = -axis * halfDepth;
@@ -27,40 +27,41 @@ namespace MHZE.GearSystem
             Color toothColor = new Color(0.2f, 0.5f, 0.9f, 0.8f);
 
             var prevMatrix = Gizmos.matrix;
-            Gizmos.matrix = gear.transform.localToWorldMatrix;
+            Gizmos.matrix = targetTransform.localToWorldMatrix;
 
             // Draw pitch circle (gear body)
             Gizmos.color = bodyColor;
-            DrawCircle(topCenter, b1, b2, gear.radius, segments);
-            DrawCircle(botCenter, b1, b2, gear.radius, segments);
+            DrawCircle(topCenter, b1, b2, radius, segments);
+            DrawCircle(botCenter, b1, b2, radius, segments);
 
             // Vertical lines along the body
             for (int i = 0; i < segments; i += 4)
             {
                 float angle = 2f * Mathf.PI * i / segments;
                 Vector3 dir = b1 * Mathf.Cos(angle) + b2 * Mathf.Sin(angle);
-                Gizmos.DrawLine(topCenter + dir * gear.radius, botCenter + dir * gear.radius);
+                Gizmos.DrawLine(topCenter + dir * radius, botCenter + dir * radius);
             }
 
             // Draw individual teeth with gaps
             Gizmos.color = toothColor;
-            float toothHalfWidth = Mathf.PI / gear.toothCount * 0.35f;
+            int toothCount = gear.GetToothCount(radius);
+            float toothHalfWidth = Mathf.PI / toothCount * 0.35f;
 
-            for (int i = 0; i < gear.toothCount; i++)
+            for (int i = 0; i < toothCount; i++)
             {
-                float angle = 2f * Mathf.PI * i / gear.toothCount;
+                float angle = 2f * Mathf.PI * i / toothCount;
 
                 Vector3 dirLeft = b1 * Mathf.Cos(angle - toothHalfWidth) + b2 * Mathf.Sin(angle - toothHalfWidth);
                 Vector3 dirRight = b1 * Mathf.Cos(angle + toothHalfWidth) + b2 * Mathf.Sin(angle + toothHalfWidth);
 
-                Vector3 tlInner = topCenter + dirLeft * gear.radius;
+                Vector3 tlInner = topCenter + dirLeft * radius;
                 Vector3 tlOuter = topCenter + dirLeft * outerRadius;
-                Vector3 trInner = topCenter + dirRight * gear.radius;
+                Vector3 trInner = topCenter + dirRight * radius;
                 Vector3 trOuter = topCenter + dirRight * outerRadius;
 
-                Vector3 blInner = botCenter + dirLeft * gear.radius;
+                Vector3 blInner = botCenter + dirLeft * radius;
                 Vector3 blOuter = botCenter + dirLeft * outerRadius;
-                Vector3 brInner = botCenter + dirRight * gear.radius;
+                Vector3 brInner = botCenter + dirRight * radius;
                 Vector3 brOuter = botCenter + dirRight * outerRadius;
 
                 // Top face
@@ -79,31 +80,7 @@ namespace MHZE.GearSystem
                 Gizmos.DrawLine(tlInner, blInner);
                 Gizmos.DrawLine(trInner, brInner);
             }
-
-            // Axis indicator
-            Gizmos.color = Color.red;
-            Gizmos.DrawLine(-axis * halfDepth * 2, axis * halfDepth * 2);
-
-            // Hub circle
-            Gizmos.color = new Color(0.5f, 0.5f, 0.5f, 0.5f);
-            float hubRadius = gear.radius * 0.25f;
-            DrawCircle(topCenter, b1, b2, hubRadius, segments);
-            DrawCircle(botCenter, b1, b2, hubRadius, segments);
-
             Gizmos.matrix = prevMatrix;
-        }
-
-        private static void DrawDependencies(GearConstraint gear)
-        {
-            var dependencies = gear.dependencies;
-            if (dependencies == null) return;
-
-            Gizmos.color = new Color(1f, 0.8f, 0.2f, 0.6f);
-            foreach (var dep in dependencies)
-            {
-                if (dep == null) continue;
-                Gizmos.DrawLine(gear.transform.position, dep.transform.position);
-            }
         }
 
         private static void GetAxes(GearAxis gearAxis, out Vector3 axis, out Vector3 b1, out Vector3 b2)

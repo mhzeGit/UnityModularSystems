@@ -8,14 +8,14 @@ namespace MHZE.GearSystem
     public class GearConstraint : MonoBehaviour
     {
         [SerializeField] private GearAxis m_Axis = GearAxis.Y;
-        [SerializeField] private float m_Radius = 0.5f;
+        [SerializeField] private float m_RadiusA = 0.5f;
+        [SerializeField] private float m_RadiusB = 0.5f;
         [SerializeField] private float m_ToothDensity = 5f;
         [SerializeField] private float m_ToothHeight = 0.1f;
         [SerializeField] private bool m_DebugDraw;
         [SerializeField] private bool m_IsDriver;
-        [SerializeField] private float m_AngularVelocity;
-        [SerializeField] private float m_CurrentAngle;
-        [SerializeField] private GearConstraint[] m_Dependencies;
+        [SerializeField] private Rigidbody m_GearA;
+        [SerializeField] private Rigidbody m_GearB;
 
         public GearAxis axis
         {
@@ -23,10 +23,16 @@ namespace MHZE.GearSystem
             set => m_Axis = value;
         }
 
-        public float radius
+        public float radiusA
         {
-            get => m_Radius;
-            set => m_Radius = Mathf.Max(0.001f, value);
+            get => m_RadiusA;
+            set => m_RadiusA = Mathf.Max(0.001f, value);
+        }
+
+        public float radiusB
+        {
+            get => m_RadiusB;
+            set => m_RadiusB = Mathf.Max(0.001f, value);
         }
 
         public float toothDensity
@@ -35,7 +41,7 @@ namespace MHZE.GearSystem
             set => m_ToothDensity = Mathf.Max(0.1f, value);
         }
 
-        public int toothCount => Mathf.Max(3, Mathf.RoundToInt(2f * Mathf.PI * m_Radius * m_ToothDensity));
+        public int GetToothCount(float radius) => Mathf.Max(3, Mathf.RoundToInt(2f * Mathf.PI * radius * m_ToothDensity));
 
         public float toothHeight
         {
@@ -55,22 +61,16 @@ namespace MHZE.GearSystem
             set => m_IsDriver = value;
         }
 
-        public float angularVelocity
+        public Rigidbody gearA
         {
-            get => m_AngularVelocity;
-            set => m_AngularVelocity = value;
+            get => m_GearA;
+            set => m_GearA = value;
         }
 
-        public float currentAngle
+        public Rigidbody gearB
         {
-            get => m_CurrentAngle;
-            set => m_CurrentAngle = value;
-        }
-
-        public GearConstraint[] dependencies
-        {
-            get => m_Dependencies;
-            set => m_Dependencies = value;
+            get => m_GearB;
+            set => m_GearB = value;
         }
 
         public Vector3 GetAxisVector()
