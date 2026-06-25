@@ -194,7 +194,78 @@ namespace MHZE.GearSystem
             };
         }
 
+        private static void GetReferenceAxes(GearAxis axis, out Vector3 axisDir, out Vector3 b1, out Vector3 b2)
+        {
+            switch (axis)
+            {
+                case GearAxis.X:
+                    axisDir = Vector3.right; b1 = Vector3.up; b2 = Vector3.forward;
+                    break;
+                case GearAxis.Z:
+                    axisDir = Vector3.forward; b1 = Vector3.right; b2 = Vector3.up;
+                    break;
+                default:
+                    axisDir = Vector3.up; b1 = Vector3.right; b2 = Vector3.forward;
+                    break;
+            }
+        }
+
         public float gearRatio => m_RadiusB / m_RadiusA;
+
+        // --------------------------------------------------------------------------------
+        // Tooth alignment
+        // --------------------------------------------------------------------------------
+
+        public void AlignTeeth()
+        {
+            if (m_GearA == null || m_GearB == null) return;
+
+            Transform xfA = m_GearA.transform;
+            Transform xfB = m_GearB.transform;
+
+            GetReferenceAxes(m_AxisA, out Vector3 axisA, out Vector3 b1A, out Vector3 b2A);
+            GetReferenceAxes(m_AxisB, out Vector3 axisB, out Vector3 b1B, out Vector3 b2B);
+
+            Vector3 dir = (xfB.position - xfA.position).normalized;
+
+            Vector3 localDirA = xfA.InverseTransformDirection(dir);
+            Vector3 localDirB = xfB.InverseTransformDirection(-dir);
+
+            float angleA = Mathf.Atan2(Vector3.Dot(localDirA, b2A), Vector3.Dot(localDirA, b1A));
+            float angleB = Mathf.Atan2(Vector3.Dot(localDirB, b2B), Vector3.Dot(localDirB, b1B));
+
+            int nA = GetToothCount(m_RadiusA);
+            int nB = GetToothCount(m_RadiusB);
+            float tA = 2f * Mathf.PI / nA;
+            float tB = 2f * Mathf.PI / nB;
+
+            // Two alignment options:
+            //   A: gear A tooth at contact (phase=0), gear B gap at contact (phase=0.5)
+            //   B: gear A gap at contact (phase=0.5), gear B tooth at contact (phase=0)
+            //
+            // Each option independently finds the nearest tooth/gap center for each gear,
+            // then picks the option that requires less total rotation.
+
+            // Option A
+            float dA_A = angleA - (float)System.Math.Round(angleA / tA) * tA;
+            float dB_A = angleB - ((float)System.Math.Round(angleB / tB - 0.5f) + 0.5f) * tB;
+
+            // Option B
+            float dA_B = angleA - ((float)System.Math.Round(angleA / tA - 0.5f) + 0.5f) * tA;
+            float dB_B = angleB - (float)System.Math.Round(angleB / tB) * tB;
+
+            float costA = Mathf.Abs(dA_A) + Mathf.Abs(dB_A);
+            float costB = Mathf.Abs(dA_B) + Mathf.Abs(dB_B);
+
+            float deltaA = costA <= costB ? dA_A : dA_B;
+            float deltaB = costA <= costB ? dB_A : dB_B;
+
+            Vector3 worldAxisA = xfA.TransformDirection(axisA);
+            Vector3 worldAxisB = xfB.TransformDirection(axisB);
+
+            xfA.rotation = Quaternion.AngleAxis(deltaA * Mathf.Rad2Deg, worldAxisA) * xfA.rotation;
+            xfB.rotation = Quaternion.AngleAxis(deltaB * Mathf.Rad2Deg, worldAxisB) * xfB.rotation;
+        }
 
         // --------------------------------------------------------------------------------
         // Unity Messages
@@ -219,14 +290,20 @@ namespace MHZE.GearSystem
         {
             AlignTransformToGears();
 
+            // Original initial alignment: rotate gear B by half a tooth
             if (m_GearB != null)
             {
                 int toothCount = GetToothCount(m_RadiusB);
                 float halfToothAngle = Mathf.PI / toothCount;
                 Vector3 localAxis = GetAxisVector(m_AxisB);
-                Vector3 worldAxis = m_GearB.transform.rotation * localAxis;
+                Vector3 worldAxis = m_GearB.transform.TransformDirection(localAxis);
                 m_GearB.transform.rotation = Quaternion.AngleAxis(halfToothAngle * Mathf.Rad2Deg, worldAxis) * m_GearB.transform.rotation;
             }
+
+            // Seed transform-rotation tracking so the solver doesn't treat
+            // the alignment rotation as an external transform delta.
+            if (m_GearA != null) { m_PrevRotA = m_GearA.transform.rotation; m_HasPrevRotA = true; }
+            if (m_GearB != null) { m_PrevRotB = m_GearB.transform.rotation; m_HasPrevRotB = true; }
 
             if (m_IgnoreCollisionBetweenGears && m_GearA != null && m_GearB != null)
             {
@@ -292,7 +369,7 @@ namespace MHZE.GearSystem
                 return;
             }
 
-            m_PositionError += velError * dt;
+            m_PositionError = m_PositionError * 0.9f + velError * dt;
 
             // --- Sleep heuristic ---
             float absVelError = Mathf.Abs(velError);
@@ -359,9 +436,7 @@ namespace MHZE.GearSystem
             m_GearA.AddRelativeTorque(localAxisA * tauA, ForceMode.Force);
             m_GearB.AddRelativeTorque(localAxisB * tauB, ForceMode.Force);
 
-            // Decay position error
-            m_PositionError *= Mathf.Clamp01(1f - beta * 0.1f);
-            m_PositionError = Mathf.Clamp(m_PositionError, -10f, 10f);
+            m_PositionError = Mathf.Clamp(m_PositionError, -0.5f, 0.5f);
 
             // Debug log every 60 frames
             if (m_DebugLog && m_FrameCount % 60 == 0)
