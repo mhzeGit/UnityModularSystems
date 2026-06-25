@@ -1,0 +1,14 @@
+{
+  "name": "com.mhze.mouse-physics-grab-system.Runtime",
+  "rootNamespace": "MHZE.MousePhysicsGrabSystem",
+  "references": [
+    "Unity.InputSystem"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": []
+}

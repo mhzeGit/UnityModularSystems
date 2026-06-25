@@ -1,0 +1,15 @@
+{
+  "name": "com.mhze.mouse-physics-grab-system",
+  "version": "1.0.0",
+  "displayName": "Mouse Physics Grab System",
+  "description": "Modular physics-based mouse grab/drag system for dragging Rigidbody objects with spring-damper forces, scroll depth adjustment, and configurable constraints.",
+  "unity": "2021.3",
+  "author": {
+    "name": "MHZE",
+    "email": "mhze.uk@gmail.com",
+    "url": "https://github.com/mhzeGit/"
+  },
+  "dependencies": {
+    "com.unity.inputsystem": "1.4.0"
+  }
+}

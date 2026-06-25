@@ -22,5 +22,6 @@
   <Project Path="com.mhze.llm-chat.Editor.csproj" />
   <Project Path="com.mhze.ultimate-door-system.Runtime.csproj" />
   <Project Path="com.mhze.roughness-detection.Editor.csproj" />
+  <Project Path="com.mhze.mouse-physics-grab-system.Runtime.csproj" />
   <Project Path="com.mhze.gear-system.Editor.csproj" />
 </Solution>
