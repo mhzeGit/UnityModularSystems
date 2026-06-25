@@ -7,14 +7,13 @@ namespace MHZE.GearSystem
     [AddComponentMenu("Mechanical/Gear Constraint")]
     public class GearConstraint : MonoBehaviour
     {
-        [Header("Axis")]
-        [SerializeField] private GearAxis m_Axis = GearAxis.Y;
-
         [Header("Gears")]
         [SerializeField] private Rigidbody m_GearA;
         [SerializeField] private Rigidbody m_GearB;
         [SerializeField] private float m_RadiusA = 0.5f;
         [SerializeField] private float m_RadiusB = 0.5f;
+        [SerializeField] private GearAxis m_AxisA = GearAxis.Y;
+        [SerializeField] private GearAxis m_AxisB = GearAxis.Y;
 
         [Header("Visual")]
         [SerializeField] private float m_ToothDensity = 5f;
@@ -83,10 +82,16 @@ namespace MHZE.GearSystem
         // Public Properties
         // --------------------------------------------------------------------------------
 
-        public GearAxis axis
+        public GearAxis axisA
         {
-            get => m_Axis;
-            set => m_Axis = value;
+            get => m_AxisA;
+            set => m_AxisA = value;
+        }
+
+        public GearAxis axisB
+        {
+            get => m_AxisB;
+            set => m_AxisB = value;
         }
 
         public float radiusA
@@ -170,9 +175,9 @@ namespace MHZE.GearSystem
             set => m_DebugLog = value;
         }
 
-        public Vector3 GetAxisVector()
+        public static Vector3 GetAxisVector(GearAxis axis)
         {
-            return m_Axis switch
+            return axis switch
             {
                 GearAxis.X => Vector3.right,
                 GearAxis.Z => Vector3.forward,
@@ -201,7 +206,7 @@ namespace MHZE.GearSystem
             {
                 int toothCount = GetToothCount(m_RadiusB);
                 float halfToothAngle = Mathf.PI / toothCount;
-                Vector3 localAxis = GetAxisVector();
+                Vector3 localAxis = GetAxisVector(m_AxisB);
                 Vector3 worldAxis = m_GearB.transform.rotation * localAxis;
                 m_GearB.transform.rotation = Quaternion.AngleAxis(halfToothAngle * Mathf.Rad2Deg, worldAxis) * m_GearB.transform.rotation;
             }
@@ -232,13 +237,12 @@ namespace MHZE.GearSystem
             m_FrameCount++;
             m_LastSlept = false;
 
-            // Work in each rigidbody's LOCAL frame to avoid coordinate-mismatch
-            // between world-space axes and per-body inertia tensors / freeze constraints.
-            Vector3 localAxis = GetAxisVector();
+            // Work in each rigidbody's LOCAL frame.
+            Vector3 localAxisA = GetAxisVector(m_AxisA);
+            Vector3 localAxisB = GetAxisVector(m_AxisB);
 
-            // Angular velocity about the constraint axis in the body's LOCAL frame.
-            float omegaA = GetBodyAngularVelocity(m_GearA, localAxis, ref m_PrevRotA, ref m_HasPrevRotA, dt);
-            float omegaB = GetBodyAngularVelocity(m_GearB, localAxis, ref m_PrevRotB, ref m_HasPrevRotB, dt);
+            float omegaA = GetBodyAngularVelocity(m_GearA, localAxisA, ref m_PrevRotA, ref m_HasPrevRotA, dt);
+            float omegaB = GetBodyAngularVelocity(m_GearB, localAxisB, ref m_PrevRotB, ref m_HasPrevRotB, dt);
 
             m_LastOmegaA = omegaA;
             m_LastOmegaB = omegaB;
@@ -249,8 +253,8 @@ namespace MHZE.GearSystem
             float velError = omegaA * rA + omegaB * rB;
             m_LastVelError = velError;
 
-            float invIA = GetInverseInertiaAboutBodyAxis(m_GearA, localAxis);
-            float invIB = GetInverseInertiaAboutBodyAxis(m_GearB, localAxis);
+            float invIA = GetInverseInertiaAboutBodyAxis(m_GearA, localAxisA);
+            float invIB = GetInverseInertiaAboutBodyAxis(m_GearB, localAxisB);
 
             m_LastInvIA = invIA;
             m_LastInvIB = invIB;
@@ -266,8 +270,6 @@ namespace MHZE.GearSystem
             m_PositionError += velError * dt;
 
             // --- Sleep heuristic ---
-            // Only sleep when the constraint is ALREADY satisfied (velError is tiny).
-            // Never sleep while there is an active velocity mismatch.
             float absVelError = Mathf.Abs(velError);
             float speedB = Mathf.Abs(omegaB);
             bool gearBIsSlow = speedB < m_SleepThreshold;
@@ -328,14 +330,9 @@ namespace MHZE.GearSystem
             m_LastTauA = tauA;
             m_LastTauB = tauB;
 
-            // Apply torques in each rigidbody's LOCAL space so that
-            // FreezeRotation constraints (e.g. freeze X, Z; leave Y free)
-            // do not block the torque. AddTorque with a world-space axis
-            // can develop cross-axis components from quaternion rounding,
-            // which get clamped by frozen rotation axes.
-            // AddRelativeTorque applies a clean single-axis torque.
-            m_GearA.AddRelativeTorque(localAxis * tauA, ForceMode.Force);
-            m_GearB.AddRelativeTorque(localAxis * tauB, ForceMode.Force);
+            // Apply torques in each rigidbody's LOCAL space.
+            m_GearA.AddRelativeTorque(localAxisA * tauA, ForceMode.Force);
+            m_GearB.AddRelativeTorque(localAxisB * tauB, ForceMode.Force);
 
             // Decay position error
             m_PositionError *= Mathf.Clamp01(1f - beta * 0.1f);
@@ -358,17 +355,10 @@ namespace MHZE.GearSystem
         // Helpers
         // --------------------------------------------------------------------------------
 
-        /// <summary>
-        /// Returns the scalar angular velocity (rad/s) of <paramref name="rb"/> about its
-        /// LOCAL <paramref name="bodyAxis"/> (a unit vector in the body's local frame).
-        /// Uses Rigidbody.angularVelocity when available; falls back to Transform-derived
-        /// rotation when the rigidbody reports near-zero while the Transform is rotating.
-        /// </summary>
         private float GetBodyAngularVelocity(
             Rigidbody rb, Vector3 bodyAxis,
             ref Quaternion prevRot, ref bool hasPrev, float dt)
         {
-            // Convert world angular-velocity to body-local and project
             Vector3 localOmega = rb.transform.InverseTransformDirection(rb.angularVelocity);
             float rigidOmega = Vector3.Dot(localOmega, bodyAxis);
 
@@ -387,8 +377,6 @@ namespace MHZE.GearSystem
                 {
                     delta.ToAngleAxis(out float angleDeg, out Vector3 rotAxis);
 
-                    // rotAxis is in world space. Convert to body-local,
-                    // project onto the constraint axis.
                     Vector3 localRotAxis = rb.transform.InverseTransformDirection(rotAxis);
                     float projectedDeg = angleDeg * Vector3.Dot(localRotAxis, bodyAxis);
                     transformOmega = projectedDeg * Mathf.Deg2Rad / dt;
@@ -410,19 +398,10 @@ namespace MHZE.GearSystem
             return rigidOmega;
         }
 
-        /// <summary>
-        /// Returns the inverse rotational inertia about the body-local <paramref name="bodyAxis"/>
-        /// (e.g. (0,1,0) for the local Y axis). Accounts for inertiaTensorRotation.
-        /// Returns 0 if the body is kinematic or has zero inertia about that axis.
-        /// </summary>
         private static float GetInverseInertiaAboutBodyAxis(Rigidbody rb, Vector3 bodyAxis)
         {
             if (rb == null || rb.isKinematic) return 0f;
 
-            // Convert body-local axis to inertia-principal space.
-            // bodyAxis is in the rigidbody's local frame.
-            // inertiaTensorRotation rotates from body-local to principal.
-            // So principal-axis = R_i^T * bodyAxis = inverse(R_i) * bodyAxis
             Vector3 princAxis = Quaternion.Inverse(rb.inertiaTensorRotation) * bodyAxis;
             princAxis.Normalize();
 

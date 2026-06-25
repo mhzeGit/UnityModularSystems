@@ -7,11 +7,12 @@ namespace MHZE.GearSystem.Editor
     [CanEditMultipleObjects]
     public class GearConstraintEditor : UnityEditor.Editor
     {
-        private SerializedProperty m_Axis;
         private SerializedProperty m_GearA;
         private SerializedProperty m_GearB;
         private SerializedProperty m_RadiusA;
         private SerializedProperty m_RadiusB;
+        private SerializedProperty m_AxisA;
+        private SerializedProperty m_AxisB;
         private SerializedProperty m_ToothDensity;
         private SerializedProperty m_ToothHeight;
         private SerializedProperty m_DebugDraw;
@@ -31,11 +32,12 @@ namespace MHZE.GearSystem.Editor
 
         private void OnEnable()
         {
-            m_Axis = serializedObject.FindProperty("m_Axis");
             m_GearA = serializedObject.FindProperty("m_GearA");
             m_GearB = serializedObject.FindProperty("m_GearB");
             m_RadiusA = serializedObject.FindProperty("m_RadiusA");
             m_RadiusB = serializedObject.FindProperty("m_RadiusB");
+            m_AxisA = serializedObject.FindProperty("m_AxisA");
+            m_AxisB = serializedObject.FindProperty("m_AxisB");
             m_ToothDensity = serializedObject.FindProperty("m_ToothDensity");
             m_ToothHeight = serializedObject.FindProperty("m_ToothHeight");
             m_DebugDraw = serializedObject.FindProperty("m_DebugDraw");
@@ -55,11 +57,8 @@ namespace MHZE.GearSystem.Editor
 
             EditorGUILayout.Space(4);
 
-            DrawGearSection("Gear A", m_GearA, m_RadiusA, ref m_ShowGearA);
-            DrawGearSection("Gear B", m_GearB, m_RadiusB, ref m_ShowGearB);
-
-            EditorGUILayout.PropertyField(m_Axis, new GUIContent("Axis", "Local rotation axis for both gears"));
-            EditorGUILayout.Space(2);
+            DrawGearSection("Gear A", m_GearA, m_RadiusA, m_AxisA, ref m_ShowGearA);
+            DrawGearSection("Gear B", m_GearB, m_RadiusB, m_AxisB, ref m_ShowGearB);
 
             m_ShowVisual = EditorGUILayout.Foldout(m_ShowVisual, "Visual", true, EditorStyles.foldoutHeader);
             if (m_ShowVisual)
@@ -90,7 +89,7 @@ namespace MHZE.GearSystem.Editor
             serializedObject.ApplyModifiedProperties();
         }
 
-        private static void DrawGearSection(string label, SerializedProperty rbProp, SerializedProperty radiusProp, ref bool show)
+        private static void DrawGearSection(string label, SerializedProperty rbProp, SerializedProperty radiusProp, SerializedProperty axisProp, ref bool show)
         {
             show = EditorGUILayout.Foldout(show, label, true, EditorStyles.foldoutHeader);
             if (!show) return;
@@ -98,6 +97,7 @@ namespace MHZE.GearSystem.Editor
             EditorGUI.indentLevel++;
             EditorGUILayout.PropertyField(rbProp, new GUIContent("Rigidbody"));
             EditorGUILayout.PropertyField(radiusProp, new GUIContent("Radius"));
+            EditorGUILayout.PropertyField(axisProp, new GUIContent("Axis"));
             EditorGUI.indentLevel--;
             EditorGUILayout.Space(2);
         }

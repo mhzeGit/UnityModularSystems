@@ -6,8 +6,8 @@ namespace MHZE.GearSystem
     {
         public static void Draw(GearConstraint gear)
         {
-            if (gear.gearA != null) DrawGear(gear, gear.gearA.transform, gear.radiusA);
-            if (gear.gearB != null) DrawGear(gear, gear.gearB.transform, gear.radiusB);
+            if (gear.gearA != null) DrawGear(gear, gear.gearA.transform, gear.radiusA, gear.axisA);
+            if (gear.gearB != null) DrawGear(gear, gear.gearB.transform, gear.radiusB, gear.axisB);
 
             if (gear.gearA != null && gear.gearB != null)
             {
@@ -20,7 +20,6 @@ namespace MHZE.GearSystem
             Vector3 posA = gear.gearA.transform.position;
             Vector3 posB = gear.gearB.transform.position;
             Vector3 dir = (posB - posA).normalized;
-            float dist = Vector3.Distance(posA, posB);
             float rA = gear.radiusA;
             float rB = gear.radiusB;
 
@@ -39,11 +38,11 @@ namespace MHZE.GearSystem
             Gizmos.DrawWireSphere(contactB, 0.03f);
         }
 
-        private static void DrawGear(GearConstraint gear, Transform targetTransform, float radius)
+        private static void DrawGear(GearConstraint gear, Transform targetTransform, float radius, GearAxis gearAxis)
         {
             if (radius <= 0f) return;
 
-            GetAxes(gear.axis, out var axis, out var b1, out var b2);
+            GetAxes(gearAxis, out var axis, out var b1, out var b2);
 
             float outerRadius = radius + gear.toothHeight;
             float halfDepth = 0.05f;
