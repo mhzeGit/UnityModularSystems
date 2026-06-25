@@ -20,7 +20,6 @@ namespace MHZE.GearSystem
         [SerializeField] private float m_ToothDensity = 5f;
         [SerializeField] private float m_ToothHeight = 0.1f;
         [SerializeField] private bool m_DebugDraw;
-        [SerializeField] private bool m_IsDriver;
 
         [Header("Physics")]
         [SerializeField]
@@ -121,12 +120,6 @@ namespace MHZE.GearSystem
         {
             get => m_DebugDraw;
             set => m_DebugDraw = value;
-        }
-
-        public bool isDriver
-        {
-            get => m_IsDriver;
-            set => m_IsDriver = value;
         }
 
         public Rigidbody gearA
@@ -256,7 +249,7 @@ namespace MHZE.GearSystem
             float velError = omegaA * rA + omegaB * rB;
             m_LastVelError = velError;
 
-            float invIA = m_IsDriver ? 0f : GetInverseInertiaAboutBodyAxis(m_GearA, localAxis);
+            float invIA = GetInverseInertiaAboutBodyAxis(m_GearA, localAxis);
             float invIB = GetInverseInertiaAboutBodyAxis(m_GearB, localAxis);
 
             m_LastInvIA = invIA;
@@ -280,15 +273,14 @@ namespace MHZE.GearSystem
             bool gearBIsSlow = speedB < m_SleepThreshold;
             bool constraintSatisfied = absVelError < m_SleepThreshold * 0.1f;
 
-            if (gearBIsSlow && constraintSatisfied && (m_IsDriver || Mathf.Abs(omegaA) < m_SleepThreshold))
+            if (gearBIsSlow && constraintSatisfied && Mathf.Abs(omegaA) < m_SleepThreshold)
             {
                 m_SleepCounter++;
                 if (m_SleepCounter > 10)
                 {
                     m_LastSlept = true;
                     m_GearB.angularVelocity = Vector3.MoveTowards(m_GearB.angularVelocity, Vector3.zero, m_SleepThreshold * 0.1f);
-                    if (!m_IsDriver)
-                        m_GearA.angularVelocity = Vector3.MoveTowards(m_GearA.angularVelocity, Vector3.zero, m_SleepThreshold * 0.1f);
+                    m_GearA.angularVelocity = Vector3.MoveTowards(m_GearA.angularVelocity, Vector3.zero, m_SleepThreshold * 0.1f);
                     return;
                 }
             }
@@ -309,29 +301,19 @@ namespace MHZE.GearSystem
             // Efficiency
             if (m_Efficiency < 1f)
             {
-                if (m_IsDriver)
+                float powA = omegaA * tauA;
+                if (Mathf.Abs(powA) > 1e-6f)
                 {
-                    tauB *= m_Efficiency;
-                }
-                else
-                {
-                    float powA = omegaA * tauA;
-                    if (Mathf.Abs(powA) > 1e-6f)
-                    {
-                        if (powA < 0f) tauB *= m_Efficiency;
-                        else           tauA *= m_Efficiency;
-                    }
+                    if (powA < 0f) tauB *= m_Efficiency;
+                    else           tauA *= m_Efficiency;
                 }
             }
 
             // Damping
             if (m_Damping > 0f)
             {
-                if (!m_IsDriver)
-                {
-                    float iA = 1f / Mathf.Max(invIA, 1e-8f);
-                    tauA -= m_Damping * omegaA * iA;
-                }
+                float iA = 1f / Mathf.Max(invIA, 1e-8f);
+                tauA -= m_Damping * omegaA * iA;
                 float iB = 1f / Mathf.Max(invIB, 1e-8f);
                 tauB -= m_Damping * omegaB * iB;
             }
@@ -352,8 +334,7 @@ namespace MHZE.GearSystem
             // can develop cross-axis components from quaternion rounding,
             // which get clamped by frozen rotation axes.
             // AddRelativeTorque applies a clean single-axis torque.
-            if (!m_IsDriver)
-                m_GearA.AddRelativeTorque(localAxis * tauA, ForceMode.Force);
+            m_GearA.AddRelativeTorque(localAxis * tauA, ForceMode.Force);
             m_GearB.AddRelativeTorque(localAxis * tauB, ForceMode.Force);
 
             // Decay position error
