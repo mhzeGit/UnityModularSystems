@@ -290,21 +290,6 @@ namespace MHZE.GearSystem
         {
             AlignTransformToGears();
 
-            // Original initial alignment: rotate gear B by half a tooth
-            if (m_GearB != null)
-            {
-                int toothCount = GetToothCount(m_RadiusB);
-                float halfToothAngle = Mathf.PI / toothCount;
-                Vector3 localAxis = GetAxisVector(m_AxisB);
-                Vector3 worldAxis = m_GearB.transform.TransformDirection(localAxis);
-                m_GearB.transform.rotation = Quaternion.AngleAxis(halfToothAngle * Mathf.Rad2Deg, worldAxis) * m_GearB.transform.rotation;
-            }
-
-            // Seed transform-rotation tracking so the solver doesn't treat
-            // the alignment rotation as an external transform delta.
-            if (m_GearA != null) { m_PrevRotA = m_GearA.transform.rotation; m_HasPrevRotA = true; }
-            if (m_GearB != null) { m_PrevRotB = m_GearB.transform.rotation; m_HasPrevRotB = true; }
-
             if (m_IgnoreCollisionBetweenGears && m_GearA != null && m_GearB != null)
             {
                 Collider[] collidersA = m_GearA.GetComponentsInChildren<Collider>();

@@ -111,6 +111,7 @@ namespace MHZE.GearSystem
             constraint.radiusB = other.m_Radius;
             constraint.axisA = m_Axis;
             constraint.axisB = other.m_Axis;
+            constraint.debugDraw = true;
 
             m_ActiveConstraints[other] = constraint;
             other.m_ActiveConstraints[this] = constraint;
