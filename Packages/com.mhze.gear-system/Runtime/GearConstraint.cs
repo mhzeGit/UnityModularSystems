@@ -239,12 +239,13 @@ namespace MHZE.GearSystem
             m_FrameCount++;
             m_LastSlept = false;
 
+            // Work in each rigidbody's LOCAL frame to avoid coordinate-mismatch
+            // between world-space axes and per-body inertia tensors / freeze constraints.
             Vector3 localAxis = GetAxisVector();
-            Vector3 axisA = m_GearA.transform.rotation * localAxis;
-            Vector3 axisB = m_GearB.transform.rotation * localAxis;
 
-            float omegaA = GetEffectiveAngularVelocity(m_GearA, axisA, ref m_PrevRotA, ref m_HasPrevRotA, dt);
-            float omegaB = GetEffectiveAngularVelocity(m_GearB, axisB, ref m_PrevRotB, ref m_HasPrevRotB, dt);
+            // Angular velocity about the constraint axis in the body's LOCAL frame.
+            float omegaA = GetBodyAngularVelocity(m_GearA, localAxis, ref m_PrevRotA, ref m_HasPrevRotA, dt);
+            float omegaB = GetBodyAngularVelocity(m_GearB, localAxis, ref m_PrevRotB, ref m_HasPrevRotB, dt);
 
             m_LastOmegaA = omegaA;
             m_LastOmegaB = omegaB;
@@ -255,8 +256,8 @@ namespace MHZE.GearSystem
             float velError = omegaA * rA + omegaB * rB;
             m_LastVelError = velError;
 
-            float invIA = m_IsDriver ? 0f : GetInverseInertiaAboutAxis(m_GearA, axisA);
-            float invIB = GetInverseInertiaAboutAxis(m_GearB, axisB);
+            float invIA = m_IsDriver ? 0f : GetInverseInertiaAboutBodyAxis(m_GearA, localAxis);
+            float invIB = GetInverseInertiaAboutBodyAxis(m_GearB, localAxis);
 
             m_LastInvIA = invIA;
             m_LastInvIB = invIB;
@@ -345,10 +346,15 @@ namespace MHZE.GearSystem
             m_LastTauA = tauA;
             m_LastTauB = tauB;
 
-            // Apply
+            // Apply torques in each rigidbody's LOCAL space so that
+            // FreezeRotation constraints (e.g. freeze X, Z; leave Y free)
+            // do not block the torque. AddTorque with a world-space axis
+            // can develop cross-axis components from quaternion rounding,
+            // which get clamped by frozen rotation axes.
+            // AddRelativeTorque applies a clean single-axis torque.
             if (!m_IsDriver)
-                m_GearA.AddTorque(axisA * tauA, ForceMode.Force);
-            m_GearB.AddTorque(axisB * tauB, ForceMode.Force);
+                m_GearA.AddRelativeTorque(localAxis * tauA, ForceMode.Force);
+            m_GearB.AddRelativeTorque(localAxis * tauB, ForceMode.Force);
 
             // Decay position error
             m_PositionError *= Mathf.Clamp01(1f - beta * 0.1f);
@@ -371,11 +377,19 @@ namespace MHZE.GearSystem
         // Helpers
         // --------------------------------------------------------------------------------
 
-        private float GetEffectiveAngularVelocity(
-            Rigidbody rb, Vector3 worldAxis,
+        /// <summary>
+        /// Returns the scalar angular velocity (rad/s) of <paramref name="rb"/> about its
+        /// LOCAL <paramref name="bodyAxis"/> (a unit vector in the body's local frame).
+        /// Uses Rigidbody.angularVelocity when available; falls back to Transform-derived
+        /// rotation when the rigidbody reports near-zero while the Transform is rotating.
+        /// </summary>
+        private float GetBodyAngularVelocity(
+            Rigidbody rb, Vector3 bodyAxis,
             ref Quaternion prevRot, ref bool hasPrev, float dt)
         {
-            float rigidOmega = Vector3.Dot(rb.angularVelocity, worldAxis);
+            // Convert world angular-velocity to body-local and project
+            Vector3 localOmega = rb.transform.InverseTransformDirection(rb.angularVelocity);
+            float rigidOmega = Vector3.Dot(localOmega, bodyAxis);
 
             if (!m_DetectTransformRotation)
                 return rigidOmega;
@@ -385,14 +399,17 @@ namespace MHZE.GearSystem
 
             if (hasPrev)
             {
-                // Delta rotation since last FixedUpdate
                 Quaternion delta = Quaternion.Inverse(prevRot) * current;
                 float angleDiff = Quaternion.Angle(prevRot, current);
 
                 if (angleDiff > 0.0001f)
                 {
                     delta.ToAngleAxis(out float angleDeg, out Vector3 rotAxis);
-                    float projectedDeg = angleDeg * Vector3.Dot(rotAxis, worldAxis);
+
+                    // rotAxis is in world space. Convert to body-local,
+                    // project onto the constraint axis.
+                    Vector3 localRotAxis = rb.transform.InverseTransformDirection(rotAxis);
+                    float projectedDeg = angleDeg * Vector3.Dot(localRotAxis, bodyAxis);
                     transformOmega = projectedDeg * Mathf.Deg2Rad / dt;
                 }
             }
@@ -412,17 +429,26 @@ namespace MHZE.GearSystem
             return rigidOmega;
         }
 
-        private static float GetInverseInertiaAboutAxis(Rigidbody rb, Vector3 worldAxis)
+        /// <summary>
+        /// Returns the inverse rotational inertia about the body-local <paramref name="bodyAxis"/>
+        /// (e.g. (0,1,0) for the local Y axis). Accounts for inertiaTensorRotation.
+        /// Returns 0 if the body is kinematic or has zero inertia about that axis.
+        /// </summary>
+        private static float GetInverseInertiaAboutBodyAxis(Rigidbody rb, Vector3 bodyAxis)
         {
             if (rb == null || rb.isKinematic) return 0f;
 
-            Vector3 localAxis = Quaternion.Inverse(rb.inertiaTensorRotation) * worldAxis;
-            localAxis.Normalize();
+            // Convert body-local axis to inertia-principal space.
+            // bodyAxis is in the rigidbody's local frame.
+            // inertiaTensorRotation rotates from body-local to principal.
+            // So principal-axis = R_i^T * bodyAxis = inverse(R_i) * bodyAxis
+            Vector3 princAxis = Quaternion.Inverse(rb.inertiaTensorRotation) * bodyAxis;
+            princAxis.Normalize();
 
             Vector3 i = rb.inertiaTensor;
-            float I = localAxis.x * localAxis.x * i.x
-                    + localAxis.y * localAxis.y * i.y
-                    + localAxis.z * localAxis.z * i.z;
+            float I = princAxis.x * princAxis.x * i.x
+                    + princAxis.y * princAxis.y * i.y
+                    + princAxis.z * princAxis.z * i.z;
 
             if (I < 1e-8f) return 0f;
             return 1f / I;
