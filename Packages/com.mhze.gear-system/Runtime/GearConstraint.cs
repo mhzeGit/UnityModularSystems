@@ -113,8 +113,13 @@ namespace MHZE.GearSystem
             set => m_ToothDensity = Mathf.Max(0.1f, value);
         }
 
-        public int GetToothCount(float radius) =>
-            Mathf.Max(3, Mathf.RoundToInt(2f * Mathf.PI * radius * m_ToothDensity));
+        public int GetToothCount(float radius)
+        {
+            int count = Mathf.RoundToInt(2f * Mathf.PI * radius * m_ToothDensity);
+            if (count % 2 != 0)
+                count++;
+            return Mathf.Max(4, count);
+        }
 
         public float toothHeight
         {
@@ -218,53 +223,7 @@ namespace MHZE.GearSystem
 
         public void AlignTeeth()
         {
-            if (m_GearA == null || m_GearB == null) return;
-
-            Transform xfA = m_GearA.transform;
-            Transform xfB = m_GearB.transform;
-
-            GetReferenceAxes(m_AxisA, out Vector3 axisA, out Vector3 b1A, out Vector3 b2A);
-            GetReferenceAxes(m_AxisB, out Vector3 axisB, out Vector3 b1B, out Vector3 b2B);
-
-            Vector3 dir = (xfB.position - xfA.position).normalized;
-
-            Vector3 localDirA = xfA.InverseTransformDirection(dir);
-            Vector3 localDirB = xfB.InverseTransformDirection(-dir);
-
-            float angleA = Mathf.Atan2(Vector3.Dot(localDirA, b2A), Vector3.Dot(localDirA, b1A));
-            float angleB = Mathf.Atan2(Vector3.Dot(localDirB, b2B), Vector3.Dot(localDirB, b1B));
-
-            int nA = GetToothCount(m_RadiusA);
-            int nB = GetToothCount(m_RadiusB);
-            float tA = 2f * Mathf.PI / nA;
-            float tB = 2f * Mathf.PI / nB;
-
-            // Two alignment options:
-            //   A: gear A tooth at contact (phase=0), gear B gap at contact (phase=0.5)
-            //   B: gear A gap at contact (phase=0.5), gear B tooth at contact (phase=0)
-            //
-            // Each option independently finds the nearest tooth/gap center for each gear,
-            // then picks the option that requires less total rotation.
-
-            // Option A
-            float dA_A = angleA - (float)System.Math.Round(angleA / tA) * tA;
-            float dB_A = angleB - ((float)System.Math.Round(angleB / tB - 0.5f) + 0.5f) * tB;
-
-            // Option B
-            float dA_B = angleA - ((float)System.Math.Round(angleA / tA - 0.5f) + 0.5f) * tA;
-            float dB_B = angleB - (float)System.Math.Round(angleB / tB) * tB;
-
-            float costA = Mathf.Abs(dA_A) + Mathf.Abs(dB_A);
-            float costB = Mathf.Abs(dA_B) + Mathf.Abs(dB_B);
-
-            float deltaA = costA <= costB ? dA_A : dA_B;
-            float deltaB = costA <= costB ? dB_A : dB_B;
-
-            Vector3 worldAxisA = xfA.TransformDirection(axisA);
-            Vector3 worldAxisB = xfB.TransformDirection(axisB);
-
-            xfA.rotation = Quaternion.AngleAxis(deltaA * Mathf.Rad2Deg, worldAxisA) * xfA.rotation;
-            xfB.rotation = Quaternion.AngleAxis(deltaB * Mathf.Rad2Deg, worldAxisB) * xfB.rotation;
+            // Alignment is disabled — the debug draw always matches the gear transform directly.
         }
 
         // --------------------------------------------------------------------------------

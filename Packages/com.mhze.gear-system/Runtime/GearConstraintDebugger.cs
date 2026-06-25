@@ -6,8 +6,10 @@ namespace MHZE.GearSystem
     {
         public static void Draw(GearConstraint gear)
         {
-            if (gear.gearA != null) DrawGear(gear, gear.gearA.transform, gear.radiusA, gear.axisA);
-            if (gear.gearB != null) DrawGear(gear, gear.gearB.transform, gear.radiusB, gear.axisB);
+            Transform xfA = GetGearTransform(gear.gearA);
+            Transform xfB = GetGearTransform(gear.gearB);
+            if (xfA != null) DrawGear(gear, xfA, gear.radiusA, gear.axisA);
+            if (xfB != null) DrawGear(gear, xfB, gear.radiusB, gear.axisB);
 
             if (gear.gearA != null && gear.gearB != null)
             {
@@ -17,8 +19,12 @@ namespace MHZE.GearSystem
 
         private static void DrawConnectionLine(GearConstraint gear)
         {
-            Vector3 posA = gear.gearA.transform.position;
-            Vector3 posB = gear.gearB.transform.position;
+            Transform xfA = GetGearTransform(gear.gearA);
+            Transform xfB = GetGearTransform(gear.gearB);
+            if (xfA == null || xfB == null) return;
+
+            Vector3 posA = xfA.position;
+            Vector3 posB = xfB.position;
             Vector3 dir = (posB - posA).normalized;
             float rA = gear.radiusA;
             float rB = gear.radiusB;
@@ -103,6 +109,13 @@ namespace MHZE.GearSystem
                 Gizmos.DrawLine(trInner, brInner);
             }
             Gizmos.matrix = prevMatrix;
+        }
+
+        private static Transform GetGearTransform(Rigidbody rb)
+        {
+            if (rb == null) return null;
+            MeshFilter meshFilter = rb.GetComponentInChildren<MeshFilter>();
+            return meshFilter != null ? meshFilter.transform : rb.transform;
         }
 
         private static void GetAxes(GearAxis gearAxis, out Vector3 axis, out Vector3 b1, out Vector3 b2)
