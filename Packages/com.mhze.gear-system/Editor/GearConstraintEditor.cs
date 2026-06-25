@@ -29,6 +29,7 @@ namespace MHZE.GearSystem.Editor
         private bool m_ShowGearB = true;
         private bool m_ShowVisual;
         private bool m_ShowPhysics = true;
+        private bool m_ShowDebug;
 
         private void OnEnable()
         {
@@ -66,7 +67,6 @@ namespace MHZE.GearSystem.Editor
                 EditorGUI.indentLevel++;
                 EditorGUILayout.PropertyField(m_ToothDensity, new GUIContent("Tooth Density"));
                 EditorGUILayout.PropertyField(m_ToothHeight, new GUIContent("Tooth Height"));
-                EditorGUILayout.PropertyField(m_DebugDraw, new GUIContent("Debug Draw"));
                 EditorGUI.indentLevel--;
                 EditorGUILayout.Space(2);
             }
@@ -82,7 +82,15 @@ namespace MHZE.GearSystem.Editor
                 EditorGUILayout.PropertyField(m_IgnoreCollisionBetweenGears, new GUIContent("Ignore Collision", "Auto-disable collision between gear colliders."));
                 EditorGUILayout.PropertyField(m_SleepThreshold, new GUIContent("Sleep Threshold", "Angular velocity below which the constraint can sleep."));
                 EditorGUILayout.PropertyField(m_DetectTransformRotation, new GUIContent("Detect Transform Rotation", "Detect rotation applied via Transform (e.g. Animator)."));
-                EditorGUILayout.PropertyField(m_DebugLog, new GUIContent("Debug Log", "Log debug values to console."));
+                EditorGUI.indentLevel--;
+            }
+
+            m_ShowDebug = EditorGUILayout.Foldout(m_ShowDebug, "Debug", true, EditorStyles.foldoutHeader);
+            if (m_ShowDebug)
+            {
+                EditorGUI.indentLevel++;
+                EditorGUILayout.PropertyField(m_DebugDraw, new GUIContent("Debug Draw", "Draw gear gizmos in the Scene view."));
+                EditorGUILayout.PropertyField(m_DebugLog, new GUIContent("Debug Log", "Log constraint values to console every 60 frames."));
                 EditorGUI.indentLevel--;
             }
 
