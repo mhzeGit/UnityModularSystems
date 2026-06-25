@@ -8,13 +8,14 @@
   <Project Path="com.mhze.input-prompt-system.Editor.csproj" />
   <Project Path="com.mhze.input-prompt-system.Runtime.csproj" />
   <Project Path="com.mhze.pickup-system.Runtime.csproj" />
+  <Project Path="com.mhze.gear-system.Runtime.csproj" />
   <Project Path="com.mhze.ultimate-trigger-system.Editor.csproj" />
+  <Project Path="com.mhze.gear-system.Editor.csproj" />
   <Project Path="com.mhze.freeform-camera.Runtime.csproj" />
   <Project Path="com.mhze.cylinder-collider.Editor.csproj" />
   <Project Path="com.mhze.freeform-camera.Editor.csproj" />
   <Project Path="com.mhze.ultimate-trigger-system.Runtime.csproj" />
   <Project Path="com.mhze.cylinder-collider.Runtime.csproj" />
-  <Project Path="com.mhze.gear-system.Runtime.csproj" />
   <Project Path="com.mhze.llm-chat.Runtime.csproj" />
   <Project Path="com.mhze.firstperson-controller.Editor.csproj" />
   <Project Path="com.mhze.roughness-detection.Runtime.csproj" />
@@ -23,5 +24,4 @@
   <Project Path="com.mhze.ultimate-door-system.Runtime.csproj" />
   <Project Path="com.mhze.roughness-detection.Editor.csproj" />
   <Project Path="com.mhze.mouse-physics-grab-system.Runtime.csproj" />
-  <Project Path="com.mhze.gear-system.Editor.csproj" />
 </Solution>
