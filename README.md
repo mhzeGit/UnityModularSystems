@@ -44,6 +44,14 @@ https://github.com/mhzeGit/UnityModularSystems.git?path=/Packages/com.mhze.inter
 
 Modular interaction system with raycast-based detection, IInteractable/IInteractor interfaces, instant and hold-to-interact support, events for prompt UI integration.
 
+### Mouse Physics Grab System
+
+```
+https://github.com/mhzeGit/UnityModularSystems.git?path=/Packages/com.mhze.mouse-physics-grab-system
+```
+
+Modular physics-based mouse grab/drag system for dragging Rigidbody objects with spring-damper forces, scroll depth adjustment, and configurable constraints.
+
 ### Pickup System
 
 ```
