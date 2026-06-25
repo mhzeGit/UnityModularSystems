@@ -130,13 +130,21 @@ namespace MHZE.GearSystem
         public Rigidbody gearA
         {
             get => m_GearA;
-            set => m_GearA = value;
+            set
+            {
+                m_GearA = value;
+                AlignTransformToGears();
+            }
         }
 
         public Rigidbody gearB
         {
             get => m_GearB;
-            set => m_GearB = value;
+            set
+            {
+                m_GearB = value;
+                AlignTransformToGears();
+            }
         }
 
         public float damping
@@ -200,8 +208,15 @@ namespace MHZE.GearSystem
             m_HasPrevRotB = false;
         }
 
+        private void OnValidate()
+        {
+            AlignTransformToGears();
+        }
+
         private void Start()
         {
+            AlignTransformToGears();
+
             if (m_GearB != null)
             {
                 int toothCount = GetToothCount(m_RadiusB);
@@ -217,10 +232,10 @@ namespace MHZE.GearSystem
                 Collider[] collidersB = m_GearB.GetComponentsInChildren<Collider>();
                 foreach (Collider ca in collidersA)
                 {
-                    if (ca == null) continue;
+                    if (ca == null || ca.isTrigger) continue;
                     foreach (Collider cb in collidersB)
                     {
-                        if (cb == null) continue;
+                        if (cb == null || cb.isTrigger) continue;
                         Physics.IgnoreCollision(ca, cb, true);
                     }
                 }
@@ -412,6 +427,24 @@ namespace MHZE.GearSystem
 
             if (I < 1e-8f) return 0f;
             return 1f / I;
+        }
+
+        // --------------------------------------------------------------------------------
+        // Transform alignment
+        // --------------------------------------------------------------------------------
+
+        private void AlignTransformToGears()
+        {
+            if (m_GearA == null || m_GearB == null) return;
+
+            Vector3 posA = m_GearA.position;
+            Vector3 posB = m_GearB.position;
+            Vector3 direction = posB - posA;
+
+            transform.position = (posA + posB) * 0.5f;
+
+            if (direction.sqrMagnitude > 0.0001f)
+                transform.rotation = Quaternion.LookRotation(direction);
         }
 
         // --------------------------------------------------------------------------------

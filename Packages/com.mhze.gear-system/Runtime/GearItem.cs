@@ -11,14 +11,9 @@ namespace MHZE.GearSystem
         [SerializeField] private float m_Radius = 0.5f;
         [SerializeField] private GearAxis m_Axis = GearAxis.Y;
 
-        [Header("Detection")]
-        [SerializeField] private float m_DetectionRadius = 2f;
-        [SerializeField] private bool m_AutoConnect = true;
-
         private Rigidbody m_Rigidbody;
-        private SphereCollider m_DetectionTrigger;
         private readonly Dictionary<GearItem, GearConstraint> m_ActiveConstraints = new();
-        private bool m_HasSetupTrigger;
+        private readonly Dictionary<GearItem, int> m_OverlapCount = new();
 
         public Rigidbody connectedBody => m_Rigidbody;
         public float radius
@@ -31,21 +26,6 @@ namespace MHZE.GearSystem
             get => m_Axis;
             set => m_Axis = value;
         }
-        public float detectionRadius
-        {
-            get => m_DetectionRadius;
-            set
-            {
-                m_DetectionRadius = Mathf.Max(0f, value);
-                if (m_HasSetupTrigger && m_DetectionTrigger != null)
-                    m_DetectionTrigger.radius = m_DetectionRadius;
-            }
-        }
-        public bool autoConnect
-        {
-            get => m_AutoConnect;
-            set => m_AutoConnect = value;
-        }
         public IReadOnlyCollection<GearConstraint> activeConstraints => m_ActiveConstraints.Values;
 
         public event System.Action<GearItem, GearConstraint> OnGearConnected;
@@ -54,37 +34,19 @@ namespace MHZE.GearSystem
         private void Awake()
         {
             m_Rigidbody = GetComponent<Rigidbody>();
-            SetupDetectionTrigger();
-        }
-
-        private void Start()
-        {
-            if (m_AutoConnect)
-                ScanForNearbyGears();
-        }
-
-        private void SetupDetectionTrigger()
-        {
-            m_DetectionTrigger = gameObject.AddComponent<SphereCollider>();
-            m_DetectionTrigger.isTrigger = true;
-            m_DetectionTrigger.radius = m_DetectionRadius;
-            m_HasSetupTrigger = true;
-        }
-
-        private void OnValidate()
-        {
-            if (m_HasSetupTrigger && m_DetectionTrigger != null)
-                m_DetectionTrigger.radius = m_DetectionRadius;
         }
 
         private void OnTriggerEnter(Collider other)
         {
-            if (!m_AutoConnect) return;
-
             GearItem otherGear = other.GetComponentInParent<GearItem>();
             if (otherGear == null || otherGear == this) return;
 
-            if (GetInstanceID() > otherGear.GetInstanceID()) return;
+            m_OverlapCount.TryGetValue(otherGear, out int count);
+            m_OverlapCount[otherGear] = count + 1;
+
+            if (count > 0) return;
+
+            if (GetEntityId() > otherGear.GetEntityId()) return;
             if (m_ActiveConstraints.ContainsKey(otherGear)) return;
 
             CreateConstraint(otherGear);
@@ -94,6 +56,17 @@ namespace MHZE.GearSystem
         {
             GearItem otherGear = other.GetComponentInParent<GearItem>();
             if (otherGear == null || otherGear == this) return;
+
+            if (m_OverlapCount.TryGetValue(otherGear, out int count))
+            {
+                count--;
+                if (count > 0)
+                {
+                    m_OverlapCount[otherGear] = count;
+                    return;
+                }
+                m_OverlapCount.Remove(otherGear);
+            }
 
             DestroyConstraint(otherGear);
         }
@@ -156,27 +129,14 @@ namespace MHZE.GearSystem
             m_ActiveConstraints.Remove(other);
             other.m_ActiveConstraints.Remove(this);
 
+            m_OverlapCount.Remove(other);
+            other.m_OverlapCount.Remove(this);
+
             OnGearDisconnected?.Invoke(other, constraint);
             other.OnGearDisconnected?.Invoke(this, constraint);
 
             if (constraint != null && constraint.gameObject != null)
                 Destroy(constraint.gameObject);
-        }
-
-        private void ScanForNearbyGears()
-        {
-            Collider[] results = new Collider[16];
-            int count = Physics.OverlapSphereNonAlloc(transform.position, m_DetectionRadius, results);
-
-            for (int i = 0; i < count; i++)
-            {
-                GearItem other = results[i].GetComponentInParent<GearItem>();
-                if (other == null || other == this) continue;
-                if (GetInstanceID() > other.GetInstanceID()) continue;
-                if (m_ActiveConstraints.ContainsKey(other)) continue;
-
-                CreateConstraint(other);
-            }
         }
     }
 }
