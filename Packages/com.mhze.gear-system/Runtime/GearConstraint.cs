@@ -60,6 +60,7 @@ namespace MHZE.GearSystem
         private float m_PositionError;
         private int m_SleepCounter;
         private int m_FrameCount;
+        private bool m_HasAppliedInitialBlend;
 
         // Transform-rotation tracking
         private Quaternion m_PrevRotA = Quaternion.identity;
@@ -204,6 +205,7 @@ namespace MHZE.GearSystem
             m_PositionError = 0f;
             m_SleepCounter = 0;
             m_FrameCount = 0;
+            m_HasAppliedInitialBlend = false;
             m_HasPrevRotA = false;
             m_HasPrevRotB = false;
         }
@@ -251,6 +253,14 @@ namespace MHZE.GearSystem
 
             m_FrameCount++;
             m_LastSlept = false;
+
+            // Apply one-time velocity blend on the first frame so the constraint
+            // starts from an equilibrium state rather than applying a sudden snap.
+            if (!m_HasAppliedInitialBlend)
+            {
+                ApplyInitialVelocityBlend();
+                m_HasAppliedInitialBlend = true;
+            }
 
             // Work in each rigidbody's LOCAL frame.
             Vector3 localAxisA = GetAxisVector(m_AxisA);
@@ -364,6 +374,51 @@ namespace MHZE.GearSystem
                     $"invIA={invIA:F4} invIB={invIB:F4} " +
                     $"posErr={m_PositionError:F4} slept={m_LastSlept}");
             }
+        }
+
+        // --------------------------------------------------------------------------------
+        // Initial velocity blend (one-shot at constraint creation)
+        // --------------------------------------------------------------------------------
+
+        private void ApplyInitialVelocityBlend()
+        {
+            Vector3 localAxisA = GetAxisVector(m_AxisA);
+            Vector3 localAxisB = GetAxisVector(m_AxisB);
+
+            float omegaA0 = Vector3.Dot(
+                m_GearA.transform.InverseTransformDirection(m_GearA.angularVelocity), localAxisA);
+            float omegaB0 = Vector3.Dot(
+                m_GearB.transform.InverseTransformDirection(m_GearB.angularVelocity), localAxisB);
+
+            float rA = m_RadiusA;
+            float rB = m_RadiusB;
+
+            float velError = omegaA0 * rA + omegaB0 * rB;
+
+            if (Mathf.Abs(velError) < 1e-10f)
+                return;
+
+            float invIA = GetInverseInertiaAboutBodyAxis(m_GearA, localAxisA);
+            float invIB = GetInverseInertiaAboutBodyAxis(m_GearB, localAxisB);
+
+            if (invIA < 1e-12f && invIB < 1e-12f)
+                return;
+
+            float invMass = invIA * rA * rA + invIB * rB * rB;
+            if (invMass < 1e-12f)
+                return;
+
+            // Impulse that satisfies the constraint while conserving angular momentum
+            // J = -velError / (rA²/IA + rB²/IB)
+            float J = -velError / invMass;
+
+            float deltaOmegaA = J * rA * invIA;
+            float deltaOmegaB = J * rB * invIB;
+
+            m_GearA.angularVelocity += m_GearA.transform.TransformDirection(localAxisA * deltaOmegaA);
+            m_GearB.angularVelocity += m_GearB.transform.TransformDirection(localAxisB * deltaOmegaB);
+
+            m_PositionError = 0f;
         }
 
         // --------------------------------------------------------------------------------
