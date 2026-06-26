@@ -8,13 +8,24 @@ namespace MHZE.GearSystem
         {
             Transform xfA = GetGearTransform(gear.gearA);
             Transform xfB = GetGearTransform(gear.gearB);
-            if (xfA != null) DrawGear(gear, xfA, gear.radiusA, gear.axisA);
-            if (xfB != null) DrawGear(gear, xfB, gear.radiusB, gear.axisB);
+
+            float offsetA = GetRotationOffset(xfA);
+            float offsetB = GetRotationOffset(xfB);
+
+            if (xfA != null) DrawGear(gear, xfA, gear.radiusA, gear.axisA, offsetA);
+            if (xfB != null) DrawGear(gear, xfB, gear.radiusB, gear.axisB, offsetB);
 
             if (gear.gearA != null && gear.gearB != null)
             {
                 DrawConnectionLine(gear);
             }
+        }
+
+        private static float GetRotationOffset(Transform xf)
+        {
+            if (xf == null) return 0f;
+            GearItem item = xf.GetComponentInParent<GearItem>();
+            return item != null ? item.rotationOffset : 0f;
         }
 
         private static void DrawConnectionLine(GearConstraint gear)
@@ -44,7 +55,7 @@ namespace MHZE.GearSystem
             Gizmos.DrawWireSphere(contactB, 0.03f);
         }
 
-        private static void DrawGear(GearConstraint gear, Transform targetTransform, float radius, GearAxis gearAxis)
+        private static void DrawGear(GearConstraint gear, Transform targetTransform, float radius, GearAxis gearAxis, float rotationOffset)
         {
             if (radius <= 0f) return;
 
@@ -61,7 +72,8 @@ namespace MHZE.GearSystem
             Color toothColor = new Color(0.2f, 0.5f, 0.9f, 0.8f);
 
             var prevMatrix = Gizmos.matrix;
-            Gizmos.matrix = targetTransform.localToWorldMatrix;
+            Quaternion offsetRot = Quaternion.AngleAxis(rotationOffset, axis);
+            Gizmos.matrix = targetTransform.localToWorldMatrix * Matrix4x4.Rotate(offsetRot);
 
             Gizmos.color = bodyColor;
             DrawCircle(topCenter, b1, b2, radius, segments);
@@ -114,6 +126,11 @@ namespace MHZE.GearSystem
         private static Transform GetGearTransform(Rigidbody rb)
         {
             if (rb == null) return null;
+
+            GearItem item = rb.GetComponent<GearItem>();
+            if (item != null && item.meshTransform != null)
+                return item.meshTransform;
+
             MeshFilter meshFilter = rb.GetComponentInChildren<MeshFilter>();
             return meshFilter != null ? meshFilter.transform : rb.transform;
         }

@@ -13,7 +13,14 @@ namespace MHZE.GearSystem
         [SerializeField] private float m_Radius = 0.5f;
         [SerializeField] private GearAxis m_Axis = GearAxis.Y;
         [SerializeField] private GearStage m_Stage = GearStage.Normal;
+        [SerializeField] private float m_ToothDensity = 5f;
         [SerializeField] private bool m_DebugDrawStage = true;
+
+        [Header("Visual")]
+        [Tooltip("Separate transform for the visual mesh. Rotation offset is applied to this transform only, leaving the rigidbody untouched.")]
+        [SerializeField] private Transform m_MeshTransform;
+
+        private float m_RotationOffset;
 
         private Rigidbody m_Rigidbody;
         private readonly Dictionary<GearItem, GearConstraint> m_ActiveConstraints = new();
@@ -32,6 +39,12 @@ namespace MHZE.GearSystem
         }
         public IReadOnlyCollection<GearConstraint> activeConstraints => m_ActiveConstraints.Values;
         public GearStage stage => m_Stage;
+        public float rotationOffset => m_RotationOffset;
+        public Transform meshTransform
+        {
+            get => m_MeshTransform;
+            set => m_MeshTransform = value;
+        }
 
         public event System.Action<GearItem, GearConstraint> OnGearConnected;
         public event System.Action<GearItem, GearConstraint> OnGearDisconnected;
@@ -132,6 +145,7 @@ namespace MHZE.GearSystem
         private void AssignStage(GearItem other)
         {
             m_Stage = other.m_Stage == GearStage.Normal ? GearStage.Offset : GearStage.Normal;
+            UpdateRotationOffset();
 
             var visited = new HashSet<GearItem> { this, other };
             PropagateStage(this, visited);
@@ -145,8 +159,50 @@ namespace MHZE.GearSystem
                 if (!visited.Add(neighbor)) continue;
 
                 neighbor.m_Stage = gear.m_Stage == GearStage.Normal ? GearStage.Offset : GearStage.Normal;
+                neighbor.UpdateRotationOffset();
                 PropagateStage(neighbor, visited);
             }
+        }
+
+        private void UpdateRotationOffset()
+        {
+            m_RotationOffset = m_Stage == GearStage.Normal
+                ? 0f
+                : 180f / GetToothCount();
+        }
+
+        private int GetToothCount()
+        {
+            int count = Mathf.RoundToInt(2f * Mathf.PI * m_Radius * m_ToothDensity);
+            if (count % 2 != 0) count++;
+            return Mathf.Max(4, count);
+        }
+
+        private void LateUpdate()
+        {
+            if (m_MeshTransform == null || m_Rigidbody == null)
+                return;
+
+            if ((object)m_MeshTransform == (object)m_Rigidbody.transform)
+                return;
+
+            Vector3 axis = GetAxisVector(m_Axis);
+            Quaternion offset = Quaternion.AngleAxis(m_RotationOffset, axis);
+
+            m_MeshTransform.SetPositionAndRotation(
+                m_Rigidbody.position,
+                m_Rigidbody.rotation * offset
+            );
+        }
+
+        private static Vector3 GetAxisVector(GearAxis axis)
+        {
+            return axis switch
+            {
+                GearAxis.X => Vector3.right,
+                GearAxis.Z => Vector3.forward,
+                _ => Vector3.up
+            };
         }
 
         private void DestroyConstraint(GearItem other)

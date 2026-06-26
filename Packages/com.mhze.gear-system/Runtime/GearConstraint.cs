@@ -171,6 +171,12 @@ namespace MHZE.GearSystem
             set => m_Efficiency = Mathf.Clamp01(value);
         }
 
+        public float maxTorque
+        {
+            get => m_MaxTorque;
+            set => m_MaxTorque = Mathf.Max(0f, value);
+        }
+
         public float sleepThreshold
         {
             get => m_SleepThreshold;
@@ -238,6 +244,12 @@ namespace MHZE.GearSystem
             m_HasAppliedInitialBlend = false;
             m_HasPrevRotA = false;
             m_HasPrevRotB = false;
+            GearChainManager.Register(this);
+        }
+
+        private void OnDisable()
+        {
+            GearChainManager.Unregister(this);
         }
 
         private void OnValidate()
@@ -267,6 +279,7 @@ namespace MHZE.GearSystem
 
         private void FixedUpdate()
         {
+            if (GearChainManager.exists) return;
             if (m_GearA == null || m_GearB == null) return;
 
             float dt = Time.fixedDeltaTime;
