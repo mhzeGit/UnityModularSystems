@@ -19,7 +19,7 @@ namespace MHZE.GearSystem
         private static void EnsureInstance()
         {
             if (s_Instance != null) return;
-            var go = new GameObject("[GearChainManager]") { hideFlags = HideFlags.HideAndDontSave };
+            var go = new GameObject("[GearChainManager]");
             s_Instance = go.AddComponent<GearChainManager>();
             if (Application.isPlaying)
                 DontDestroyOnLoad(go);
