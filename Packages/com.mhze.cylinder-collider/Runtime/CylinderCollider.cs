@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace MHZE.CylinderCollider
@@ -8,6 +9,7 @@ namespace MHZE.CylinderCollider
     {
         [SerializeField] private Vector3 m_Center = Vector3.zero;
         [SerializeField] private float m_Radius = 0.5f;
+        [SerializeField] private float m_InnerRadius = 0f;
         [SerializeField] private float m_Height = 2f;
         [SerializeField] [Range(3, 64)] private int m_Sides = 16;
         [SerializeField] private int m_Direction = 1;
@@ -21,6 +23,7 @@ namespace MHZE.CylinderCollider
 
         private Vector3 m_PrevCenter;
         private float m_PrevRadius;
+        private float m_PrevInnerRadius;
         private float m_PrevHeight;
         private int m_PrevSides;
         private int m_PrevDirection;
@@ -31,6 +34,7 @@ namespace MHZE.CylinderCollider
 
         private GameObject m_ColliderGO;
         private MeshCollider m_MeshCollider;
+        private List<MeshCollider> m_SegmentColliders;
         private Mesh m_Mesh;
 
         public Vector3 center
@@ -42,7 +46,13 @@ namespace MHZE.CylinderCollider
         public float radius
         {
             get => m_Radius;
-            set { m_Radius = Mathf.Max(0.001f, value); DirtyAndRebuild(); }
+            set { m_Radius = Mathf.Max(0.001f, value); m_InnerRadius = Mathf.Min(m_InnerRadius, m_Radius - 0.001f); DirtyAndRebuild(); }
+        }
+
+        public float innerRadius
+        {
+            get => m_InnerRadius;
+            set { m_InnerRadius = Mathf.Clamp(value, 0f, m_Radius - 0.001f); DirtyAndRebuild(); }
         }
 
         public float height
@@ -69,8 +79,8 @@ namespace MHZE.CylinderCollider
             set
             {
                 m_Material = value;
-                if (m_MeshCollider != null)
-                    m_MeshCollider.sharedMaterial = m_Material;
+                foreach (var c in GetAllColliders())
+                    c.sharedMaterial = m_Material;
             }
         }
 
@@ -80,8 +90,8 @@ namespace MHZE.CylinderCollider
             set
             {
                 m_IsTrigger = value;
-                if (m_MeshCollider != null)
-                    m_MeshCollider.isTrigger = m_IsTrigger;
+                foreach (var c in GetAllColliders())
+                    c.isTrigger = m_IsTrigger;
             }
         }
 
@@ -91,8 +101,8 @@ namespace MHZE.CylinderCollider
             set
             {
                 m_ProvidesContacts = value;
-                if (m_MeshCollider != null)
-                    m_MeshCollider.providesContacts = m_ProvidesContacts;
+                foreach (var c in GetAllColliders())
+                    c.providesContacts = m_ProvidesContacts;
             }
         }
 
@@ -102,8 +112,8 @@ namespace MHZE.CylinderCollider
             set
             {
                 m_LayerOverridePriority = value;
-                if (m_MeshCollider != null)
-                    m_MeshCollider.layerOverridePriority = m_LayerOverridePriority;
+                foreach (var c in GetAllColliders())
+                    c.layerOverridePriority = m_LayerOverridePriority;
             }
         }
 
@@ -113,8 +123,8 @@ namespace MHZE.CylinderCollider
             set
             {
                 m_IncludeLayers = value;
-                if (m_MeshCollider != null)
-                    m_MeshCollider.includeLayers = m_IncludeLayers;
+                foreach (var c in GetAllColliders())
+                    c.includeLayers = m_IncludeLayers;
             }
         }
 
@@ -124,12 +134,42 @@ namespace MHZE.CylinderCollider
             set
             {
                 m_ExcludeLayers = value;
-                if (m_MeshCollider != null)
-                    m_MeshCollider.excludeLayers = m_ExcludeLayers;
+                foreach (var c in GetAllColliders())
+                    c.excludeLayers = m_ExcludeLayers;
             }
         }
 
-        public MeshCollider meshCollider => m_MeshCollider;
+        public MeshCollider meshCollider
+        {
+            get
+            {
+                if (m_MeshCollider != null)
+                    return m_MeshCollider;
+                if (m_SegmentColliders != null && m_SegmentColliders.Count > 0)
+                    return m_SegmentColliders[0];
+                return null;
+            }
+        }
+
+        private IEnumerable<MeshCollider> GetAllColliders()
+        {
+            if (m_MeshCollider != null)
+                yield return m_MeshCollider;
+            if (m_SegmentColliders != null)
+                foreach (var c in m_SegmentColliders)
+                    if (c != null)
+                        yield return c;
+        }
+
+        private void CopyPropertiesTo(MeshCollider collider)
+        {
+            collider.sharedMaterial = m_Material;
+            collider.isTrigger = m_IsTrigger;
+            collider.providesContacts = m_ProvidesContacts;
+            collider.layerOverridePriority = m_LayerOverridePriority;
+            collider.includeLayers = m_IncludeLayers;
+            collider.excludeLayers = m_ExcludeLayers;
+        }
 
         private void Reset()
         {
@@ -178,21 +218,23 @@ namespace MHZE.CylinderCollider
                 EnsureCollider();
                 RebuildIfNeeded();
             }
-            else if (m_MeshCollider != null)
+            else
             {
-                m_MeshCollider.enabled = true;
+                foreach (var c in GetAllColliders())
+                    c.enabled = m_ColliderGO.activeInHierarchy;
             }
         }
 
         private void OnDisable()
         {
-            if (m_MeshCollider != null)
-                m_MeshCollider.enabled = false;
+            foreach (var c in GetAllColliders())
+                c.enabled = false;
         }
 
         private void OnDestroy()
         {
             ReleaseMesh();
+            DestroySegmentColliders();
             if (m_ColliderGO != null)
             {
                 if (Application.isPlaying)
@@ -207,6 +249,7 @@ namespace MHZE.CylinderCollider
         private void OnValidate()
         {
             m_Radius = Mathf.Max(0.001f, m_Radius);
+            m_InnerRadius = Mathf.Clamp(m_InnerRadius, 0f, m_Radius - 0.001f);
             m_Height = Mathf.Max(0.001f, m_Height);
             m_Sides = Mathf.Clamp(m_Sides, 3, 64);
 
@@ -244,15 +287,7 @@ namespace MHZE.CylinderCollider
         {
             if (m_ColliderGO != null)
             {
-                if (m_MeshCollider == null)
-                {
-                    m_MeshCollider = m_ColliderGO.AddComponent<MeshCollider>();
-                    m_MeshCollider.convex = true;
-                    m_MeshCollider.cookingOptions = MeshColliderCookingOptions.CookForFasterSimulation
-                        | MeshColliderCookingOptions.EnableMeshCleaning
-                        | MeshColliderCookingOptions.WeldColocatedVertices;
-                }
-                m_MeshCollider.enabled = true;
+                m_ColliderGO.layer = gameObject.layer;
                 return;
             }
 
@@ -263,18 +298,16 @@ namespace MHZE.CylinderCollider
             m_ColliderGO.transform.localPosition = Vector3.zero;
             m_ColliderGO.transform.localRotation = Quaternion.identity;
             m_ColliderGO.transform.localScale = Vector3.one;
+        }
 
-            m_MeshCollider = m_ColliderGO.AddComponent<MeshCollider>();
-            m_MeshCollider.hideFlags = HideFlags.HideAndDontSave;
-            m_MeshCollider.convex = true;
-            m_MeshCollider.cookingOptions = MeshColliderCookingOptions.CookForFasterSimulation
-                | MeshColliderCookingOptions.EnableMeshCleaning
-                | MeshColliderCookingOptions.WeldColocatedVertices;
-            m_MeshCollider.providesContacts = m_ProvidesContacts;
-            m_MeshCollider.layerOverridePriority = m_LayerOverridePriority;
-            m_MeshCollider.includeLayers = m_IncludeLayers;
-            m_MeshCollider.excludeLayers = m_ExcludeLayers;
-            m_MeshCollider.enabled = true;
+        private void GetBasisVectors(out Vector3 axis, out Vector3 basis1, out Vector3 basis2)
+        {
+            switch (m_Direction)
+            {
+                case 0: axis = Vector3.right; basis1 = Vector3.up; basis2 = Vector3.forward; break;
+                case 2: axis = Vector3.forward; basis1 = Vector3.right; basis2 = Vector3.up; break;
+                default: axis = Vector3.up; basis1 = Vector3.right; basis2 = Vector3.forward; break;
+            }
         }
 
         private void DirtyAndRebuild()
@@ -293,6 +326,7 @@ namespace MHZE.CylinderCollider
         {
             return m_PrevCenter != m_Center ||
                    !Mathf.Approximately(m_PrevRadius, m_Radius) ||
+                   !Mathf.Approximately(m_PrevInnerRadius, m_InnerRadius) ||
                    !Mathf.Approximately(m_PrevHeight, m_Height) ||
                    m_PrevSides != m_Sides ||
                    m_PrevDirection != m_Direction;
@@ -300,29 +334,78 @@ namespace MHZE.CylinderCollider
 
         private void Rebuild()
         {
-            if (m_MeshCollider == null)
+            if (m_ColliderGO == null)
                 EnsureCollider();
 
-            if (m_ColliderGO != null && m_ColliderGO.layer != gameObject.layer)
+            if (m_ColliderGO.layer != gameObject.layer)
                 m_ColliderGO.layer = gameObject.layer;
 
             ReleaseMesh();
-            m_Mesh = GenerateCylinderMesh();
-            m_MeshCollider.sharedMesh = m_Mesh;
-            m_MeshCollider.convex = true;
-            m_MeshCollider.cookingOptions = MeshColliderCookingOptions.CookForFasterSimulation
+            DestroySegmentColliders();
+
+            if (m_MeshCollider != null)
+            {
+                if (Application.isPlaying)
+                    Destroy(m_MeshCollider);
+                else
+                    DestroyImmediate(m_MeshCollider);
+                m_MeshCollider = null;
+            }
+
+            var cookingOptions = MeshColliderCookingOptions.CookForFasterSimulation
                 | MeshColliderCookingOptions.EnableMeshCleaning
                 | MeshColliderCookingOptions.WeldColocatedVertices;
-            m_MeshCollider.isTrigger = m_IsTrigger;
-            m_MeshCollider.providesContacts = m_ProvidesContacts;
-            m_MeshCollider.layerOverridePriority = m_LayerOverridePriority;
-            m_MeshCollider.includeLayers = m_IncludeLayers;
-            m_MeshCollider.excludeLayers = m_ExcludeLayers;
-            m_MeshCollider.sharedMaterial = m_Material;
-            m_MeshCollider.enabled = true;
+
+            if (m_InnerRadius <= 0f)
+            {
+                m_Mesh = GenerateCylinderMesh();
+                m_MeshCollider = m_ColliderGO.AddComponent<MeshCollider>();
+                m_MeshCollider.hideFlags = HideFlags.HideAndDontSave;
+                m_MeshCollider.convex = true;
+                m_MeshCollider.sharedMesh = m_Mesh;
+                m_MeshCollider.cookingOptions = cookingOptions;
+                CopyPropertiesTo(m_MeshCollider);
+                m_MeshCollider.enabled = true;
+            }
+            else
+            {
+                int n = Mathf.Max(3, m_Sides);
+                m_SegmentColliders = new List<MeshCollider>(n);
+
+                Vector3 axis, basis1, basis2;
+                GetBasisVectors(out axis, out basis1, out basis2);
+                Vector3 halfAxis = axis * (m_Height * 0.5f);
+
+                for (int seg = 0; seg < n; seg++)
+                {
+                    float angle0 = 2f * Mathf.PI * seg / n;
+                    float angle1 = 2f * Mathf.PI * (seg + 1) / n;
+
+                    var mesh = GenerateSegmentMesh(m_Center, m_Radius, m_InnerRadius,
+                        halfAxis, basis1, basis2, angle0, angle1);
+
+                    var segGO = new GameObject($"Segment_{seg}");
+                    segGO.hideFlags = HideFlags.HideAndDontSave;
+                    segGO.transform.SetParent(m_ColliderGO.transform);
+                    segGO.transform.localPosition = Vector3.zero;
+                    segGO.transform.localRotation = Quaternion.identity;
+                    segGO.transform.localScale = Vector3.one;
+
+                    var mc = segGO.AddComponent<MeshCollider>();
+                    mc.hideFlags = HideFlags.HideAndDontSave;
+                    mc.convex = true;
+                    mc.sharedMesh = mesh;
+                    mc.cookingOptions = cookingOptions;
+                    CopyPropertiesTo(mc);
+                    mc.enabled = true;
+
+                    m_SegmentColliders.Add(mc);
+                }
+            }
 
             m_PrevCenter = m_Center;
             m_PrevRadius = m_Radius;
+            m_PrevInnerRadius = m_InnerRadius;
             m_PrevHeight = m_Height;
             m_PrevSides = m_Sides;
             m_PrevDirection = m_Direction;
@@ -343,6 +426,35 @@ namespace MHZE.CylinderCollider
             }
         }
 
+        private void DestroySegmentColliders()
+        {
+            if (m_SegmentColliders == null)
+                return;
+
+            foreach (var c in m_SegmentColliders)
+            {
+                if (c == null)
+                    continue;
+                if (c.sharedMesh != null)
+                {
+                    if (Application.isPlaying)
+                        Destroy(c.sharedMesh);
+                    else
+                        DestroyImmediate(c.sharedMesh);
+                }
+                var go = c.gameObject;
+                if (go != null)
+                {
+                    if (Application.isPlaying)
+                        Destroy(go);
+                    else
+                        DestroyImmediate(go);
+                }
+            }
+
+            m_SegmentColliders = null;
+        }
+
         private static Mesh GenerateCylinderMesh(
             Vector3 center, float radius, float height, int sides, int direction)
         {
@@ -350,30 +462,19 @@ namespace MHZE.CylinderCollider
             mesh.name = "CylinderCollider_Mesh";
 
             int n = Mathf.Max(3, sides);
-            var vertices = new Vector3[2 * n + 2];
-            var triangles = new int[12 * n];
 
             Vector3 axis, basis1, basis2;
             switch (direction)
             {
-                case 0:
-                    axis = Vector3.right;
-                    basis1 = Vector3.up;
-                    basis2 = Vector3.forward;
-                    break;
-                case 2:
-                    axis = Vector3.forward;
-                    basis1 = Vector3.right;
-                    basis2 = Vector3.up;
-                    break;
-                default:
-                    axis = Vector3.up;
-                    basis1 = Vector3.right;
-                    basis2 = Vector3.forward;
-                    break;
+                case 0: axis = Vector3.right; basis1 = Vector3.up; basis2 = Vector3.forward; break;
+                case 2: axis = Vector3.forward; basis1 = Vector3.right; basis2 = Vector3.up; break;
+                default: axis = Vector3.up; basis1 = Vector3.right; basis2 = Vector3.forward; break;
             }
 
             Vector3 halfAxis = axis * (height * 0.5f);
+
+            var vertices = new Vector3[2 * n + 2];
+            var triangles = new int[12 * n];
 
             vertices[0] = center - halfAxis;
             vertices[2 * n + 1] = center + halfAxis;
@@ -383,9 +484,7 @@ namespace MHZE.CylinderCollider
                 float angle = 2f * Mathf.PI * i / n;
                 float cos = Mathf.Cos(angle);
                 float sin = Mathf.Sin(angle);
-
                 Vector3 offset = basis1 * (cos * radius) + basis2 * (sin * radius);
-
                 vertices[i + 1] = center + offset - halfAxis;
                 vertices[i + 1 + n] = center + offset + halfAxis;
             }
@@ -438,6 +537,60 @@ namespace MHZE.CylinderCollider
             return GenerateCylinderMesh(m_Center, m_Radius, m_Height, m_Sides, m_Direction);
         }
 
+        private static Mesh GenerateSegmentMesh(
+            Vector3 center, float radius, float innerRadius,
+            Vector3 halfAxis, Vector3 basis1, Vector3 basis2,
+            float angle0, float angle1)
+        {
+            var mesh = new Mesh { hideFlags = HideFlags.DontSave };
+
+            float cos0 = Mathf.Cos(angle0), sin0 = Mathf.Sin(angle0);
+            float cos1 = Mathf.Cos(angle1), sin1 = Mathf.Sin(angle1);
+
+            Vector3 o0 = basis1 * (cos0 * radius) + basis2 * (sin0 * radius);
+            Vector3 o1 = basis1 * (cos1 * radius) + basis2 * (sin1 * radius);
+            Vector3 i0 = basis1 * (cos0 * innerRadius) + basis2 * (sin0 * innerRadius);
+            Vector3 i1 = basis1 * (cos1 * innerRadius) + basis2 * (sin1 * innerRadius);
+
+            var vertices = new Vector3[8];
+            var triangles = new int[36];
+
+            vertices[0] = center + o0 - halfAxis;
+            vertices[1] = center + o1 - halfAxis;
+            vertices[2] = center + i0 - halfAxis;
+            vertices[3] = center + i1 - halfAxis;
+            vertices[4] = center + o0 + halfAxis;
+            vertices[5] = center + o1 + halfAxis;
+            vertices[6] = center + i0 + halfAxis;
+            vertices[7] = center + i1 + halfAxis;
+
+            int tri = 0;
+
+            triangles[tri++] = 0; triangles[tri++] = 1; triangles[tri++] = 3;
+            triangles[tri++] = 0; triangles[tri++] = 3; triangles[tri++] = 2;
+
+            triangles[tri++] = 4; triangles[tri++] = 6; triangles[tri++] = 7;
+            triangles[tri++] = 4; triangles[tri++] = 7; triangles[tri++] = 5;
+
+            triangles[tri++] = 0; triangles[tri++] = 4; triangles[tri++] = 1;
+            triangles[tri++] = 4; triangles[tri++] = 5; triangles[tri++] = 1;
+
+            triangles[tri++] = 2; triangles[tri++] = 3; triangles[tri++] = 7;
+            triangles[tri++] = 2; triangles[tri++] = 7; triangles[tri++] = 6;
+
+            triangles[tri++] = 0; triangles[tri++] = 2; triangles[tri++] = 4;
+            triangles[tri++] = 2; triangles[tri++] = 6; triangles[tri++] = 4;
+
+            triangles[tri++] = 1; triangles[tri++] = 5; triangles[tri++] = 7;
+            triangles[tri++] = 1; triangles[tri++] = 7; triangles[tri++] = 3;
+
+            mesh.vertices = vertices;
+            mesh.triangles = triangles;
+            mesh.RecalculateBounds();
+
+            return mesh;
+        }
+
         private static void DrawCircle(Vector3 center, Vector3 b1, Vector3 b2, float radius, int segments)
         {
             Vector3 prev = center + b1 * radius;
@@ -456,12 +609,7 @@ namespace MHZE.CylinderCollider
             float halfH = m_Height * 0.5f;
 
             Vector3 axis, b1, b2;
-            switch (m_Direction)
-            {
-                case 0: axis = Vector3.right; b1 = Vector3.up; b2 = Vector3.forward; break;
-                case 2: axis = Vector3.forward; b1 = Vector3.right; b2 = Vector3.up; break;
-                default: axis = Vector3.up; b1 = Vector3.right; b2 = Vector3.forward; break;
-            }
+            GetBasisVectors(out axis, out b1, out b2);
 
             Vector3 topCenter = m_Center + axis * halfH;
             Vector3 botCenter = m_Center - axis * halfH;
@@ -470,11 +618,21 @@ namespace MHZE.CylinderCollider
             DrawCircle(topCenter, b1, b2, m_Radius, segments);
             DrawCircle(botCenter, b1, b2, m_Radius, segments);
 
+            if (m_InnerRadius > 0f)
+            {
+                DrawCircle(topCenter, b1, b2, m_InnerRadius, segments);
+                DrawCircle(botCenter, b1, b2, m_InnerRadius, segments);
+            }
+
             for (int i = 0; i < m_Sides; i++)
             {
                 float angle = 2f * Mathf.PI * i / m_Sides;
                 Vector3 dir = b1 * Mathf.Cos(angle) + b2 * Mathf.Sin(angle);
                 Gizmos.DrawLine(topCenter + dir * m_Radius, botCenter + dir * m_Radius);
+                if (m_InnerRadius > 0f)
+                {
+                    Gizmos.DrawLine(topCenter + dir * m_InnerRadius, botCenter + dir * m_InnerRadius);
+                }
             }
         }
 

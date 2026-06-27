@@ -10,6 +10,7 @@ namespace MHZE.CylinderCollider.Editor
         private CylinderCollider m_Target;
         private SerializedProperty m_Center;
         private SerializedProperty m_Radius;
+        private SerializedProperty m_InnerRadius;
         private SerializedProperty m_Height;
         private SerializedProperty m_Sides;
         private SerializedProperty m_Direction;
@@ -22,9 +23,6 @@ namespace MHZE.CylinderCollider.Editor
 
         private static readonly string[] m_DirectionNames = { "X-Axis", "Y-Axis", "Z-Axis" };
         private static readonly int[] m_DirectionValues = { 0, 1, 2 };
-
-        private static Texture2D s_Icon;
-        private static bool s_IconLoaded;
 
         private bool m_Editing;
         private bool m_ShowLayerOverrides = true;
@@ -40,22 +38,9 @@ namespace MHZE.CylinderCollider.Editor
         {
             m_Target = (CylinderCollider)target;
 
-            if (!s_IconLoaded)
-            {
-                s_Icon = AssetDatabase.LoadAssetAtPath<Texture2D>(
-                    "Packages/com.mhze.cylinder-collider/d_CylinderColliderIcon.png");
-                s_IconLoaded = true;
-            }
-
-            if (s_Icon != null)
-            {
-                var currentIcon = EditorGUIUtility.GetIconForObject(target);
-                if (currentIcon != s_Icon)
-                    EditorGUIUtility.SetIconForObject(target, s_Icon);
-            }
-
             m_Center = serializedObject.FindProperty("m_Center");
             m_Radius = serializedObject.FindProperty("m_Radius");
+            m_InnerRadius = serializedObject.FindProperty("m_InnerRadius");
             m_Height = serializedObject.FindProperty("m_Height");
             m_Sides = serializedObject.FindProperty("m_Sides");
             m_Direction = serializedObject.FindProperty("m_Direction");
@@ -84,6 +69,7 @@ namespace MHZE.CylinderCollider.Editor
             EditorGUILayout.PropertyField(m_Material);
             EditorGUILayout.PropertyField(m_Center);
             EditorGUILayout.PropertyField(m_Radius);
+            EditorGUILayout.PropertyField(m_InnerRadius);
             EditorGUILayout.PropertyField(m_Height);
             EditorGUILayout.PropertyField(m_Sides);
             m_Direction.intValue = EditorGUILayout.IntPopup("Direction", m_Direction.intValue, m_DirectionNames, m_DirectionValues);
@@ -156,11 +142,21 @@ namespace MHZE.CylinderCollider.Editor
                 Handles.DrawWireDisc(topPos, axisLS, m_Target.radius);
                 Handles.DrawWireDisc(botPos, axisLS, m_Target.radius);
 
+                if (m_Target.innerRadius > 0f)
+                {
+                    Handles.DrawWireDisc(topPos, axisLS, m_Target.innerRadius);
+                    Handles.DrawWireDisc(botPos, axisLS, m_Target.innerRadius);
+                }
+
                 for (int i = 0; i < m_Target.sides; i++)
                 {
                     float angle = 2f * Mathf.PI * i / m_Target.sides;
                     Vector3 dir = b1 * Mathf.Cos(angle) + b2 * Mathf.Sin(angle);
                     Handles.DrawLine(topPos + dir * m_Target.radius, botPos + dir * m_Target.radius);
+                    if (m_Target.innerRadius > 0f)
+                    {
+                        Handles.DrawLine(topPos + dir * m_Target.innerRadius, botPos + dir * m_Target.innerRadius);
+                    }
                 }
             }
 
@@ -238,6 +234,21 @@ namespace MHZE.CylinderCollider.Editor
                 {
                     Undo.RecordObject(m_Target, "Change Cylinder Radius");
                     m_Target.radius = Mathf.Max(0.001f, Vector3.Dot(newRadiusPos - m_Target.center, b1));
+                }
+            }
+
+            if (m_Target.innerRadius > 0f)
+            {
+                using (new Handles.DrawingScope(new Color(0.2f, 0.6f, 1f, 0.5f), matrix))
+                {
+                    Vector3 innerRadiusPos = m_Target.center + b2 * m_Target.innerRadius;
+                    EditorGUI.BeginChangeCheck();
+                    Vector3 newInnerRadiusPos = Handles.Slider(innerRadiusPos, b2, 0.015f, Handles.DotHandleCap, 0f);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        Undo.RecordObject(m_Target, "Change Cylinder Inner Radius");
+                        m_Target.innerRadius = Mathf.Max(0f, Vector3.Dot(newInnerRadiusPos - m_Target.center, b2));
+                    }
                 }
             }
         }
