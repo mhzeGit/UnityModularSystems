@@ -33,6 +33,8 @@ namespace MHZE.GearSystem
 
         private Quaternion m_PrevWorldRotA;
         private Quaternion m_PrevWorldRotB;
+        private Vector3 m_PrevWorldPosA;
+        private Vector3 m_PrevWorldPosB;
         private bool m_HasInitialized;
 
         public Transform gearA { get => m_GearA; set => m_GearA = value; }
@@ -177,6 +179,8 @@ namespace MHZE.GearSystem
             {
                 m_PrevWorldRotA = m_GearA.rotation;
                 m_PrevWorldRotB = m_GearB.rotation;
+                m_PrevWorldPosA = m_GearA.position;
+                m_PrevWorldPosB = m_GearB.position;
                 m_HasInitialized = true;
             }
         }
@@ -192,49 +196,75 @@ namespace MHZE.GearSystem
             if (m_GearA == null || m_GearB == null) return;
             if (m_RadiusA <= 0f || m_RadiusB <= 0f) return;
 
+            Vector3 posA = m_GearA.position;
+            Vector3 posB = m_GearB.position;
+
+            Vector3 deltaPosA = posA - m_PrevWorldPosA;
+            Vector3 deltaPosB = posB - m_PrevWorldPosB;
+
+            Vector3 axisDirA = GetWorldAxis(m_GearA, m_AxisA);
+            Vector3 axisDirB = GetWorldAxis(m_GearB, m_AxisB);
+
+            float radiusSum = m_RadiusA + m_RadiusB;
+
+            float orbitalA = ComputeOrbitalAngle(deltaPosA, m_PrevWorldPosA, posA, posB, axisDirA, m_RadiusA, radiusSum);
+            float orbitalB = ComputeOrbitalAngle(deltaPosB, m_PrevWorldPosB, posB, posA, axisDirB, m_RadiusB, radiusSum);
+
+            if (!Mathf.Approximately(orbitalA, 0f))
+            {
+                m_GearA.rotation = Quaternion.AngleAxis(orbitalA, axisDirA) * m_GearA.rotation;
+            }
+
+            if (!Mathf.Approximately(orbitalB, 0f))
+            {
+                m_GearB.rotation = Quaternion.AngleAxis(orbitalB, axisDirB) * m_GearB.rotation;
+            }
+
             Quaternion worldA = m_GearA.rotation;
             Quaternion worldB = m_GearB.rotation;
 
             Quaternion deltaRotA = worldA * Quaternion.Inverse(m_PrevWorldRotA);
             Quaternion deltaRotB = worldB * Quaternion.Inverse(m_PrevWorldRotB);
 
-            Vector3 axisDirA = GetWorldAxis(m_GearA, m_AxisA);
-            Vector3 axisDirB = GetWorldAxis(m_GearB, m_AxisB);
-
             float deltaA = ExtractSignedAngle(deltaRotA, axisDirA);
             float deltaB = ExtractSignedAngle(deltaRotB, axisDirB);
+
+            float couplingDeltaA = deltaA - orbitalA;
+            float couplingDeltaB = deltaB - orbitalB;
 
             float ratio = m_RadiusA / m_RadiusB;
             float threshold = 0.001f;
 
-            float scaledA = deltaA * m_RadiusA;
-            float scaledB = deltaB * m_RadiusB;
+            float scaledA = couplingDeltaA * m_RadiusA;
+            float scaledB = couplingDeltaB * m_RadiusB;
 
             if (Mathf.Abs(scaledA) > Mathf.Abs(scaledB) && Mathf.Abs(scaledA) > threshold)
             {
-                Quaternion applyB = Quaternion.AngleAxis(-deltaA * ratio, axisDirB);
+                Quaternion applyB = Quaternion.AngleAxis(-couplingDeltaA * ratio, axisDirB);
                 m_GearB.rotation = applyB * worldB;
 
                 if (m_DebugLog)
                     Debug.Log(
                         $"[GearConstraint] A→B  ΔA={deltaA:F3}°  ΔB={deltaB:F3}°  " +
-                        $"ratio={ratio:F4}  scaledA={scaledA:F4}  scaledB={scaledB:F4}",
+                        $"orbA={orbitalA:F3}°  cplA={couplingDeltaA:F3}°  ratio={ratio:F4}",
                         this);
             }
             else if (Mathf.Abs(scaledB) > threshold)
             {
-                Quaternion applyA = Quaternion.AngleAxis(-deltaB / ratio, axisDirA);
+                Quaternion applyA = Quaternion.AngleAxis(-couplingDeltaB / ratio, axisDirA);
                 m_GearA.rotation = applyA * worldA;
 
                 if (m_DebugLog)
                     Debug.Log(
                         $"[GearConstraint] B→A  ΔA={deltaA:F3}°  ΔB={deltaB:F3}°  " +
-                        $"ratio={ratio:F4}  scaledA={scaledA:F4}  scaledB={scaledB:F4}",
+                        $"orbB={orbitalB:F3}°  cplB={couplingDeltaB:F3}°  ratio={ratio:F4}",
                         this);
             }
 
             m_PrevWorldRotA = m_GearA.rotation;
             m_PrevWorldRotB = m_GearB.rotation;
+            m_PrevWorldPosA = m_GearA.position;
+            m_PrevWorldPosB = m_GearB.position;
         }
 
         private static Vector3 GetWorldAxis(Transform t, GearAxis axis)
@@ -253,6 +283,36 @@ namespace MHZE.GearSystem
             delta.ToAngleAxis(out float angle, out Vector3 rotationAxis);
             float sign = Mathf.Sign(Vector3.Dot(rotationAxis, axis));
             return angle * sign;
+        }
+
+        private static float ComputeOrbitalAngle(
+            Vector3 deltaPos, Vector3 prevPos, Vector3 currPos, Vector3 otherPos,
+            Vector3 axisDir, float ownRadius, float radiusSum)
+        {
+            if (deltaPos.sqrMagnitude < 1e-12f)
+                return 0f;
+
+            Vector3 rPrev = prevPos - otherPos;
+            Vector3 rCurr = currPos - otherPos;
+
+            Vector3 rPrevProj = rPrev - Vector3.Dot(rPrev, axisDir) * axisDir;
+            Vector3 rCurrProj = rCurr - Vector3.Dot(rCurr, axisDir) * axisDir;
+
+            float prevMag = rPrevProj.magnitude;
+            float currMag = rCurrProj.magnitude;
+
+            if (prevMag < 1e-8f || currMag < 1e-8f)
+                return 0f;
+
+            float dot = Vector3.Dot(rPrevProj, rCurrProj);
+            float cross = Vector3.Dot(Vector3.Cross(rCurrProj, rPrevProj), axisDir);
+
+            float orbitalDtheta = Mathf.Atan2(cross, dot);
+
+            if (Mathf.Abs(orbitalDtheta) * Mathf.Rad2Deg < 1e-4f)
+                return 0f;
+
+            return -(orbitalDtheta * radiusSum / ownRadius) * Mathf.Rad2Deg;
         }
     }
 }
