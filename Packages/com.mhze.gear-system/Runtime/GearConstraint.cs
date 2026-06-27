@@ -12,13 +12,10 @@ namespace MHZE.GearSystem
         [SerializeField] private Transform m_GearA;
         [SerializeField] private float m_RadiusA = 0.5f;
         [SerializeField] private GearAxis m_AxisA = GearAxis.Y;
-        [SerializeField] private Transform m_MeshA;
-
         [Header("Gear B")]
         [SerializeField] private Transform m_GearB;
         [SerializeField] private float m_RadiusB = 0.5f;
         [SerializeField] private GearAxis m_AxisB = GearAxis.Y;
-        [SerializeField] private Transform m_MeshB;
 
         [Header("Visual")]
         [SerializeField] private float m_ToothDensity = 5f;
@@ -40,8 +37,6 @@ namespace MHZE.GearSystem
 
         public Transform gearA { get => m_GearA; set => m_GearA = value; }
         public Transform gearB { get => m_GearB; set => m_GearB = value; }
-        public Transform meshA { get => m_MeshA; set => m_MeshA = value; }
-        public Transform meshB { get => m_MeshB; set => m_MeshB = value; }
         public GearAxis axisA { get => m_AxisA; set => m_AxisA = value; }
         public GearAxis axisB { get => m_AxisB; set => m_AxisB = value; }
         public float radiusA { get => m_RadiusA; set => m_RadiusA = value; }
@@ -84,7 +79,7 @@ namespace MHZE.GearSystem
             GearConstraintDebugger.Draw(this);
         }
 
-        public static void DrawGearGizmo(Transform gearTransform, Transform meshTransform, float radius, GearAxis axis, float rotationOffset, float toothDensity, float toothHeight)
+        public static void DrawGearGizmo(Transform gearTransform, float radius, GearAxis axis, float rotationOffset, float toothDensity, float toothHeight)
         {
             if (gearTransform == null || radius <= 0f) return;
 
