@@ -9,8 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 284673124731539666}
-  - component: {fileID: 2212450118661002848}
-  - component: {fileID: 6650316766278038705}
+  - component: {fileID: 7763480739442920237}
   m_Layer: 0
   m_Name: Gear
   m_TagString: Untagged
@@ -35,60 +34,33 @@ Transform:
   - {fileID: 4398979450770483319}
   m_Father: {fileID: 8517450497226328923}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2212450118661002848
-MonoBehaviour:
+--- !u!54 &7763480739442920237
+Rigidbody:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1106527671581644962}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c1d2e3f4a5b69788a9b0c1d2e3f4a5b6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.mhze.cylinder-collider.Runtime::MHZE.CylinderCollider.CylinderCollider
-  m_Center: {x: 0, y: 0, z: 0}
-  m_Radius: 0.86
-  m_Height: 0.08
-  m_Sides: 16
-  m_Direction: 1
-  m_Material: {fileID: 0}
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_LayerOverridePriority: 0
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
---- !u!114 &6650316766278038705
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1106527671581644962}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c1d2e3f4a5b69788a9b0c1d2e3f4a5b6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.mhze.cylinder-collider.Runtime::MHZE.CylinderCollider.CylinderCollider
-  m_Center: {x: 0, y: 0, z: 0}
-  m_Radius: 0.77
-  m_Height: 0.08
-  m_Sides: 16
-  m_Direction: 1
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_LayerOverridePriority: 0
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 1
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
 --- !u!1 &5268894552559184641
 GameObject:
   m_ObjectHideFlags: 0
@@ -176,13 +148,80 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 2046035c280046c4ca6af9530adc83d6, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4762173193299948399}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 2046035c280046c4ca6af9530adc83d6, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8681619990288232340}
   m_SourcePrefab: {fileID: 100100000, guid: 2046035c280046c4ca6af9530adc83d6, type: 3}
 --- !u!4 &324609407145657972 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 2046035c280046c4ca6af9530adc83d6, type: 3}
   m_PrefabInstance: {fileID: 219418490192765343}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1137983701382765774 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 2046035c280046c4ca6af9530adc83d6, type: 3}
+  m_PrefabInstance: {fileID: 219418490192765343}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &4762173193299948399
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1137983701382765774}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1d2e3f4a5b69788a9b0c1d2e3f4a5b6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.mhze.cylinder-collider.Runtime::MHZE.CylinderCollider.CylinderCollider
+  m_Center: {x: 0, y: 0, z: 0}
+  m_Radius: 0.46
+  m_InnerRadius: 0.37
+  m_Height: 0.08
+  m_Sides: 16
+  m_Direction: 1
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_LayerOverridePriority: 0
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+--- !u!114 &8681619990288232340
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1137983701382765774}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1d2e3f4a5b69788a9b0c1d2e3f4a5b6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.mhze.cylinder-collider.Runtime::MHZE.CylinderCollider.CylinderCollider
+  m_Center: {x: 0, y: 0, z: 0}
+  m_Radius: 0.37
+  m_InnerRadius: 0
+  m_Height: 0.08
+  m_Sides: 16
+  m_Direction: 1
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_LayerOverridePriority: 0
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
 --- !u!1001 &4217315376328314780
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -238,8 +277,75 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7fcb8c316b563a4488bfdaf0c82242ae, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 504889541899258413}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7fcb8c316b563a4488bfdaf0c82242ae, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3182596044140820419}
   m_SourcePrefab: {fileID: 100100000, guid: 7fcb8c316b563a4488bfdaf0c82242ae, type: 3}
+--- !u!1 &3911235729670976205 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 7fcb8c316b563a4488bfdaf0c82242ae, type: 3}
+  m_PrefabInstance: {fileID: 4217315376328314780}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &504889541899258413
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3911235729670976205}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1d2e3f4a5b69788a9b0c1d2e3f4a5b6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.mhze.cylinder-collider.Runtime::MHZE.CylinderCollider.CylinderCollider
+  m_Center: {x: 0, y: 0, z: 0}
+  m_Radius: 0.86
+  m_InnerRadius: 0.77
+  m_Height: 0.08
+  m_Sides: 16
+  m_Direction: 1
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_LayerOverridePriority: 0
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+--- !u!114 &3182596044140820419
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3911235729670976205}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1d2e3f4a5b69788a9b0c1d2e3f4a5b6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.mhze.cylinder-collider.Runtime::MHZE.CylinderCollider.CylinderCollider
+  m_Center: {x: 0, y: 0, z: 0}
+  m_Radius: 0.77
+  m_InnerRadius: 0
+  m_Height: 0.08
+  m_Sides: 16
+  m_Direction: 1
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_LayerOverridePriority: 0
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
 --- !u!4 &4398979450770483319 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 7fcb8c316b563a4488bfdaf0c82242ae, type: 3}
