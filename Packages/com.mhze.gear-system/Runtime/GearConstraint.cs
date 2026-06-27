@@ -34,8 +34,8 @@ namespace MHZE.GearSystem
         [Tooltip("Log debug values to console when enabled.")]
         private bool m_DebugLog;
 
-        private float m_LastAngleA;
-        private float m_LastAngleB;
+        private Quaternion m_PrevWorldRotA;
+        private Quaternion m_PrevWorldRotB;
         private bool m_HasInitialized;
 
         public Transform gearA { get => m_GearA; set => m_GearA = value; }
@@ -180,8 +180,8 @@ namespace MHZE.GearSystem
         {
             if (m_GearA != null && m_GearB != null && m_RadiusA > 0f && m_RadiusB > 0f)
             {
-                m_LastAngleA = GetNormalizedAngle(m_GearA, m_AxisA);
-                m_LastAngleB = GetNormalizedAngle(m_GearB, m_AxisB);
+                m_PrevWorldRotA = m_GearA.rotation;
+                m_PrevWorldRotB = m_GearB.rotation;
                 m_HasInitialized = true;
             }
         }
@@ -197,11 +197,17 @@ namespace MHZE.GearSystem
             if (m_GearA == null || m_GearB == null) return;
             if (m_RadiusA <= 0f || m_RadiusB <= 0f) return;
 
-            float currentA = GetNormalizedAngle(m_GearA, m_AxisA);
-            float currentB = GetNormalizedAngle(m_GearB, m_AxisB);
+            Quaternion worldA = m_GearA.rotation;
+            Quaternion worldB = m_GearB.rotation;
 
-            float deltaA = Mathf.DeltaAngle(m_LastAngleA, currentA);
-            float deltaB = Mathf.DeltaAngle(m_LastAngleB, currentB);
+            Quaternion deltaRotA = worldA * Quaternion.Inverse(m_PrevWorldRotA);
+            Quaternion deltaRotB = worldB * Quaternion.Inverse(m_PrevWorldRotB);
+
+            Vector3 axisDirA = GetWorldAxis(m_GearA, m_AxisA);
+            Vector3 axisDirB = GetWorldAxis(m_GearB, m_AxisB);
+
+            float deltaA = ExtractSignedAngle(deltaRotA, axisDirA);
+            float deltaB = ExtractSignedAngle(deltaRotB, axisDirB);
 
             float ratio = m_RadiusA / m_RadiusB;
             float threshold = 0.001f;
@@ -211,8 +217,8 @@ namespace MHZE.GearSystem
 
             if (Mathf.Abs(scaledA) > Mathf.Abs(scaledB) && Mathf.Abs(scaledA) > threshold)
             {
-                float targetB = m_LastAngleB - deltaA * ratio;
-                SetLocalAngle(m_GearB, m_AxisB, targetB);
+                Quaternion applyB = Quaternion.AngleAxis(-deltaA * ratio, axisDirB);
+                m_GearB.rotation = applyB * worldB;
 
                 if (m_DebugLog)
                     Debug.Log(
@@ -222,8 +228,8 @@ namespace MHZE.GearSystem
             }
             else if (Mathf.Abs(scaledB) > threshold)
             {
-                float targetA = m_LastAngleA - deltaB / ratio;
-                SetLocalAngle(m_GearA, m_AxisA, targetA);
+                Quaternion applyA = Quaternion.AngleAxis(-deltaB / ratio, axisDirA);
+                m_GearA.rotation = applyA * worldA;
 
                 if (m_DebugLog)
                     Debug.Log(
@@ -232,32 +238,26 @@ namespace MHZE.GearSystem
                         this);
             }
 
-            m_LastAngleA = GetNormalizedAngle(m_GearA, m_AxisA);
-            m_LastAngleB = GetNormalizedAngle(m_GearB, m_AxisB);
+            m_PrevWorldRotA = m_GearA.rotation;
+            m_PrevWorldRotB = m_GearB.rotation;
         }
 
-        private static float GetNormalizedAngle(Transform t, GearAxis axis)
+        private static Vector3 GetWorldAxis(Transform t, GearAxis axis)
         {
-            Vector3 euler = t.localEulerAngles;
             return axis switch
             {
-                GearAxis.X => euler.x,
-                GearAxis.Y => euler.y,
-                GearAxis.Z => euler.z,
-                _ => 0f
+                GearAxis.X => t.right,
+                GearAxis.Y => t.up,
+                GearAxis.Z => t.forward,
+                _ => t.up
             };
         }
 
-        private static void SetLocalAngle(Transform t, GearAxis axis, float angle)
+        private static float ExtractSignedAngle(Quaternion delta, Vector3 axis)
         {
-            Vector3 euler = t.localEulerAngles;
-            switch (axis)
-            {
-                case GearAxis.X: euler.x = angle; break;
-                case GearAxis.Y: euler.y = angle; break;
-                case GearAxis.Z: euler.z = angle; break;
-            }
-            t.localEulerAngles = euler;
+            delta.ToAngleAxis(out float angle, out Vector3 rotationAxis);
+            float sign = Mathf.Sign(Vector3.Dot(rotationAxis, axis));
+            return angle * sign;
         }
     }
 }
