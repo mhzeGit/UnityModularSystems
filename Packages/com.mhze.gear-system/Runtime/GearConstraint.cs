@@ -207,8 +207,11 @@ namespace MHZE.GearSystem
 
             float radiusSum = m_RadiusA + m_RadiusB;
 
-            float orbitalA = ComputeOrbitalAngle(deltaPosA, m_PrevWorldPosA, posA, posB, axisDirA, m_RadiusA, radiusSum);
-            float orbitalB = ComputeOrbitalAngle(deltaPosB, m_PrevWorldPosB, posB, posA, axisDirB, m_RadiusB, radiusSum);
+            Quaternion preOrbitalRotA = m_GearA.rotation;
+            Quaternion preOrbitalRotB = m_GearB.rotation;
+
+            float orbitalA = ComputeOrbitalAngle(deltaPosA, m_PrevWorldPosA, posA, posB, axisDirA, m_RadiusA, radiusSum, out float sweepDegA);
+            float orbitalB = ComputeOrbitalAngle(deltaPosB, m_PrevWorldPosB, posB, posA, axisDirB, m_RadiusB, radiusSum, out float sweepDegB);
 
             if (!Mathf.Approximately(orbitalA, 0f))
             {
@@ -231,6 +234,21 @@ namespace MHZE.GearSystem
 
             float couplingDeltaA = deltaA - orbitalA;
             float couplingDeltaB = deltaB - orbitalB;
+
+            Quaternion rawDeltaRotA = preOrbitalRotA * Quaternion.Inverse(m_PrevWorldRotA);
+            Quaternion rawDeltaRotB = preOrbitalRotB * Quaternion.Inverse(m_PrevWorldRotB);
+            float rawExternalA = ExtractSignedAngle(rawDeltaRotA, axisDirA);
+            float rawExternalB = ExtractSignedAngle(rawDeltaRotB, axisDirB);
+
+            const float correlationEpsilon = 0.001f;
+            if (Mathf.Abs(rawExternalA - sweepDegA) < correlationEpsilon && Mathf.Abs(sweepDegA) > correlationEpsilon)
+            {
+                couplingDeltaA = 0f;
+            }
+            if (Mathf.Abs(rawExternalB - sweepDegB) < correlationEpsilon && Mathf.Abs(sweepDegB) > correlationEpsilon)
+            {
+                couplingDeltaB = 0f;
+            }
 
             float ratio = m_RadiusA / m_RadiusB;
             float threshold = 0.001f;
@@ -287,8 +305,10 @@ namespace MHZE.GearSystem
 
         private static float ComputeOrbitalAngle(
             Vector3 deltaPos, Vector3 prevPos, Vector3 currPos, Vector3 otherPos,
-            Vector3 axisDir, float ownRadius, float radiusSum)
+            Vector3 axisDir, float ownRadius, float radiusSum, out float sweepDegrees)
         {
+            sweepDegrees = 0f;
+
             if (deltaPos.sqrMagnitude < 1e-12f)
                 return 0f;
 
@@ -308,6 +328,8 @@ namespace MHZE.GearSystem
             float cross = Vector3.Dot(Vector3.Cross(rCurrProj, rPrevProj), axisDir);
 
             float orbitalDtheta = Mathf.Atan2(cross, dot);
+
+            sweepDegrees = orbitalDtheta * Mathf.Rad2Deg;
 
             if (Mathf.Abs(orbitalDtheta) * Mathf.Rad2Deg < 1e-4f)
                 return 0f;

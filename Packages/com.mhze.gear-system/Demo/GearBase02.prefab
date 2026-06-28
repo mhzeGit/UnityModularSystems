@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 284673124731539666}
   - component: {fileID: 7614088308196193115}
   - component: {fileID: 6600224881345514086}
-  - component: {fileID: 11893607197495986}
   m_Layer: 0
   m_Name: Gear
   m_TagString: Untagged
@@ -75,33 +74,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: com.mhze.gear-system.Runtime::MHZE.GearSystem.GearItem
   m_GearTransform: {fileID: 284673124731539666}
-  m_Radius: 0.5
   m_Axis: 1
-  m_ToothDensity: 0.76
+  m_ToothDensity: 5
   m_ToothHeight: 0.09
   m_MaxTorque: 0
---- !u!64 &11893607197495986
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1106527671581644962}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 1
-  m_CookingOptions: 30
-  m_Mesh: {fileID: -434881312882543757, guid: 7fcb8c316b563a4488bfdaf0c82242ae, type: 3}
+  m_ColliderRadii:
+  - colliderObject: {fileID: 6700762939900229669}
+    radius: 0.76
 --- !u!1 &5268894552559184641
 GameObject:
   m_ObjectHideFlags: 0
@@ -189,10 +168,40 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7fcb8c316b563a4488bfdaf0c82242ae, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 515978850455528440}
   m_SourcePrefab: {fileID: 100100000, guid: 7fcb8c316b563a4488bfdaf0c82242ae, type: 3}
 --- !u!4 &6320297164390703775 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 7fcb8c316b563a4488bfdaf0c82242ae, type: 3}
   m_PrefabInstance: {fileID: 5781651832863966580}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &6700762939900229669 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 7fcb8c316b563a4488bfdaf0c82242ae, type: 3}
+  m_PrefabInstance: {fileID: 5781651832863966580}
+  m_PrefabAsset: {fileID: 0}
+--- !u!64 &515978850455528440
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6700762939900229669}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 1
+  m_CookingOptions: 30
+  m_Mesh: {fileID: -434881312882543757, guid: 7fcb8c316b563a4488bfdaf0c82242ae, type: 3}
