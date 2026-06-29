@@ -29,61 +29,52 @@ namespace MHZE.GearSystem
         [Tooltip("Log debug values to console when enabled.")]
         public bool debugLog;
 
-        private float m_ArcLength;
-        private float m_PrevContactAngleA;
-        private float m_AppliedAngleB;
-        private bool m_HasInitialized;
+        [Tooltip("Invert gear B rotation direction.")]
+        public bool reverseB;
 
-        public float arcLength => m_ArcLength;
+        private float m_SavedContactA;
+        private float m_OffsetA;
+        private float m_AppliedB;
+
+        public float arcLength => m_OffsetA * Mathf.Deg2Rad * radiusA;
 
         private void Start()
         {
             if (gearA == null || gearB == null) return;
 
             Vector3 dir = (gearB.position - gearA.position).normalized;
-            m_PrevContactAngleA = GetContactAngle(gearA, axisA, dir);
-            m_HasInitialized = true;
+            m_SavedContactA = GetContactAngle(gearA, axisA, dir);
+            m_OffsetA = 0f;
+            m_AppliedB = 0f;
         }
 
         private void Update()
         {
-            if (!m_HasInitialized || gearA == null || gearB == null)
-                return;
-            if (radiusA <= 0f || radiusB <= 0f)
-                return;
+            if (gearA == null || gearB == null) return;
+            if (radiusA <= 0f || radiusB <= 0f) return;
 
-            Vector3 centerA = gearA.position;
-            Vector3 centerB = gearB.position;
-            Vector3 contactDir = (centerB - centerA).normalized;
+            Vector3 dir = (gearB.position - gearA.position).normalized;
 
-            Vector3 contactPoint = centerA + contactDir * radiusA;
+            float contactA = GetContactAngle(gearA, axisA, dir);
 
-            float contactAngleA = GetContactAngle(gearA, axisA, contactDir);
-            float deltaContactA = Mathf.DeltaAngle(m_PrevContactAngleA, contactAngleA);
+            m_OffsetA += Mathf.DeltaAngle(m_SavedContactA + m_OffsetA, contactA);
 
-            float deltaS = -deltaContactA * Mathf.Deg2Rad * radiusA;
-            m_ArcLength += deltaS;
+            float targetB = m_OffsetA * (radiusA / radiusB);
+            if (reverseB) targetB = -targetB;
 
-            float targetAngleB = -(m_ArcLength / radiusB) * Mathf.Rad2Deg;
-            float deltaB = targetAngleB - m_AppliedAngleB;
+            float correction = targetB - m_AppliedB;
 
-            if (Mathf.Abs(deltaB) > 1e-6f)
+            if (Mathf.Abs(correction) > 0.1f)
             {
-                Vector3 worldAxisB = GetWorldAxis(gearB, axisB);
-                gearB.Rotate(worldAxisB, deltaB, Space.World);
-                m_AppliedAngleB = targetAngleB;
+                gearB.Rotate(GetWorldAxis(gearB, axisB), correction, Space.World);
+                m_AppliedB = targetB;
             }
 
             if (debugLog)
             {
-                Debug.Log($"[GearConstraint] cp={contactPoint:F3} " +
-                          $"s={m_ArcLength:F6} " +
-                          $"cAngA={contactAngleA:F2}°(Δ{deltaContactA:F4}) " +
-                          $"θB_applied={m_AppliedAngleB:F2}° ΔB={deltaB:F4} " +
-                          $"ratio={radiusA / radiusB:F4}");
+                Debug.Log($"[GearConstraint] s={m_OffsetA * Mathf.Deg2Rad * radiusA:F6} " +
+                          $"ΔA={m_OffsetA:F1}° ΔB={m_AppliedB:F1}°");
             }
-
-            m_PrevContactAngleA = contactAngleA;
         }
 
         private static float GetContactAngle(Transform gear, GearAxis axis, Vector3 worldDirection)
@@ -91,10 +82,7 @@ namespace MHZE.GearSystem
             Vector3 worldAxis = GetWorldAxis(gear, axis);
             Vector3 projDir = Vector3.ProjectOnPlane(worldDirection, worldAxis);
             Vector3 projRight = Vector3.ProjectOnPlane(gear.right, worldAxis);
-
-            if (projDir.sqrMagnitude < 1e-8f || projRight.sqrMagnitude < 1e-8f)
-                return 0f;
-
+            if (projDir.sqrMagnitude < 1e-8f || projRight.sqrMagnitude < 1e-8f) return 0f;
             return Vector3.SignedAngle(projRight.normalized, projDir.normalized, worldAxis);
         }
 
@@ -110,10 +98,7 @@ namespace MHZE.GearSystem
 
         private void OnDrawGizmos()
         {
-            if (debugDraw)
-            {
-                GearConstraintDebugger.Draw(this);
-            }
+            if (debugDraw) GearConstraintDebugger.Draw(this);
         }
     }
 }
