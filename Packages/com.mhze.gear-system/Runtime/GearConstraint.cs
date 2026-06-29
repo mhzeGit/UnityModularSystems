@@ -9,17 +9,21 @@ namespace MHZE.GearSystem
     {
         [Header("Gear A")]
         public Transform gearA;
+        public Transform meshA;
         public float radiusA = 0.5f;
         public GearAxis axisA = GearAxis.Y;
 
         [Header("Gear B")]
         public Transform gearB;
+        public Transform meshB;
         public float radiusB = 0.5f;
         public GearAxis axisB = GearAxis.Y;
 
         [Header("Visual")]
         public float toothDensity = 5f;
         public float toothHeight = 0.1f;
+        [Tooltip("Angular width of one tooth (degrees). Used for mesh offset alignment.")]
+        public float toothWidth = 36f;
         public bool debugDraw;
 
         [Header("Limit")]
@@ -59,6 +63,12 @@ namespace MHZE.GearSystem
 
             if (debugLog)
                 Debug.Log($"[GearConstraint] init: contactA={startContact:F2}° appliedB={m_AppliedB:F2}°");
+
+            float halfTooth = toothWidth * 0.5f;
+            if (meshA != null)
+                meshA.localRotation = Quaternion.AngleAxis(halfTooth, GetLocalAxis(axisA));
+            if (meshB != null)
+                meshB.localRotation = Quaternion.AngleAxis(-halfTooth, GetLocalAxis(axisB));
         }
 
         private void Update()
@@ -120,6 +130,16 @@ namespace MHZE.GearSystem
                 GearAxis.X => t.right,
                 GearAxis.Z => t.forward,
                 _ => t.up
+            };
+        }
+
+        private static Vector3 GetLocalAxis(GearAxis axis)
+        {
+            return axis switch
+            {
+                GearAxis.X => Vector3.right,
+                GearAxis.Z => Vector3.forward,
+                _ => Vector3.up
             };
         }
 

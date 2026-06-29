@@ -8,13 +8,16 @@ namespace MHZE.GearSystem.Editor
     public class GearConstraintEditor : UnityEditor.Editor
     {
         private SerializedProperty m_GearA;
+        private SerializedProperty m_MeshA;
         private SerializedProperty m_GearB;
+        private SerializedProperty m_MeshB;
         private SerializedProperty m_RadiusA;
         private SerializedProperty m_RadiusB;
         private SerializedProperty m_AxisA;
         private SerializedProperty m_AxisB;
         private SerializedProperty m_ToothDensity;
         private SerializedProperty m_ToothHeight;
+        private SerializedProperty m_ToothWidth;
         private SerializedProperty m_DebugDraw;
         private SerializedProperty m_MaxTorque;
         private SerializedProperty m_DebugLog;
@@ -27,13 +30,16 @@ namespace MHZE.GearSystem.Editor
         private void OnEnable()
         {
             m_GearA = serializedObject.FindProperty("gearA");
+            m_MeshA = serializedObject.FindProperty("meshA");
             m_GearB = serializedObject.FindProperty("gearB");
+            m_MeshB = serializedObject.FindProperty("meshB");
             m_RadiusA = serializedObject.FindProperty("radiusA");
             m_RadiusB = serializedObject.FindProperty("radiusB");
             m_AxisA = serializedObject.FindProperty("axisA");
             m_AxisB = serializedObject.FindProperty("axisB");
             m_ToothDensity = serializedObject.FindProperty("toothDensity");
             m_ToothHeight = serializedObject.FindProperty("toothHeight");
+            m_ToothWidth = serializedObject.FindProperty("toothWidth");
             m_DebugDraw = serializedObject.FindProperty("debugDraw");
             m_MaxTorque = serializedObject.FindProperty("maxTorque");
             m_DebugLog = serializedObject.FindProperty("debugLog");
@@ -45,8 +51,8 @@ namespace MHZE.GearSystem.Editor
 
             EditorGUILayout.Space(4);
 
-            DrawGearSection("Gear A", m_GearA, m_RadiusA, m_AxisA, ref m_ShowGearA);
-            DrawGearSection("Gear B", m_GearB, m_RadiusB, m_AxisB, ref m_ShowGearB);
+            DrawGearSection("Gear A", m_GearA, m_MeshA, m_RadiusA, m_AxisA, ref m_ShowGearA);
+            DrawGearSection("Gear B", m_GearB, m_MeshB, m_RadiusB, m_AxisB, ref m_ShowGearB);
 
             m_ShowVisual = EditorGUILayout.Foldout(m_ShowVisual, "Visual", true, EditorStyles.foldoutHeader);
             if (m_ShowVisual)
@@ -54,6 +60,7 @@ namespace MHZE.GearSystem.Editor
                 EditorGUI.indentLevel++;
                 EditorGUILayout.PropertyField(m_ToothDensity, new GUIContent("Tooth Density"));
                 EditorGUILayout.PropertyField(m_ToothHeight, new GUIContent("Tooth Height"));
+                EditorGUILayout.PropertyField(m_ToothWidth, new GUIContent("Tooth Width"));
                 EditorGUI.indentLevel--;
                 EditorGUILayout.Space(2);
             }
@@ -73,13 +80,14 @@ namespace MHZE.GearSystem.Editor
             serializedObject.ApplyModifiedProperties();
         }
 
-        private static void DrawGearSection(string label, SerializedProperty transformProp, SerializedProperty radiusProp, SerializedProperty axisProp, ref bool show)
+        private static void DrawGearSection(string label, SerializedProperty transformProp, SerializedProperty meshProp, SerializedProperty radiusProp, SerializedProperty axisProp, ref bool show)
         {
             show = EditorGUILayout.Foldout(show, label, true, EditorStyles.foldoutHeader);
             if (!show) return;
 
             EditorGUI.indentLevel++;
             EditorGUILayout.PropertyField(transformProp, new GUIContent("Transform"));
+            EditorGUILayout.PropertyField(meshProp, new GUIContent("Mesh Transform"));
             EditorGUILayout.PropertyField(radiusProp, new GUIContent("Radius"));
             EditorGUILayout.PropertyField(axisProp, new GUIContent("Axis"));
             EditorGUI.indentLevel--;

@@ -15,6 +15,7 @@ namespace MHZE.GearSystem
     {
         [Header("Gear")]
         [SerializeField] private Transform m_GearTransform;
+        [SerializeField] private Transform m_MeshTransform;
         [SerializeField] private GearAxis m_Axis = GearAxis.Y;
         [SerializeField] private float m_ToothDensity = 5f;
         [SerializeField] private float m_ToothHeight = 0.1f;
@@ -34,6 +35,7 @@ namespace MHZE.GearSystem
         public float toothHeight { get => m_ToothHeight; set => m_ToothHeight = value; }
         public float maxTorque { get => m_MaxTorque; set => m_MaxTorque = value; }
         public Transform gearTransform { get => m_GearTransform; set => m_GearTransform = value; }
+        public Transform meshTransform { get => m_MeshTransform; set => m_MeshTransform = value; }
 
         private void Awake()
         {
@@ -84,7 +86,9 @@ namespace MHZE.GearSystem
 
             GearConstraint constraint = constraintGO.AddComponent<GearConstraint>();
             constraint.gearA = m_GearTransform;
+            constraint.meshA = m_MeshTransform;
             constraint.gearB = otherGear.m_GearTransform;
+            constraint.meshB = otherGear.m_MeshTransform;
             constraint.radiusA = thisRadius;
             constraint.radiusB = otherRadius;
             constraint.axisA = m_Axis;
