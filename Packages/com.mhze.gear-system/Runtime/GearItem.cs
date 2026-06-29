@@ -19,6 +19,7 @@ namespace MHZE.GearSystem
         [SerializeField] private GearAxis m_Axis = GearAxis.Y;
         [SerializeField] private float m_ToothDensity = 5f;
         [SerializeField] private float m_ToothHeight = 0.1f;
+        [SerializeField] private float m_ToothWidth = 36f;
         [SerializeField] private float m_MaxTorque;
 
         [Header("Collider Radii")]
@@ -33,6 +34,7 @@ namespace MHZE.GearSystem
         public GearAxis axis { get => m_Axis; set => m_Axis = value; }
         public float toothDensity { get => m_ToothDensity; set => m_ToothDensity = value; }
         public float toothHeight { get => m_ToothHeight; set => m_ToothHeight = value; }
+        public float toothWidth { get => m_ToothWidth; set => m_ToothWidth = value; }
         public float maxTorque { get => m_MaxTorque; set => m_MaxTorque = value; }
         public Transform gearTransform { get => m_GearTransform; set => m_GearTransform = value; }
         public Transform meshTransform { get => m_MeshTransform; set => m_MeshTransform = value; }
@@ -95,6 +97,7 @@ namespace MHZE.GearSystem
             constraint.axisB = otherGear.m_Axis;
             constraint.toothDensity = Mathf.Max(m_ToothDensity, otherGear.m_ToothDensity);
             constraint.toothHeight = Mathf.Max(m_ToothHeight, otherGear.m_ToothHeight);
+            constraint.toothWidth = Mathf.Max(m_ToothWidth, otherGear.m_ToothWidth);
             constraint.maxTorque = Mathf.Min(m_MaxTorque, otherGear.m_MaxTorque);
 
             m_Constraints[otherGear] = constraintGO;
