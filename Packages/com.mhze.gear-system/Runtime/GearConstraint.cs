@@ -35,6 +35,10 @@ namespace MHZE.GearSystem
         private Quaternion m_PrevWorldRotB;
         private Vector3 m_PrevWorldPosA;
         private Vector3 m_PrevWorldPosB;
+        private Quaternion m_PrevPreOrbitalRotA;
+        private Quaternion m_PrevPreOrbitalRotB;
+        private float m_PrevOrbitalA;
+        private float m_PrevOrbitalB;
         private bool m_HasInitialized;
 
         public Transform gearA { get => m_GearA; set => m_GearA = value; }
@@ -181,6 +185,10 @@ namespace MHZE.GearSystem
                 m_PrevWorldRotB = m_GearB.rotation;
                 m_PrevWorldPosA = m_GearA.position;
                 m_PrevWorldPosB = m_GearB.position;
+                m_PrevPreOrbitalRotA = m_GearA.rotation;
+                m_PrevPreOrbitalRotB = m_GearB.rotation;
+                m_PrevOrbitalA = 0f;
+                m_PrevOrbitalB = 0f;
                 m_HasInitialized = true;
             }
         }
@@ -205,13 +213,27 @@ namespace MHZE.GearSystem
             Vector3 axisDirA = GetWorldAxis(m_GearA, m_AxisA);
             Vector3 axisDirB = GetWorldAxis(m_GearB, m_AxisB);
 
-            float radiusSum = m_RadiusA + m_RadiusB;
-
             Quaternion preOrbitalRotA = m_GearA.rotation;
             Quaternion preOrbitalRotB = m_GearB.rotation;
 
+            Quaternion rawDeltaRotA = preOrbitalRotA * Quaternion.Inverse(m_PrevPreOrbitalRotA);
+            Quaternion rawDeltaRotB = preOrbitalRotB * Quaternion.Inverse(m_PrevPreOrbitalRotB);
+            float rawExtA = ExtractSignedAngle(rawDeltaRotA, axisDirA);
+            float rawExtB = ExtractSignedAngle(rawDeltaRotB, axisDirB);
+
+            float adjExtA = rawExtA - m_PrevOrbitalA;
+            float adjExtB = rawExtB - m_PrevOrbitalB;
+
+            float radiusSum = m_RadiusA + m_RadiusB;
+
             float orbitalA = ComputeOrbitalAngle(deltaPosA, m_PrevWorldPosA, posA, posB, axisDirA, m_RadiusA, radiusSum, out float sweepDegA);
             float orbitalB = ComputeOrbitalAngle(deltaPosB, m_PrevWorldPosB, posB, posA, axisDirB, m_RadiusB, radiusSum, out float sweepDegB);
+
+            const float correlationEpsilon = 0.5f;
+            if (Mathf.Abs(sweepDegA) > correlationEpsilon)
+                orbitalA -= adjExtA;
+            if (Mathf.Abs(sweepDegB) > correlationEpsilon)
+                orbitalB -= adjExtB;
 
             if (!Mathf.Approximately(orbitalA, 0f))
             {
@@ -235,20 +257,10 @@ namespace MHZE.GearSystem
             float couplingDeltaA = deltaA - orbitalA;
             float couplingDeltaB = deltaB - orbitalB;
 
-            Quaternion rawDeltaRotA = preOrbitalRotA * Quaternion.Inverse(m_PrevWorldRotA);
-            Quaternion rawDeltaRotB = preOrbitalRotB * Quaternion.Inverse(m_PrevWorldRotB);
-            float rawExternalA = ExtractSignedAngle(rawDeltaRotA, axisDirA);
-            float rawExternalB = ExtractSignedAngle(rawDeltaRotB, axisDirB);
-
-            const float correlationEpsilon = 0.001f;
-            if (Mathf.Abs(rawExternalA - sweepDegA) < correlationEpsilon && Mathf.Abs(sweepDegA) > correlationEpsilon)
-            {
+            if (!Mathf.Approximately(orbitalA, 0f))
                 couplingDeltaA = 0f;
-            }
-            if (Mathf.Abs(rawExternalB - sweepDegB) < correlationEpsilon && Mathf.Abs(sweepDegB) > correlationEpsilon)
-            {
+            if (!Mathf.Approximately(orbitalB, 0f))
                 couplingDeltaB = 0f;
-            }
 
             float ratio = m_RadiusA / m_RadiusB;
             float threshold = 0.001f;
@@ -283,6 +295,10 @@ namespace MHZE.GearSystem
             m_PrevWorldRotB = m_GearB.rotation;
             m_PrevWorldPosA = m_GearA.position;
             m_PrevWorldPosB = m_GearB.position;
+            m_PrevPreOrbitalRotA = preOrbitalRotA;
+            m_PrevPreOrbitalRotB = preOrbitalRotB;
+            m_PrevOrbitalA = orbitalA;
+            m_PrevOrbitalB = orbitalB;
         }
 
         private static Vector3 GetWorldAxis(Transform t, GearAxis axis)
