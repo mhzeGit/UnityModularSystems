@@ -6,26 +6,24 @@ namespace MHZE.GearSystem
     {
         public static void Draw(GearConstraint gear)
         {
-            if (gear.gearA != null)
-                GearConstraint.DrawGearGizmo(gear.gearA, gear.radiusA, gear.axisA, 0f, gear.toothDensity, gear.toothHeight);
-            if (gear.gearB != null)
-                GearConstraint.DrawGearGizmo(gear.gearB, gear.radiusB, gear.axisB, 0f, gear.toothDensity, gear.toothHeight);
-
             if (gear.gearA != null && gear.gearB != null)
             {
-                DrawConnectionLine(gear);
+                DrawContactPoint(gear);
             }
         }
 
-        private static void DrawConnectionLine(GearConstraint gear)
+        private static void DrawContactPoint(GearConstraint gear)
         {
             if (gear.gearA == null || gear.gearB == null) return;
 
             Vector3 posA = gear.gearA.position;
             Vector3 posB = gear.gearB.position;
             Vector3 dir = (posB - posA).normalized;
+            float distance = Vector3.Distance(posA, posB);
+
             float rA = gear.radiusA;
             float rB = gear.radiusB;
+            float totalRadius = rA + rB;
 
             Vector3 contactA = posA + dir * rA;
             Vector3 contactB = posB - dir * rB;
@@ -37,11 +35,12 @@ namespace MHZE.GearSystem
             Gizmos.color = new Color(1f, 0.5f, 0f, 0.9f);
             Gizmos.DrawLine(contactA, contactB);
 
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(contactA, 0.03f);
-            Gizmos.DrawWireSphere(contactB, 0.03f);
+            float ratio = totalRadius > 0f ? rA / totalRadius : 0.5f;
+            Vector3 contactPoint = posA + dir * (distance * ratio);
+
+            float sphereRadius = Mathf.Min(rA, rB) * 0.2f;
+            Gizmos.color = new Color(0f, 0.8f, 1f, 0.8f);
+            Gizmos.DrawSphere(contactPoint, sphereRadius);
         }
-
-
     }
 }

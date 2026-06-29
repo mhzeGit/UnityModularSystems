@@ -26,17 +26,17 @@ namespace MHZE.GearSystem.Editor
 
         private void OnEnable()
         {
-            m_GearA = serializedObject.FindProperty("m_GearA");
-            m_GearB = serializedObject.FindProperty("m_GearB");
-            m_RadiusA = serializedObject.FindProperty("m_RadiusA");
-            m_RadiusB = serializedObject.FindProperty("m_RadiusB");
-            m_AxisA = serializedObject.FindProperty("m_AxisA");
-            m_AxisB = serializedObject.FindProperty("m_AxisB");
-            m_ToothDensity = serializedObject.FindProperty("m_ToothDensity");
-            m_ToothHeight = serializedObject.FindProperty("m_ToothHeight");
-            m_DebugDraw = serializedObject.FindProperty("m_DebugDraw");
-            m_MaxTorque = serializedObject.FindProperty("m_MaxTorque");
-            m_DebugLog = serializedObject.FindProperty("m_DebugLog");
+            m_GearA = serializedObject.FindProperty("gearA");
+            m_GearB = serializedObject.FindProperty("gearB");
+            m_RadiusA = serializedObject.FindProperty("radiusA");
+            m_RadiusB = serializedObject.FindProperty("radiusB");
+            m_AxisA = serializedObject.FindProperty("axisA");
+            m_AxisB = serializedObject.FindProperty("axisB");
+            m_ToothDensity = serializedObject.FindProperty("toothDensity");
+            m_ToothHeight = serializedObject.FindProperty("toothHeight");
+            m_DebugDraw = serializedObject.FindProperty("debugDraw");
+            m_MaxTorque = serializedObject.FindProperty("maxTorque");
+            m_DebugLog = serializedObject.FindProperty("debugLog");
         }
 
         public override void OnInspectorGUI()
