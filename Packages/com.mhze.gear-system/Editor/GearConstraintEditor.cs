@@ -18,6 +18,7 @@ namespace MHZE.GearSystem.Editor
         private SerializedProperty m_ToothDensity;
         private SerializedProperty m_ToothHeight;
         private SerializedProperty m_ToothWidth;
+        private SerializedProperty m_MeshOffset;
         private SerializedProperty m_DebugDraw;
         private SerializedProperty m_DebugLog;
 
@@ -39,6 +40,7 @@ namespace MHZE.GearSystem.Editor
             m_ToothDensity = serializedObject.FindProperty("toothDensity");
             m_ToothHeight = serializedObject.FindProperty("toothHeight");
             m_ToothWidth = serializedObject.FindProperty("toothWidth");
+            m_MeshOffset = serializedObject.FindProperty("meshOffset");
             m_DebugDraw = serializedObject.FindProperty("debugDraw");
             m_DebugLog = serializedObject.FindProperty("debugLog");
         }
@@ -59,6 +61,7 @@ namespace MHZE.GearSystem.Editor
                 EditorGUILayout.PropertyField(m_ToothDensity, new GUIContent("Tooth Density"));
                 EditorGUILayout.PropertyField(m_ToothHeight, new GUIContent("Tooth Height"));
                 EditorGUILayout.PropertyField(m_ToothWidth, new GUIContent("Tooth Width"));
+                EditorGUILayout.PropertyField(m_MeshOffset, new GUIContent("Mesh Offset", "Angular offset for gear mesh alignment (degrees)."));
                 EditorGUI.indentLevel--;
                 EditorGUILayout.Space(2);
             }
