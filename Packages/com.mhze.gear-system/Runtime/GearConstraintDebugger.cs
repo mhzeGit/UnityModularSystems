@@ -10,7 +10,7 @@ namespace MHZE.GearSystem
         private static readonly Color OverlapColor = new Color(1f, 0.78f, 0f, 0.7f);
 
         private const float SphereRadius = 0.05f;
-        private static readonly float OverlapThreshold = SphereRadius * 2f;
+        public static readonly float OverlapThreshold = SphereRadius * 2f;
 
         public static void Draw(GearConstraintBase gear, int winningA = -1, int winningB = -1)
         {
@@ -136,7 +136,7 @@ namespace MHZE.GearSystem
                 for (int j = 0; j < teethB.Count; j++)
                 {
                     float dist = Vector3.Distance(teethA[i], teethB[j]);
-                    if (dist < OverlapThreshold && dist < bestDist)
+                    if (dist <= OverlapThreshold && dist < bestDist)
                     {
                         bestDist = dist;
                         bestPoint = (teethA[i] + teethB[j]) * 0.5f;
@@ -183,7 +183,7 @@ namespace MHZE.GearSystem
         {
             foreach (var other in others)
             {
-                if (Vector3.Distance(pos, other) < OverlapThreshold)
+                if (Vector3.Distance(pos, other) <= OverlapThreshold)
                     return true;
             }
             return false;
