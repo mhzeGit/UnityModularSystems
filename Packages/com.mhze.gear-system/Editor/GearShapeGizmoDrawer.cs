@@ -23,32 +23,40 @@ namespace MHZE.GearSystem.Editor
                 if (!gear.debugDraw || !gear.enabled) continue;
 
                 if (gear.gearA != null)
-                    DrawGearShape(gear.gearA.position,
-                        GearConstraintBase.GetWorldAxis(gear.gearA, gear.axisA),
-                        gear.radiusA, gear.toothHeight, gear.toothDensity, gear.toothWidth);
+                    DrawGearShape(gear.gearA, gear.axisA,
+                        gear.radiusA, gear.toothHeight, gear.toothCountA, gear.toothWidth,
+                        -180f / Mathf.Max(4, Mathf.RoundToInt(gear.toothCountA)));
 
                 if (gear.gearB != null)
-                    DrawGearShape(gear.gearB.position,
-                        GearConstraintBase.GetWorldAxis(gear.gearB, gear.axisB),
-                        gear.radiusB, gear.toothHeight, gear.toothDensity, gear.toothWidth);
+                    DrawGearShape(gear.gearB, gear.axisB,
+                        gear.radiusB, gear.toothHeight, gear.toothCountB, gear.toothWidth,
+                        180f / Mathf.Max(4, Mathf.RoundToInt(gear.toothCountB)));
             }
         }
 
-        private static void GetGearPlaneBasis(Vector3 axis, out Vector3 b1, out Vector3 b2)
+        private static void DrawGearShape(Transform gearTransform, GearAxis axis, float radius, float toothHeight, float toothCount, float toothWidth, float angleOffset)
         {
-            if (Mathf.Abs(Vector3.Dot(axis, Vector3.up)) > 0.99f)
-            { b1 = Vector3.right; b2 = Vector3.forward; }
-            else
-            { b1 = Vector3.Cross(axis, Vector3.up).normalized; b2 = Vector3.Cross(axis, b1).normalized; }
-        }
+            if (radius <= 0f || toothCount <= 0f) return;
 
-        private static void DrawGearShape(Vector3 center, Vector3 axis, float radius, float toothHeight, float toothDensity, float toothWidth)
-        {
-            if (radius <= 0f || toothDensity <= 0f) return;
+            Vector3 center = gearTransform.position;
+            Vector3 b1, b2;
+            switch (axis)
+            {
+                case GearAxis.X:
+                    b1 = gearTransform.forward;
+                    b2 = gearTransform.up;
+                    break;
+                case GearAxis.Z:
+                    b1 = gearTransform.right;
+                    b2 = gearTransform.up;
+                    break;
+                default:
+                    b1 = gearTransform.right;
+                    b2 = gearTransform.forward;
+                    break;
+            }
 
-            GetGearPlaneBasis(axis, out Vector3 b1, out Vector3 b2);
-
-            int numTeeth = Mathf.Max(4, Mathf.RoundToInt(toothDensity));
+            int numTeeth = Mathf.Max(4, Mathf.RoundToInt(toothCount));
             float angleStep = 360f / numTeeth;
 
             Color color = new Color(0.3f, 0.6f, 1f, 0.7f);
@@ -71,13 +79,13 @@ namespace MHZE.GearSystem.Editor
                 prev = p;
             }
 
-            // teeth
-            float halfToothAngle = toothWidth * 0.5f * Mathf.Deg2Rad;
+            // teeth — scale angular width inversely with radius to keep linear width constant
+            float halfToothAngle = toothWidth * 0.5f * Mathf.Deg2Rad * (0.5f / radius);
             float outerRadius = radius + toothHeight;
             Handles.color = new Color(0.3f, 0.6f, 1f, 0.75f);
             for (int i = 0; i < numTeeth; i++)
             {
-                float centerAngle = i * angleStep * Mathf.Deg2Rad;
+                float centerAngle = (i * angleStep + angleOffset) * Mathf.Deg2Rad;
                 float lAngle = centerAngle - halfToothAngle;
                 float rAngle = centerAngle + halfToothAngle;
 

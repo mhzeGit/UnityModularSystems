@@ -11,15 +11,16 @@ namespace MHZE.GearSystem
         public Transform meshA;
         public float radiusA = 0.5f;
         public GearAxis axisA = GearAxis.Y;
+        public float toothCountA = 5f;
 
         [Header("Gear B")]
         public Transform gearB;
         public Transform meshB;
         public float radiusB = 0.5f;
         public GearAxis axisB = GearAxis.Y;
+        public float toothCountB = 5f;
 
         [Header("Visual")]
-        public float toothDensity = 5f;
         public float toothHeight = 0.1f;
         [Tooltip("Angular width of one tooth (degrees). Used for mesh offset alignment.")]
         public float toothWidth = 36f;

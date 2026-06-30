@@ -15,7 +15,8 @@ namespace MHZE.GearSystem.Editor
         private SerializedProperty m_RadiusB;
         private SerializedProperty m_AxisA;
         private SerializedProperty m_AxisB;
-        private SerializedProperty m_ToothDensity;
+        private SerializedProperty m_ToothCountA;
+        private SerializedProperty m_ToothCountB;
         private SerializedProperty m_ToothHeight;
         private SerializedProperty m_ToothWidth;
         private SerializedProperty m_MeshOffset;
@@ -37,7 +38,8 @@ namespace MHZE.GearSystem.Editor
             m_RadiusB = serializedObject.FindProperty("radiusB");
             m_AxisA = serializedObject.FindProperty("axisA");
             m_AxisB = serializedObject.FindProperty("axisB");
-            m_ToothDensity = serializedObject.FindProperty("toothDensity");
+            m_ToothCountA = serializedObject.FindProperty("toothCountA");
+            m_ToothCountB = serializedObject.FindProperty("toothCountB");
             m_ToothHeight = serializedObject.FindProperty("toothHeight");
             m_ToothWidth = serializedObject.FindProperty("toothWidth");
             m_MeshOffset = serializedObject.FindProperty("meshOffset");
@@ -51,14 +53,13 @@ namespace MHZE.GearSystem.Editor
 
             EditorGUILayout.Space(4);
 
-            DrawGearSection("Gear A", m_GearA, m_MeshA, m_RadiusA, m_AxisA, ref m_ShowGearA);
-            DrawGearSection("Gear B", m_GearB, m_MeshB, m_RadiusB, m_AxisB, ref m_ShowGearB);
+            DrawGearSection("Gear A", m_GearA, m_MeshA, m_RadiusA, m_AxisA, m_ToothCountA, ref m_ShowGearA);
+            DrawGearSection("Gear B", m_GearB, m_MeshB, m_RadiusB, m_AxisB, m_ToothCountB, ref m_ShowGearB);
 
             m_ShowVisual = EditorGUILayout.Foldout(m_ShowVisual, "Visual", true, EditorStyles.foldoutHeader);
             if (m_ShowVisual)
             {
                 EditorGUI.indentLevel++;
-                EditorGUILayout.PropertyField(m_ToothDensity, new GUIContent("Tooth Density"));
                 EditorGUILayout.PropertyField(m_ToothHeight, new GUIContent("Tooth Height"));
                 EditorGUILayout.PropertyField(m_ToothWidth, new GUIContent("Tooth Width"));
                 EditorGUILayout.PropertyField(m_MeshOffset, new GUIContent("Mesh Offset", "Angular offset for gear mesh alignment (degrees)."));
@@ -79,7 +80,7 @@ namespace MHZE.GearSystem.Editor
             serializedObject.ApplyModifiedProperties();
         }
 
-        private static void DrawGearSection(string label, SerializedProperty transformProp, SerializedProperty meshProp, SerializedProperty radiusProp, SerializedProperty axisProp, ref bool show)
+        private static void DrawGearSection(string label, SerializedProperty transformProp, SerializedProperty meshProp, SerializedProperty radiusProp, SerializedProperty axisProp, SerializedProperty toothCountProp, ref bool show)
         {
             show = EditorGUILayout.Foldout(show, label, true, EditorStyles.foldoutHeader);
             if (!show) return;
@@ -89,6 +90,7 @@ namespace MHZE.GearSystem.Editor
             EditorGUILayout.PropertyField(meshProp, new GUIContent("Mesh Transform"));
             EditorGUILayout.PropertyField(radiusProp, new GUIContent("Radius"));
             EditorGUILayout.PropertyField(axisProp, new GUIContent("Axis"));
+            EditorGUILayout.PropertyField(toothCountProp, new GUIContent("Tooth Count"));
             EditorGUI.indentLevel--;
             EditorGUILayout.Space(2);
         }

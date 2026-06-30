@@ -17,7 +17,7 @@ namespace MHZE.GearSystem
         [SerializeField] private Transform m_GearTransform;
         [SerializeField] private Transform m_MeshTransform;
         [SerializeField] private GearAxis m_Axis = GearAxis.Y;
-        [SerializeField] private float m_ToothDensity = 5f;
+        [SerializeField] private float m_ToothCount = 5f;
         [SerializeField] private float m_ToothHeight = 0.1f;
         [SerializeField] private float m_ToothWidth = 36f;
         [Header("Collider Radii")]
@@ -30,7 +30,7 @@ namespace MHZE.GearSystem
         private readonly Dictionary<GearItem, float> m_PendingRadiusOverrides = new Dictionary<GearItem, float>();
 
         public GearAxis axis { get => m_Axis; set => m_Axis = value; }
-        public float toothDensity { get => m_ToothDensity; set => m_ToothDensity = value; }
+        public float toothCount { get => m_ToothCount; set => m_ToothCount = value; }
         public float toothHeight { get => m_ToothHeight; set => m_ToothHeight = value; }
         public float toothWidth { get => m_ToothWidth; set => m_ToothWidth = value; }
         public Transform gearTransform { get => m_GearTransform; set => m_GearTransform = value; }
@@ -92,7 +92,8 @@ namespace MHZE.GearSystem
             constraint.radiusB = otherRadius;
             constraint.axisA = m_Axis;
             constraint.axisB = otherGear.m_Axis;
-            constraint.toothDensity = Mathf.Max(m_ToothDensity, otherGear.m_ToothDensity);
+            constraint.toothCountA = m_ToothCount;
+            constraint.toothCountB = otherGear.m_ToothCount;
             constraint.toothHeight = Mathf.Max(m_ToothHeight, otherGear.m_ToothHeight);
             constraint.toothWidth = Mathf.Max(m_ToothWidth, otherGear.m_ToothWidth);
 
