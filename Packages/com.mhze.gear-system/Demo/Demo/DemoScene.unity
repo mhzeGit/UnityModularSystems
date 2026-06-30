@@ -219,7 +219,6 @@ MonoBehaviour:
   toothHeight: 0.1
   toothWidth: 15
   debugDraw: 1
-  maxTorque: 0
   debugLog: 0
   reverseB: 0
 --- !u!4 &146756550
@@ -405,7 +404,6 @@ MonoBehaviour:
   toothHeight: 0.1
   toothWidth: 15
   debugDraw: 1
-  maxTorque: 0
   debugLog: 0
   reverseB: 0
 --- !u!4 &287092815
@@ -738,7 +736,6 @@ MonoBehaviour:
   toothHeight: 0.1
   toothWidth: 36
   debugDraw: 0
-  maxTorque: 0
   debugLog: 0
   reverseB: 0
 --- !u!4 &787905726
@@ -802,7 +799,6 @@ MonoBehaviour:
   toothHeight: 0.1
   toothWidth: 36
   debugDraw: 0
-  maxTorque: 0
   debugLog: 0
   reverseB: 0
 --- !u!4 &828555007
@@ -1115,7 +1111,6 @@ MonoBehaviour:
   toothHeight: 0.1
   toothWidth: 36
   debugDraw: 0
-  maxTorque: 0
   debugLog: 0
   reverseB: 0
 --- !u!4 &991148461
@@ -1174,7 +1169,6 @@ MonoBehaviour:
   toothHeight: 0.1
   toothWidth: 36
   debugDraw: 0
-  maxTorque: 0
   debugLog: 0
   reverseB: 0
 --- !u!4 &998145418

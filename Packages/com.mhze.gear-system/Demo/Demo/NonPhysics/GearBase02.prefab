@@ -77,7 +77,6 @@ MonoBehaviour:
   m_Axis: 1
   m_ToothDensity: 5
   m_ToothHeight: 0.09
-  m_MaxTorque: 0
   m_ColliderRadii:
   - colliderObject: {fileID: 6700762939900229669}
     radius: 0.76
