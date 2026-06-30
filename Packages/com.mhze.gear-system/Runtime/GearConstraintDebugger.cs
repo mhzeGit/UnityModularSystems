@@ -7,14 +7,18 @@ namespace MHZE.GearSystem
         private static readonly Color ToothColor = new Color(0.2f, 0.9f, 0.3f, 0.7f);
         private static readonly Color GapColor = new Color(0.9f, 0.2f, 0.2f, 0.7f);
 
+        private const float SphereRadius = 0.05f;
+        private static readonly float OverlapThreshold = SphereRadius * 2f;
+
         public static void Draw(GearConstraintBase gear)
         {
             if (gear.gearA != null && gear.gearB != null)
             {
                 DrawContactPoint(gear);
                 DrawArcLength(gear);
-                DrawMarkersAtTeeth(gear.gearA, gear.meshA, gear.axisA, gear.radiusA, gear.toothHeight, gear.toothCountA, ToothColor, false);
-                DrawMarkersAtTeeth(gear.gearB, gear.meshB, gear.axisB, gear.radiusB, gear.toothHeight, gear.toothCountB, GapColor, true);
+                var teethA = GetToothPositions(gear.gearA, gear.meshA, gear.axisA, gear.radiusA, gear.toothHeight, gear.toothCountA, false);
+                var teethB = GetToothPositions(gear.gearB, gear.meshB, gear.axisB, gear.radiusB, gear.toothHeight, gear.toothCountB, true);
+                DrawMarkersWithOverlapDetection(teethA, teethB, ToothColor, GapColor);
             }
         }
 
@@ -82,9 +86,10 @@ namespace MHZE.GearSystem
             }
         }
 
-        private static void DrawMarkersAtTeeth(Transform gear, Transform mesh, GearAxis axis, float radius, float toothHeight, float toothCount, Color color, bool atGaps)
+        private static System.Collections.Generic.List<Vector3> GetToothPositions(Transform gear, Transform mesh, GearAxis axis, float radius, float toothHeight, float toothCount, bool atGaps)
         {
-            if (gear == null || radius <= 0f) return;
+            var positions = new System.Collections.Generic.List<Vector3>();
+            if (gear == null || radius <= 0f) return positions;
 
             Transform t = mesh != null ? mesh : gear;
             Vector3 worldAxis = GearConstraintBase.GetWorldAxis(t, axis);
@@ -92,7 +97,7 @@ namespace MHZE.GearSystem
             if (refDir.sqrMagnitude < 0.001f)
                 refDir = Vector3.ProjectOnPlane(t.forward, worldAxis);
 
-            if (refDir.sqrMagnitude < 0.001f) return;
+            if (refDir.sqrMagnitude < 0.001f) return positions;
 
             refDir = refDir.normalized * (radius + toothHeight * 0.5f);
 
@@ -104,11 +109,35 @@ namespace MHZE.GearSystem
             {
                 float angle = (i + offset) * stepDeg;
                 Quaternion rot = Quaternion.AngleAxis(angle, worldAxis);
-                Vector3 pos = t.position + rot * refDir;
-
-                Gizmos.color = color;
-                Gizmos.DrawWireSphere(pos, 0.05f);
+                positions.Add(t.position + rot * refDir);
             }
+
+            return positions;
+        }
+
+        private static void DrawMarkersWithOverlapDetection(System.Collections.Generic.List<Vector3> teethA, System.Collections.Generic.List<Vector3> teethB, Color colorA, Color colorB)
+        {
+            foreach (var pos in teethA)
+            {
+                Gizmos.color = OverlapsAny(pos, teethB) ? Color.yellow : colorA;
+                Gizmos.DrawWireSphere(pos, SphereRadius);
+            }
+
+            foreach (var pos in teethB)
+            {
+                Gizmos.color = OverlapsAny(pos, teethA) ? Color.yellow : colorB;
+                Gizmos.DrawWireSphere(pos, SphereRadius);
+            }
+        }
+
+        private static bool OverlapsAny(Vector3 pos, System.Collections.Generic.List<Vector3> others)
+        {
+            foreach (var other in others)
+            {
+                if (Vector3.Distance(pos, other) < OverlapThreshold)
+                    return true;
+            }
+            return false;
         }
     }
 }
