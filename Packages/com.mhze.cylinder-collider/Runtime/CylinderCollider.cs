@@ -32,7 +32,6 @@ namespace MHZE.CylinderCollider
         private bool m_PendingOnValidateRebuild;
 #endif
 
-        private GameObject m_ColliderGO;
         private MeshCollider m_MeshCollider;
         private List<MeshCollider> m_SegmentColliders;
         private Mesh m_Mesh;
@@ -207,43 +206,39 @@ namespace MHZE.CylinderCollider
 
         private void Awake()
         {
-            EnsureCollider();
-            RebuildIfNeeded();
+            Rebuild();
         }
 
         private void OnEnable()
         {
-            if (m_ColliderGO == null)
+            bool enabledAny = false;
+            foreach (var c in GetAllColliders())
             {
-                EnsureCollider();
-                RebuildIfNeeded();
+                if (c != null)
+                {
+                    c.enabled = true;
+                    enabledAny = true;
+                }
             }
-            else
-            {
-                foreach (var c in GetAllColliders())
-                    c.enabled = m_ColliderGO.activeInHierarchy;
-            }
+
+            if (!enabledAny)
+                Rebuild();
         }
 
         private void OnDisable()
         {
             foreach (var c in GetAllColliders())
-                c.enabled = false;
+            {
+                if (c != null)
+                    c.enabled = false;
+            }
         }
 
         private void OnDestroy()
         {
             ReleaseMesh();
             DestroySegmentColliders();
-            if (m_ColliderGO != null)
-            {
-                if (Application.isPlaying)
-                    Destroy(m_ColliderGO);
-                else
-                    DestroyImmediate(m_ColliderGO);
-                m_ColliderGO = null;
-                m_MeshCollider = null;
-            }
+            m_MeshCollider = null;
         }
 
         private void OnValidate()
@@ -265,13 +260,11 @@ namespace MHZE.CylinderCollider
                     m_PendingOnValidateRebuild = false;
                     if (this == null || !isActiveAndEnabled)
                         return;
-                    EnsureCollider();
-                    RebuildIfNeeded();
+                    Rebuild();
                 };
             }
 #else
-            EnsureCollider();
-            RebuildIfNeeded();
+            Rebuild();
 #endif
         }
 
@@ -281,23 +274,6 @@ namespace MHZE.CylinderCollider
             if (!Application.isPlaying && ParametersChanged())
                 Rebuild();
 #endif
-        }
-
-        private void EnsureCollider()
-        {
-            if (m_ColliderGO != null)
-            {
-                m_ColliderGO.layer = gameObject.layer;
-                return;
-            }
-
-            m_ColliderGO = new GameObject("CylinderCollider");
-            m_ColliderGO.hideFlags = HideFlags.HideAndDontSave;
-            m_ColliderGO.layer = gameObject.layer;
-            m_ColliderGO.transform.SetParent(transform);
-            m_ColliderGO.transform.localPosition = Vector3.zero;
-            m_ColliderGO.transform.localRotation = Quaternion.identity;
-            m_ColliderGO.transform.localScale = Vector3.one;
         }
 
         private void GetBasisVectors(out Vector3 axis, out Vector3 basis1, out Vector3 basis2)
@@ -334,12 +310,6 @@ namespace MHZE.CylinderCollider
 
         private void Rebuild()
         {
-            if (m_ColliderGO == null)
-                EnsureCollider();
-
-            if (m_ColliderGO.layer != gameObject.layer)
-                m_ColliderGO.layer = gameObject.layer;
-
             ReleaseMesh();
             DestroySegmentColliders();
 
@@ -359,13 +329,13 @@ namespace MHZE.CylinderCollider
             if (m_InnerRadius <= 0f)
             {
                 m_Mesh = GenerateCylinderMesh();
-                m_MeshCollider = m_ColliderGO.AddComponent<MeshCollider>();
-                m_MeshCollider.hideFlags = HideFlags.HideAndDontSave;
+                m_MeshCollider = gameObject.AddComponent<MeshCollider>();
+                m_MeshCollider.hideFlags = HideFlags.HideInInspector | HideFlags.DontSaveInEditor;
                 m_MeshCollider.convex = true;
-                m_MeshCollider.sharedMesh = m_Mesh;
                 m_MeshCollider.cookingOptions = cookingOptions;
+                m_MeshCollider.sharedMesh = m_Mesh;
                 CopyPropertiesTo(m_MeshCollider);
-                m_MeshCollider.enabled = true;
+                m_MeshCollider.enabled = isActiveAndEnabled;
             }
             else
             {
@@ -385,17 +355,17 @@ namespace MHZE.CylinderCollider
                         halfAxis, basis1, basis2, angle0, angle1);
 
                     var segGO = new GameObject($"Segment_{seg}");
-                    segGO.hideFlags = HideFlags.HideAndDontSave;
-                    segGO.transform.SetParent(m_ColliderGO.transform);
+                    segGO.hideFlags = HideFlags.HideInHierarchy | HideFlags.HideInInspector | HideFlags.DontSave;
+                    segGO.transform.SetParent(transform);
                     segGO.transform.localPosition = Vector3.zero;
                     segGO.transform.localRotation = Quaternion.identity;
                     segGO.transform.localScale = Vector3.one;
 
                     var mc = segGO.AddComponent<MeshCollider>();
-                    mc.hideFlags = HideFlags.HideAndDontSave;
+                    mc.hideFlags = HideFlags.HideInInspector | HideFlags.DontSave;
                     mc.convex = true;
-                    mc.sharedMesh = mesh;
                     mc.cookingOptions = cookingOptions;
+                    mc.sharedMesh = mesh;
                     CopyPropertiesTo(mc);
                     mc.enabled = true;
 
