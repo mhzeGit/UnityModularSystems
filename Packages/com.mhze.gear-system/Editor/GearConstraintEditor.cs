@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace MHZE.GearSystem.Editor
 {
-    [CustomEditor(typeof(GearConstraintBase), true)]
+    [CustomEditor(typeof(GearConstraint), true)]
     [CanEditMultipleObjects]
     public class GearConstraintEditor : UnityEditor.Editor
     {
