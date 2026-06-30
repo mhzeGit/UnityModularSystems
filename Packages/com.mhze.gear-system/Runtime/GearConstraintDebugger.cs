@@ -4,7 +4,7 @@ namespace MHZE.GearSystem
 {
     public static class GearConstraintDebugger
     {
-        public static void Draw(GearConstraint gear)
+        public static void Draw(GearConstraintBase gear)
         {
             if (gear.gearA != null && gear.gearB != null)
             {
@@ -13,7 +13,7 @@ namespace MHZE.GearSystem
             }
         }
 
-        private static void DrawContactPoint(GearConstraint gear)
+        private static void DrawContactPoint(GearConstraintBase gear)
         {
             if (gear.gearA == null || gear.gearB == null) return;
 
@@ -42,7 +42,7 @@ namespace MHZE.GearSystem
             Gizmos.DrawWireSphere(contactPoint, sphereRadius * 2f);
         }
 
-        private static void DrawArcLength(GearConstraint gear)
+        private static void DrawArcLength(GearConstraintBase gear)
         {
             if (gear.gearA == null || gear.radiusA <= 0f) return;
 
