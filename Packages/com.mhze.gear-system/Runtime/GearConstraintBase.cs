@@ -44,7 +44,7 @@ namespace MHZE.GearSystem
             }
         }
 
-        private void OnDrawGizmos()
+        protected virtual void OnDrawGizmos()
         {
             if (debugDraw) GearConstraintDebugger.Draw(this);
         }

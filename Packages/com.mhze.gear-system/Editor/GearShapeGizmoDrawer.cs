@@ -23,14 +23,20 @@ namespace MHZE.GearSystem.Editor
                 if (!gear.debugDraw || !gear.enabled) continue;
 
                 if (gear.gearA != null)
-                    DrawGearShape(gear.gearA, gear.axisA,
+                {
+                    Transform t = gear.meshA != null ? gear.meshA : gear.gearA;
+                    DrawGearShape(t, gear.axisA,
                         gear.radiusA, gear.toothHeight, gear.toothCountA, gear.toothWidth,
                         -180f / Mathf.Max(4, Mathf.RoundToInt(gear.toothCountA)));
+                }
 
                 if (gear.gearB != null)
-                    DrawGearShape(gear.gearB, gear.axisB,
+                {
+                    Transform t = gear.meshB != null ? gear.meshB : gear.gearB;
+                    DrawGearShape(t, gear.axisB,
                         gear.radiusB, gear.toothHeight, gear.toothCountB, gear.toothWidth,
                         180f / Mathf.Max(4, Mathf.RoundToInt(gear.toothCountB)));
+                }
             }
         }
 

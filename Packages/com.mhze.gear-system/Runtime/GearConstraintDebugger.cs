@@ -6,11 +6,13 @@ namespace MHZE.GearSystem
     {
         private static readonly Color ToothColor = new Color(0.2f, 0.9f, 0.3f, 0.7f);
         private static readonly Color GapColor = new Color(0.9f, 0.2f, 0.2f, 0.7f);
+        private static readonly Color WinColor = Color.yellow;
+        private static readonly Color OverlapColor = new Color(1f, 0.78f, 0f, 0.7f);
 
         private const float SphereRadius = 0.05f;
         private static readonly float OverlapThreshold = SphereRadius * 2f;
 
-        public static void Draw(GearConstraintBase gear)
+        public static void Draw(GearConstraintBase gear, int winningA = -1, int winningB = -1)
         {
             if (gear.gearA != null && gear.gearB != null)
             {
@@ -18,7 +20,7 @@ namespace MHZE.GearSystem
                 DrawArcLength(gear);
                 var teethA = GetToothPositions(gear.gearA, gear.meshA, gear.axisA, gear.radiusA, gear.toothHeight, gear.toothCountA, false);
                 var teethB = GetToothPositions(gear.gearB, gear.meshB, gear.axisB, gear.radiusB, gear.toothHeight, gear.toothCountB, true);
-                DrawMarkersWithOverlapDetection(teethA, teethB, ToothColor, GapColor);
+                DrawMarkersWithOverlapDetection(teethA, teethB, ToothColor, GapColor, winningA, winningB);
             }
         }
 
@@ -86,7 +88,7 @@ namespace MHZE.GearSystem
             }
         }
 
-        private static System.Collections.Generic.List<Vector3> GetToothPositions(Transform gear, Transform mesh, GearAxis axis, float radius, float toothHeight, float toothCount, bool atGaps)
+        public static System.Collections.Generic.List<Vector3> GetToothPositions(Transform gear, Transform mesh, GearAxis axis, float radius, float toothHeight, float toothCount, bool atGaps)
         {
             var positions = new System.Collections.Generic.List<Vector3>();
             if (gear == null || radius <= 0f) return positions;
@@ -115,18 +117,65 @@ namespace MHZE.GearSystem
             return positions;
         }
 
-        private static void DrawMarkersWithOverlapDetection(System.Collections.Generic.List<Vector3> teethA, System.Collections.Generic.List<Vector3> teethB, Color colorA, Color colorB)
+        public static bool TryFindOverlapContact(GearConstraintBase gear, out Vector3 contactPoint)
         {
-            foreach (var pos in teethA)
+            if (gear.gearA == null || gear.gearB == null)
             {
-                Gizmos.color = OverlapsAny(pos, teethB) ? Color.yellow : colorA;
-                Gizmos.DrawWireSphere(pos, SphereRadius);
+                contactPoint = Vector3.zero;
+                return false;
             }
 
-            foreach (var pos in teethB)
+            var teethA = GetToothPositions(gear.gearA, gear.meshA, gear.axisA, gear.radiusA, gear.toothHeight, gear.toothCountA, false);
+            var teethB = GetToothPositions(gear.gearB, gear.meshB, gear.axisB, gear.radiusB, gear.toothHeight, gear.toothCountB, true);
+
+            float bestDist = float.MaxValue;
+            Vector3 bestPoint = Vector3.zero;
+
+            for (int i = 0; i < teethA.Count; i++)
             {
-                Gizmos.color = OverlapsAny(pos, teethA) ? Color.yellow : colorB;
-                Gizmos.DrawWireSphere(pos, SphereRadius);
+                for (int j = 0; j < teethB.Count; j++)
+                {
+                    float dist = Vector3.Distance(teethA[i], teethB[j]);
+                    if (dist < OverlapThreshold && dist < bestDist)
+                    {
+                        bestDist = dist;
+                        bestPoint = (teethA[i] + teethB[j]) * 0.5f;
+                    }
+                }
+            }
+
+            contactPoint = bestPoint;
+            return bestDist < float.MaxValue;
+        }
+
+        private static void DrawMarkersWithOverlapDetection(System.Collections.Generic.List<Vector3> teethA, System.Collections.Generic.List<Vector3> teethB, Color colorA, Color colorB, int winningA = -1, int winningB = -1)
+        {
+            for (int i = 0; i < teethA.Count; i++)
+            {
+                if (i == winningA)
+                {
+                    Gizmos.color = WinColor;
+                    Gizmos.DrawSphere(teethA[i], SphereRadius);
+                }
+                else
+                {
+                    Gizmos.color = OverlapsAny(teethA[i], teethB) ? OverlapColor : colorA;
+                    Gizmos.DrawWireSphere(teethA[i], SphereRadius);
+                }
+            }
+
+            for (int i = 0; i < teethB.Count; i++)
+            {
+                if (i == winningB)
+                {
+                    Gizmos.color = WinColor;
+                    Gizmos.DrawSphere(teethB[i], SphereRadius);
+                }
+                else
+                {
+                    Gizmos.color = OverlapsAny(teethB[i], teethA) ? OverlapColor : colorB;
+                    Gizmos.DrawWireSphere(teethB[i], SphereRadius);
+                }
             }
         }
 

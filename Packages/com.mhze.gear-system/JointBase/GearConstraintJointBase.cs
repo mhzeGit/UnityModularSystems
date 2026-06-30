@@ -11,6 +11,7 @@ namespace MHZE.GearSystem
 
         private Rigidbody m_RbA;
         private Rigidbody m_RbB;
+        private Vector3? m_CachedOverlapContact;
 
         private void Start()
         {
@@ -31,7 +32,7 @@ namespace MHZE.GearSystem
         private void CreateJoints()
         {
             Vector3 dir = (gearB.position - gearA.position).normalized;
-            Vector3 contactPoint = gearA.position + dir * radiusA;
+            Vector3 contactPoint = m_CachedOverlapContact ?? (gearA.position + dir * radiusA);
 
             jointHost = new GameObject($"GearJoint_{gearA.name}_{gearB.name}");
             jointHost.transform.position = contactPoint;
@@ -82,11 +83,65 @@ namespace MHZE.GearSystem
             return joint;
         }
 
+        private void SnapJointAnchors(Vector3 contactPoint)
+        {
+            jointHost.transform.position = contactPoint;
+
+            if (jointToA != null && gearA != null)
+                jointToA.connectedAnchor = gearA.InverseTransformPoint(contactPoint);
+
+            if (jointToB != null && gearB != null)
+                jointToB.connectedAnchor = gearB.InverseTransformPoint(contactPoint);
+        }
+
         private void OnDestroy()
         {
             if (jointHost != null)
             {
                 Destroy(jointHost);
+            }
+        }
+
+        protected override void OnDrawGizmos()
+        {
+            int winA = -1, winB = -1;
+
+            var teethA = GearConstraintDebugger.GetToothPositions(gearA, meshA, axisA, radiusA, toothHeight, toothCountA, false);
+            var teethB = GearConstraintDebugger.GetToothPositions(gearB, meshB, axisB, radiusB, toothHeight, toothCountB, true);
+
+            float bestDist = float.MaxValue;
+            Vector3 contactPoint = Vector3.zero;
+            bool found = false;
+
+            for (int i = 0; i < teethA.Count; i++)
+            {
+                for (int j = 0; j < teethB.Count; j++)
+                {
+                    float dist = Vector3.Distance(teethA[i], teethB[j]);
+                    if (dist < 0.1f && dist < bestDist)
+                    {
+                        bestDist = dist;
+                        contactPoint = (teethA[i] + teethB[j]) * 0.5f;
+                        winA = i;
+                        winB = j;
+                        found = true;
+                    }
+                }
+            }
+
+            if (found)
+            {
+                m_CachedOverlapContact = contactPoint;
+
+                if (jointHost != null)
+                {
+                    SnapJointAnchors(contactPoint);
+                }
+            }
+
+            if (debugDraw)
+            {
+                GearConstraintDebugger.Draw(this, winA, winB);
             }
         }
 
