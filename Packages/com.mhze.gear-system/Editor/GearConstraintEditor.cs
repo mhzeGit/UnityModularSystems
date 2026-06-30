@@ -19,7 +19,6 @@ namespace MHZE.GearSystem.Editor
         private SerializedProperty m_ToothHeight;
         private SerializedProperty m_ToothWidth;
         private SerializedProperty m_DebugDraw;
-        private SerializedProperty m_MaxTorque;
         private SerializedProperty m_DebugLog;
 
         private bool m_ShowGearA = true;
@@ -41,7 +40,6 @@ namespace MHZE.GearSystem.Editor
             m_ToothHeight = serializedObject.FindProperty("toothHeight");
             m_ToothWidth = serializedObject.FindProperty("toothWidth");
             m_DebugDraw = serializedObject.FindProperty("debugDraw");
-            m_MaxTorque = serializedObject.FindProperty("maxTorque");
             m_DebugLog = serializedObject.FindProperty("debugLog");
         }
 
@@ -66,8 +64,6 @@ namespace MHZE.GearSystem.Editor
             }
 
             EditorGUILayout.Space(2);
-            EditorGUILayout.PropertyField(m_MaxTorque, new GUIContent("Max Torque", "Maximum constraint torque (Nm). 0 = unlimited."));
-
             m_ShowDebug = EditorGUILayout.Foldout(m_ShowDebug, "Debug", true, EditorStyles.foldoutHeader);
             if (m_ShowDebug)
             {

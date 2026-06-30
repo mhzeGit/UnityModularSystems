@@ -24,11 +24,6 @@ namespace MHZE.GearSystem
         [Tooltip("Angular width of one tooth (degrees). Used for mesh offset alignment.")]
         public float toothWidth = 36f;
         public bool debugDraw;
-
-        [Header("Limit")]
-        [Tooltip("Maximum constraint torque (Nm). 0 = unlimited.")]
-        public float maxTorque = 0f;
-
         [Tooltip("Log debug values to console when enabled.")]
         public bool debugLog;
 
