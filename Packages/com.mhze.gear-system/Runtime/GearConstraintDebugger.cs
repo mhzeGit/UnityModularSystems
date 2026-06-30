@@ -4,12 +4,17 @@ namespace MHZE.GearSystem
 {
     public static class GearConstraintDebugger
     {
+        private static readonly Color ToothColor = new Color(0.2f, 0.9f, 0.3f, 0.7f);
+        private static readonly Color GapColor = new Color(0.9f, 0.2f, 0.2f, 0.7f);
+
         public static void Draw(GearConstraintBase gear)
         {
             if (gear.gearA != null && gear.gearB != null)
             {
                 DrawContactPoint(gear);
                 DrawArcLength(gear);
+                DrawMarkersAtTeeth(gear.gearA, gear.meshA, gear.axisA, gear.radiusA, gear.toothHeight, gear.toothCountA, ToothColor, false);
+                DrawMarkersAtTeeth(gear.gearB, gear.meshB, gear.axisB, gear.radiusB, gear.toothHeight, gear.toothCountB, GapColor, true);
             }
         }
 
@@ -50,12 +55,7 @@ namespace MHZE.GearSystem
             if (Mathf.Abs(arcLen) < 0.001f) return;
 
             Vector3 center = gear.gearA.position;
-            Vector3 axis = gear.axisA switch
-            {
-                GearAxis.X => gear.gearA.right,
-                GearAxis.Z => gear.gearA.forward,
-                _ => gear.gearA.up
-            };
+            Vector3 axis = GearConstraintBase.GetWorldAxis(gear.gearA, gear.axisA);
             float radius = gear.radiusA;
 
             float angleDeg = (arcLen / radius) * Mathf.Rad2Deg % 360f;
@@ -79,6 +79,35 @@ namespace MHZE.GearSystem
                 Vector3 p = center + dir * radius;
                 Gizmos.DrawLine(arcStart, p);
                 arcStart = p;
+            }
+        }
+
+        private static void DrawMarkersAtTeeth(Transform gear, Transform mesh, GearAxis axis, float radius, float toothHeight, float toothCount, Color color, bool atGaps)
+        {
+            if (gear == null || radius <= 0f) return;
+
+            Transform t = mesh != null ? mesh : gear;
+            Vector3 worldAxis = GearConstraintBase.GetWorldAxis(t, axis);
+            Vector3 refDir = Vector3.ProjectOnPlane(t.right, worldAxis);
+            if (refDir.sqrMagnitude < 0.001f)
+                refDir = Vector3.ProjectOnPlane(t.forward, worldAxis);
+
+            if (refDir.sqrMagnitude < 0.001f) return;
+
+            refDir = refDir.normalized * (radius + toothHeight * 0.5f);
+
+            int numTeeth = Mathf.Max(1, Mathf.RoundToInt(toothCount));
+            float stepDeg = 360f / numTeeth;
+            float offset = atGaps ? 0.5f : 0f;
+
+            for (int i = 0; i < numTeeth; i++)
+            {
+                float angle = (i + offset) * stepDeg;
+                Quaternion rot = Quaternion.AngleAxis(angle, worldAxis);
+                Vector3 pos = t.position + rot * refDir;
+
+                Gizmos.color = color;
+                Gizmos.DrawWireSphere(pos, 0.05f);
             }
         }
     }
