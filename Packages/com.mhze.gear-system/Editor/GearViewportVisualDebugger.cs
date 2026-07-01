@@ -42,8 +42,7 @@ namespace MHZE.GearSystem.Editor
                     foreach (var ov in overlaps)
                     {
                         bool isActive = constraint.HasActiveOverlap &&
-                            Vector3.Distance(ov.pointA, constraint.ActiveOverlap.pointA) < 0.0001f &&
-                            Vector3.Distance(ov.pointB, constraint.ActiveOverlap.pointB) < 0.0001f;
+                            ov.IsSamePair(constraint.ActiveOverlap);
                         Handles.color = isActive ? Color.yellow : new Color(1f, 0.7f, 0f);
                         Handles.DrawLine(ov.pointA, ov.pointB);
                     }
@@ -122,12 +121,10 @@ namespace MHZE.GearSystem.Editor
                 {
                     foreach (var ov in overlaps)
                     {
-                        if (Vector3.Distance(pos, ov.pointA) < 0.0001f)
+                        if (sphereOnTeeth ? ov.toothIndexA == i : ov.toothIndexB == i)
                         {
                             overlapping = true;
-                            if (hasActiveOverlap &&
-                                Vector3.Distance(ov.pointA, activeOverlap.pointA) < 0.0001f &&
-                                Vector3.Distance(ov.pointB, activeOverlap.pointB) < 0.0001f)
+                            if (hasActiveOverlap && ov.IsSamePair(activeOverlap))
                                 isActive = true;
                             break;
                         }

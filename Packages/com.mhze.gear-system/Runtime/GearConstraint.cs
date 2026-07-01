@@ -13,6 +13,12 @@ namespace MHZE.GearSystem
         public float distance;
         public Transform transformA;
         public Transform transformB;
+        public int toothIndexA;
+        public int toothIndexB;
+        public readonly bool IsSamePair(in OverlapInfo other)
+        {
+            return toothIndexA == other.toothIndexA && toothIndexB == other.toothIndexB;
+        }
     }
 
     [AddComponentMenu("Mechanical/Gear Constraint")]
@@ -73,9 +79,12 @@ namespace MHZE.GearSystem
         private static readonly OverlapInfoComparer m_OverlapComparer = new OverlapInfoComparer();
         private OverlapInfo m_ActiveOverlap;
         private bool m_HasActiveOverlap;
+        private OverlapInfo m_LastActiveOverlap;
+        private bool m_HasLastActive;
 
         public bool HasActiveOverlap => m_HasActiveOverlap;
         public OverlapInfo ActiveOverlap => m_ActiveOverlap;
+        private bool HasSpringAxis => springAxisX || springAxisY || springAxisZ;
         private ConfigurableJoint m_ActiveJoint;
         private int m_FrameCounter;
 
@@ -92,7 +101,9 @@ namespace MHZE.GearSystem
 
             CheckOverlaps();
 
-            if (createJoints && m_ActiveJoint != null && m_HasActiveOverlap)
+            if (!HasSpringAxis && m_ActiveJoint != null)
+                DestroyJointGO();
+            else if (createJoints && m_ActiveJoint != null && m_HasActiveOverlap)
                 UpdateJointGO(m_ActiveOverlap);
         }
 
@@ -105,61 +116,110 @@ namespace MHZE.GearSystem
             Vector3[] posA = GetSpherePositions(tA, radiusA, axisA, toothCountA, true, sphereRadiusOffsetA);
             Vector3[] posB = GetSpherePositions(tB, radiusB, axisB, toothCountB, false, sphereRadiusOffsetB);
 
-            float minDist = overlapSphereRadius * 2f;
-            OverlapInfo? candidate = null;
+            float minDistSq = (overlapSphereRadius + overlapSphereRadius) * (overlapSphereRadius + overlapSphereRadius);
+            OverlapInfo? closestOv = null;
+            OverlapInfo? currentActiveOv = null;
+            OverlapInfo? differentOv = null;
+            float bestDistSq = float.MaxValue;
+            bool lastActiveStillPresent = false;
 
-            for (int i = 0; i < posA.Length && candidate == null; i++)
+            for (int i = 0; i < posA.Length; i++)
             {
-                for (int j = 0; j < posB.Length && candidate == null; j++)
+                for (int j = 0; j < posB.Length; j++)
                 {
-                    float dist = Vector3.Distance(posA[i], posB[j]);
-                    if (dist < minDist)
+                    float distSq = (posA[i] - posB[j]).sqrMagnitude;
+                    if (distSq < minDistSq)
                     {
-                        candidate = new OverlapInfo
+                        bool isActive = m_HasActiveOverlap && i == m_ActiveOverlap.toothIndexA && j == m_ActiveOverlap.toothIndexB;
+                        bool isLastActive = m_HasLastActive && i == m_LastActiveOverlap.toothIndexA && j == m_LastActiveOverlap.toothIndexB;
+
+                        if (isLastActive)
+                            lastActiveStillPresent = true;
+
+                        var ov = new OverlapInfo
                         {
                             pointA = posA[i],
                             pointB = posB[j],
-                            distance = dist,
+                            distance = Mathf.Sqrt(distSq),
                             transformA = tA,
-                            transformB = tB
+                            transformB = tB,
+                            toothIndexA = i,
+                            toothIndexB = j
                         };
+
+                        if (isActive)
+                            currentActiveOv = ov;
+                        else if (m_HasActiveOverlap && differentOv == null && !isLastActive)
+                            differentOv = ov;
+
+                        if (!isLastActive && distSq < bestDistSq)
+                        {
+                            bestDistSq = distSq;
+                            closestOv = ov;
+                        }
                     }
                 }
             }
 
-            bool hasCandidate = candidate.HasValue;
+            if (!lastActiveStillPresent)
+                m_HasLastActive = false;
 
-            if (hasCandidate && !m_HasActiveOverlap)
+            if (m_HasActiveOverlap)
             {
-                onOverlapStarted?.Invoke(candidate.Value);
-                if (createJoints)
-                    CreateJointGO(candidate.Value);
-            }
-            else if (hasCandidate && m_HasActiveOverlap)
-            {
-                if (!m_OverlapComparer.Equals(candidate.Value, m_ActiveOverlap))
+                if (currentActiveOv.HasValue)
                 {
-                    onOverlapEnded?.Invoke(m_ActiveOverlap);
-                    onOverlapStarted?.Invoke(candidate.Value);
+                    if (differentOv.HasValue)
+                    {
+                        m_LastActiveOverlap = m_ActiveOverlap;
+                        m_HasLastActive = true;
+                        onOverlapEnded?.Invoke(m_ActiveOverlap);
+                        m_ActiveOverlap = differentOv.Value;
+                        onOverlapStarted?.Invoke(m_ActiveOverlap);
+                        if (createJoints && HasSpringAxis)
+                        {
+                            if (m_ActiveJoint != null)
+                                UpdateJointGO(m_ActiveOverlap);
+                            else
+                                CreateJointGO(m_ActiveOverlap);
+                        }
+                    }
+                    else
+                    {
+                        m_ActiveOverlap = currentActiveOv.Value;
+                        if (createJoints && HasSpringAxis && m_ActiveJoint != null)
+                            UpdateJointGO(m_ActiveOverlap);
+                    }
+                    return;
                 }
-                if (createJoints && m_ActiveJoint != null)
-                    UpdateJointGO(candidate.Value);
-            }
-            else if (!hasCandidate && m_HasActiveOverlap)
-            {
-                onOverlapEnded?.Invoke(m_ActiveOverlap);
-                if (createJoints)
-                    DestroyJointGO();
+
+                if (closestOv.HasValue)
+                {
+                    m_LastActiveOverlap = m_ActiveOverlap;
+                    m_HasLastActive = true;
+                    onOverlapEnded?.Invoke(m_ActiveOverlap);
+                    m_ActiveOverlap = closestOv.Value;
+                    onOverlapStarted?.Invoke(m_ActiveOverlap);
+                    if (createJoints && HasSpringAxis)
+                    {
+                        DestroyJointGO();
+                        CreateJointGO(m_ActiveOverlap);
+                    }
+                }
+                else
+                {
+                    if (createJoints && HasSpringAxis && m_ActiveJoint != null)
+                        DestroyJointGO();
+                }
+                return;
             }
 
-            if (hasCandidate)
+            if (closestOv.HasValue)
             {
-                m_ActiveOverlap = candidate.Value;
+                m_ActiveOverlap = closestOv.Value;
                 m_HasActiveOverlap = true;
-            }
-            else
-            {
-                m_HasActiveOverlap = false;
+                onOverlapStarted?.Invoke(m_ActiveOverlap);
+                if (createJoints && HasSpringAxis)
+                    CreateJointGO(m_ActiveOverlap);
             }
         }
 
@@ -212,7 +272,9 @@ namespace MHZE.GearSystem
                             pointB = posB[j],
                             distance = dist,
                             transformA = tA,
-                            transformB = tB
+                            transformB = tB,
+                            toothIndexA = i,
+                            toothIndexB = j
                         });
                     }
                 }
@@ -302,13 +364,12 @@ namespace MHZE.GearSystem
         {
             public bool Equals(OverlapInfo a, OverlapInfo b)
             {
-                return Vector3.Distance(a.pointA, b.pointA) < 0.0001f &&
-                       Vector3.Distance(a.pointB, b.pointB) < 0.0001f;
+                return a.toothIndexA == b.toothIndexA && a.toothIndexB == b.toothIndexB;
             }
 
             public int GetHashCode(OverlapInfo obj)
             {
-                return obj.pointA.GetHashCode() ^ (obj.pointB.GetHashCode() << 2);
+                return obj.toothIndexA ^ (obj.toothIndexB << 16);
             }
         }
     }
