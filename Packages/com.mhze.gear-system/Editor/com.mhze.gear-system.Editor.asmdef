@@ -2,8 +2,7 @@
   "name": "com.mhze.gear-system.Editor",
   "rootNamespace": "MHZE.GearSystem.Editor",
   "references": [
-    "com.mhze.gear-system.Runtime",
-    "com.mhze.gear-system.JointBase"
+    "com.mhze.gear-system.Runtime"
 ],
   "includePlatforms": ["Editor"],
   "excludePlatforms": [],

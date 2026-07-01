@@ -21,16 +21,31 @@ namespace MHZE.GearSystem.Editor
                 Transform mA = constraint.meshA != null ? constraint.meshA : constraint.gearA;
                 Transform mB = constraint.meshB != null ? constraint.meshB : constraint.gearB;
 
+                OverlapInfo[] overlaps = constraint.debugShowOverlaps ? constraint.GetOverlaps() : null;
+
+                float sphereOffsetA = constraint.sphereRadiusOffsetA * constraint.toothHeight;
+                float sphereOffsetB = constraint.sphereRadiusOffsetB * constraint.toothHeight;
+
                 DrawGear(mA, constraint.radiusA, constraint.axisA,
-                    constraint.toothCountA, constraint.toothHeight, constraint.toothWidth, constraint.debugColorA);
+                    constraint.toothCountA, constraint.toothHeight, constraint.toothWidth,
+                    constraint.debugColorA, constraint.overlapSphereRadius, true, sphereOffsetA, overlaps);
 
                 DrawGear(mB, constraint.radiusB, constraint.axisB,
-                    constraint.toothCountB, constraint.toothHeight, constraint.toothWidth, constraint.debugColorB);
+                    constraint.toothCountB, constraint.toothHeight, constraint.toothWidth,
+                    constraint.debugColorB, constraint.overlapSphereRadius, false, sphereOffsetB, overlaps);
+
+                if (overlaps != null && overlaps.Length > 0)
+                {
+                    Handles.color = Color.yellow;
+                    foreach (var ov in overlaps)
+                        Handles.DrawLine(ov.pointA, ov.pointB);
+                }
             }
         }
 
         private static void DrawGear(Transform gearTransform, float radius, GearAxis axis,
-            float toothCount, float toothHeight, float toothWidth, Color color)
+            float toothCount, float toothHeight, float toothWidth, Color color, float sphereRadius, bool sphereOnTeeth,
+            float sphereRadiusOffset, OverlapInfo[] overlaps)
         {
             if (gearTransform == null || radius <= 0f || toothCount <= 0f) return;
 
@@ -84,6 +99,39 @@ namespace MHZE.GearSystem.Editor
             // Radius circle outline
             Handles.color = color;
             Handles.DrawWireArc(center, normal, tangent, 360f, radius);
+
+            // Spheres (wireframe, sphere-collider style)
+            float sphereOffset = sphereOnTeeth ? 0f : angleStep * 0.5f;
+
+            for (int i = 0; i < toothCountInt; i++)
+            {
+                Vector3 dir = Quaternion.AngleAxis(i * angleStep + offsetAngle + sphereOffset, normal) * tangent;
+                Vector3 pos = center + dir * (radius + sphereRadiusOffset);
+
+                bool overlapping = false;
+                if (overlaps != null)
+                {
+                    foreach (var ov in overlaps)
+                    {
+                        if (Vector3.Distance(pos, ov.pointA) < 0.0001f ||
+                            Vector3.Distance(pos, ov.pointB) < 0.0001f)
+                        {
+                            overlapping = true;
+                            break;
+                        }
+                    }
+                }
+
+                Handles.color = overlapping ? Color.yellow : color;
+                DrawWireSphere(pos, sphereRadius);
+            }
+        }
+
+        private static void DrawWireSphere(Vector3 center, float radius)
+        {
+            Handles.DrawWireDisc(center, Vector3.up, radius);
+            Handles.DrawWireDisc(center, Vector3.right, radius);
+            Handles.DrawWireDisc(center, Vector3.forward, radius);
         }
 
         private static Vector3 AxisToVector(GearAxis axis, Transform transform)

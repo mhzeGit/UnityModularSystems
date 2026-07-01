@@ -20,8 +20,14 @@ namespace MHZE.GearSystem.Editor
         private SerializedProperty m_ToothHeight;
         private SerializedProperty m_ToothWidth;
         private SerializedProperty m_MeshOffset;
+        private SerializedProperty m_OverlapSphereRadius;
+        private SerializedProperty m_OverlapCheckInterval;
+        private SerializedProperty m_SphereRadiusOffsetA;
+        private SerializedProperty m_SphereRadiusOffsetB;
+        private SerializedProperty m_CreateJoints;
         private SerializedProperty m_DebugColorA;
         private SerializedProperty m_DebugColorB;
+        private SerializedProperty m_DebugShowOverlaps;
         private SerializedProperty m_DebugDraw;
         private SerializedProperty m_DebugLog;
 
@@ -45,8 +51,14 @@ namespace MHZE.GearSystem.Editor
             m_ToothHeight = serializedObject.FindProperty("toothHeight");
             m_ToothWidth = serializedObject.FindProperty("toothWidth");
             m_MeshOffset = serializedObject.FindProperty("meshOffset");
+            m_OverlapSphereRadius = serializedObject.FindProperty("overlapSphereRadius");
+            m_OverlapCheckInterval = serializedObject.FindProperty("overlapCheckInterval");
+            m_SphereRadiusOffsetA = serializedObject.FindProperty("sphereRadiusOffsetA");
+            m_SphereRadiusOffsetB = serializedObject.FindProperty("sphereRadiusOffsetB");
+            m_CreateJoints = serializedObject.FindProperty("createJoints");
             m_DebugColorA = serializedObject.FindProperty("debugColorA");
             m_DebugColorB = serializedObject.FindProperty("debugColorB");
+            m_DebugShowOverlaps = serializedObject.FindProperty("debugShowOverlaps");
             m_DebugDraw = serializedObject.FindProperty("debugDraw");
             m_DebugLog = serializedObject.FindProperty("debugLog");
         }
@@ -66,6 +78,11 @@ namespace MHZE.GearSystem.Editor
                 EditorGUI.indentLevel++;
                 EditorGUILayout.PropertyField(m_ToothHeight, new GUIContent("Tooth Height"));
                 EditorGUILayout.PropertyField(m_ToothWidth, new GUIContent("Tooth Width"));
+                EditorGUILayout.PropertyField(m_OverlapSphereRadius, new GUIContent("Overlap Sphere Radius"));
+                EditorGUILayout.Slider(m_SphereRadiusOffsetA, 0f, 1f, new GUIContent("Sphere Offset A", "0 = at radius, 1 = at tooth tip."));
+                EditorGUILayout.Slider(m_SphereRadiusOffsetB, 0f, 1f, new GUIContent("Sphere Offset B", "0 = at radius, 1 = at tooth tip."));
+                EditorGUILayout.PropertyField(m_OverlapCheckInterval, new GUIContent("Overlap Check Interval", "Frames between overlap checks. 0 = disabled."));
+                EditorGUILayout.PropertyField(m_CreateJoints, new GUIContent("Create Joints", "Create ConfigurableJoints at overlapping tooth sphere positions."));
                 EditorGUILayout.PropertyField(m_MeshOffset, new GUIContent("Mesh Offset", "Angular offset for gear mesh alignment (degrees)."));
                 EditorGUI.indentLevel--;
                 EditorGUILayout.Space(2);
@@ -79,6 +96,7 @@ namespace MHZE.GearSystem.Editor
                 EditorGUILayout.PropertyField(m_DebugColorA, new GUIContent("Debug Color A"));
                 EditorGUILayout.PropertyField(m_DebugColorB, new GUIContent("Debug Color B"));
                 EditorGUILayout.PropertyField(m_DebugDraw, new GUIContent("Debug Draw", "Draw gear gizmos in the Scene view."));
+                EditorGUILayout.PropertyField(m_DebugShowOverlaps, new GUIContent("Debug Show Overlaps", "Highlight overlapping spheres."));
                 EditorGUILayout.PropertyField(m_DebugLog, new GUIContent("Debug Log", "Log constraint values to console every 60 frames."));
                 EditorGUI.indentLevel--;
             }

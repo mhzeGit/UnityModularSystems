@@ -717,12 +717,12 @@ MonoBehaviour:
   meshA: {fileID: 314987458}
   radiusA: 0.36
   axisA: 1
-  toothCountA: 5
+  toothCountA: 12
   gearB: {fileID: 470909633}
   meshB: {fileID: 95575522}
   radiusB: 0.72
   axisB: 1
-  toothCountB: 5
+  toothCountB: 24
   toothHeight: 0.1
   toothWidth: 36
   meshOffset: 0
