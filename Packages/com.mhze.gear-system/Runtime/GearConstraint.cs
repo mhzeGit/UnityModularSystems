@@ -52,6 +52,12 @@ namespace MHZE.GearSystem
         public float jointMaxDistance = 0.1f;
         [Tooltip("Maximum force the joint spring can apply.")]
         public float jointMaxForce = 1000f;
+        [Tooltip("Apply spring pull on gear A's local X axis.")]
+        public bool springAxisX = true;
+        [Tooltip("Apply spring pull on gear A's local Y axis.")]
+        public bool springAxisY = true;
+        [Tooltip("Apply spring pull on gear A's local Z axis.")]
+        public bool springAxisZ = true;
         public Color debugColorA = Color.red;
         public Color debugColorB = Color.blue;
         public bool debugDraw;
@@ -237,9 +243,9 @@ namespace MHZE.GearSystem
             joint.connectedAnchor = rbB.transform.InverseTransformPoint(ov.pointB);
             joint.autoConfigureConnectedAnchor = false;
 
-            joint.xMotion = ConfigurableJointMotion.Limited;
-            joint.yMotion = ConfigurableJointMotion.Limited;
-            joint.zMotion = ConfigurableJointMotion.Limited;
+            joint.xMotion = springAxisX ? ConfigurableJointMotion.Limited : ConfigurableJointMotion.Free;
+            joint.yMotion = springAxisY ? ConfigurableJointMotion.Limited : ConfigurableJointMotion.Free;
+            joint.zMotion = springAxisZ ? ConfigurableJointMotion.Limited : ConfigurableJointMotion.Free;
             joint.angularXMotion = ConfigurableJointMotion.Free;
             joint.angularYMotion = ConfigurableJointMotion.Free;
             joint.angularZMotion = ConfigurableJointMotion.Free;
@@ -250,9 +256,10 @@ namespace MHZE.GearSystem
                 positionDamper = jointDamper,
                 maximumForce = jointMaxForce
             };
-            joint.xDrive = drive;
-            joint.yDrive = drive;
-            joint.zDrive = drive;
+
+            if (springAxisX) joint.xDrive = drive;
+            if (springAxisY) joint.yDrive = drive;
+            if (springAxisZ) joint.zDrive = drive;
 
             joint.targetPosition = Vector3.zero;
             joint.targetAngularVelocity = Vector3.zero;
