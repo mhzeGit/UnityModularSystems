@@ -36,11 +36,13 @@ namespace MHZE.GearSystem.Editor
         private SerializedProperty m_DebugShowOverlaps;
         private SerializedProperty m_DebugDraw;
         private SerializedProperty m_DebugLog;
+        private SerializedProperty m_SpawnLookAt;
 
         private bool m_ShowGearA = true;
         private bool m_ShowGearB = true;
         private bool m_ShowVisual;
         private bool m_ShowDebug;
+        private bool m_ShowLookAt;
 
         private void OnEnable()
         {
@@ -73,6 +75,7 @@ namespace MHZE.GearSystem.Editor
             m_DebugShowOverlaps = serializedObject.FindProperty("debugShowOverlaps");
             m_DebugDraw = serializedObject.FindProperty("debugDraw");
             m_DebugLog = serializedObject.FindProperty("debugLog");
+            m_SpawnLookAt = serializedObject.FindProperty("spawnLookAt");
         }
 
         public override void OnInspectorGUI()
@@ -122,6 +125,16 @@ namespace MHZE.GearSystem.Editor
                 EditorGUILayout.PropertyField(m_DebugDraw, new GUIContent("Debug Draw", "Draw gear gizmos in the Scene view."));
                 EditorGUILayout.PropertyField(m_DebugShowOverlaps, new GUIContent("Debug Show Overlaps", "Highlight overlapping spheres."));
                 EditorGUILayout.PropertyField(m_DebugLog, new GUIContent("Debug Log", "Log constraint values to console every 60 frames."));
+                EditorGUI.indentLevel--;
+            }
+
+            EditorGUILayout.Space(2);
+            m_ShowLookAt = EditorGUILayout.Foldout(m_ShowLookAt, "Look At", true, EditorStyles.foldoutHeader);
+            if (m_ShowLookAt)
+            {
+                EditorGUI.indentLevel++;
+                EditorGUILayout.PropertyField(m_SpawnLookAt, new GUIContent("Spawn Look At",
+                    "Spawns a helper GameObject at gear A that continuously orients gear A's axis toward gear B."));
                 EditorGUI.indentLevel--;
             }
 

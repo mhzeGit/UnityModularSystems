@@ -74,6 +74,9 @@ namespace MHZE.GearSystem
         public System.Action<OverlapInfo> onOverlapStarted;
         public System.Action<OverlapInfo> onOverlapEnded;
 
+        [Tooltip("Spawn a helper GameObject at gear A that continuously orients its axis toward gear B.")]
+        public bool spawnLookAt;
+
         private static readonly OverlapInfoComparer m_OverlapComparer = new OverlapInfoComparer();
         private OverlapInfo m_ActiveOverlap;
         private bool m_HasActiveOverlap;
@@ -84,6 +87,7 @@ namespace MHZE.GearSystem
         public OverlapInfo ActiveOverlap => m_ActiveOverlap;
         private bool HasSpringAxis => springAxisX || springAxisY || springAxisZ;
         private ConfigurableJoint m_ActiveJoint;
+        private GearLookAt m_LookAt;
         private int m_FrameCounter;
 
         private Transform EffectiveTransformA => meshA != null ? meshA : gearA;
@@ -91,6 +95,8 @@ namespace MHZE.GearSystem
 
         private void Update()
         {
+            UpdateLookAt();
+
             if (overlapCheckInterval <= 0) return;
 
             m_FrameCounter++;
@@ -103,6 +109,30 @@ namespace MHZE.GearSystem
                 DestroyJointGO();
             else if (createJoints && m_ActiveJoint != null && m_HasActiveOverlap)
                 UpdateJointGO(m_ActiveOverlap);
+        }
+
+        private void UpdateLookAt()
+        {
+            if (m_LookAt == null && spawnLookAt)
+                SpawnLookAt();
+            else if (m_LookAt != null && !spawnLookAt)
+                DestroyLookAt();
+        }
+
+        private void SpawnLookAt()
+        {
+            if (gearA == null || gearB == null) return;
+            m_LookAt = GearLookAt.Spawn(gearA, gearB, axisA);
+        }
+
+        private void DestroyLookAt()
+        {
+            if (m_LookAt != null)
+            {
+                if (m_LookAt.gameObject != null)
+                    Destroy(m_LookAt.gameObject);
+                m_LookAt = null;
+            }
         }
 
         public void CheckOverlaps()
@@ -351,6 +381,7 @@ namespace MHZE.GearSystem
         private void OnDestroy()
         {
             DestroyJointGO();
+            DestroyLookAt();
         }
 
         private class OverlapInfoComparer : IEqualityComparer<OverlapInfo>
