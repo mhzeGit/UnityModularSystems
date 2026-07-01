@@ -69,8 +69,8 @@ namespace MHZE.GearSystem.Editor
 
             EditorGUILayout.Space(4);
 
-            DrawGearSection("Gear A", m_GearA, m_MeshA, m_RadiusA, m_AxisA, m_ToothCountA, ref m_ShowGearA);
-            DrawGearSection("Gear B", m_GearB, m_MeshB, m_RadiusB, m_AxisB, m_ToothCountB, ref m_ShowGearB);
+            DrawGearSection("Gear A", m_GearA, m_MeshA, m_RadiusA, m_AxisA, m_ToothCountA, m_SphereRadiusOffsetA, ref m_ShowGearA);
+            DrawGearSection("Gear B", m_GearB, m_MeshB, m_RadiusB, m_AxisB, m_ToothCountB, m_SphereRadiusOffsetB, ref m_ShowGearB);
 
             m_ShowVisual = EditorGUILayout.Foldout(m_ShowVisual, "Visual", true, EditorStyles.foldoutHeader);
             if (m_ShowVisual)
@@ -79,8 +79,6 @@ namespace MHZE.GearSystem.Editor
                 EditorGUILayout.PropertyField(m_ToothHeight, new GUIContent("Tooth Height"));
                 EditorGUILayout.PropertyField(m_ToothWidth, new GUIContent("Tooth Width"));
                 EditorGUILayout.PropertyField(m_OverlapSphereRadius, new GUIContent("Overlap Sphere Radius"));
-                EditorGUILayout.Slider(m_SphereRadiusOffsetA, 0f, 1f, new GUIContent("Sphere Offset A", "0 = at radius, 1 = at tooth tip."));
-                EditorGUILayout.Slider(m_SphereRadiusOffsetB, 0f, 1f, new GUIContent("Sphere Offset B", "0 = at radius, 1 = at tooth tip."));
                 EditorGUILayout.PropertyField(m_OverlapCheckInterval, new GUIContent("Overlap Check Interval", "Frames between overlap checks. 0 = disabled."));
                 EditorGUILayout.PropertyField(m_CreateJoints, new GUIContent("Create Joints", "Create ConfigurableJoints at overlapping tooth sphere positions."));
                 EditorGUILayout.PropertyField(m_MeshOffset, new GUIContent("Mesh Offset", "Angular offset for gear mesh alignment (degrees)."));
@@ -104,7 +102,7 @@ namespace MHZE.GearSystem.Editor
             serializedObject.ApplyModifiedProperties();
         }
 
-        private static void DrawGearSection(string label, SerializedProperty transformProp, SerializedProperty meshProp, SerializedProperty radiusProp, SerializedProperty axisProp, SerializedProperty toothCountProp, ref bool show)
+        private static void DrawGearSection(string label, SerializedProperty transformProp, SerializedProperty meshProp, SerializedProperty radiusProp, SerializedProperty axisProp, SerializedProperty toothCountProp, SerializedProperty sphereOffsetProp, ref bool show)
         {
             show = EditorGUILayout.Foldout(show, label, true, EditorStyles.foldoutHeader);
             if (!show) return;
@@ -115,6 +113,7 @@ namespace MHZE.GearSystem.Editor
             EditorGUILayout.PropertyField(radiusProp, new GUIContent("Radius"));
             EditorGUILayout.PropertyField(axisProp, new GUIContent("Axis"));
             EditorGUILayout.PropertyField(toothCountProp, new GUIContent("Tooth Count"));
+            EditorGUILayout.Slider(sphereOffsetProp, 0f, 1f, new GUIContent("Sphere Offset", "0 = at radius, 1 = at tooth tip."));
             EditorGUI.indentLevel--;
             EditorGUILayout.Space(2);
         }
