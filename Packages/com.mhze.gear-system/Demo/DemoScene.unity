@@ -119,6 +119,11 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!4 &95575522 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6691340547225457361, guid: 6fc20ee77df3a034da93cc090e1f0be3, type: 3}
+  m_PrefabInstance: {fileID: 470909631}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &130807112
 GameObject:
   m_ObjectHideFlags: 0
@@ -295,6 +300,11 @@ Transform:
   m_Children: []
   m_Father: {fileID: 604712594}
   m_LocalEulerAnglesHint: {x: 50, y: -149.959, z: 0}
+--- !u!4 &314987458 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3684015668735582324, guid: 6fc20ee77df3a034da93cc090e1f0be3, type: 3}
+  m_PrefabInstance: {fileID: 2076319381}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &434130513
 GameObject:
   m_ObjectHideFlags: 0
@@ -420,6 +430,11 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 0}
   m_SourcePrefab: {fileID: 100100000, guid: 6fc20ee77df3a034da93cc090e1f0be3, type: 3}
+--- !u!4 &470909633 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2853912371937413033, guid: 6fc20ee77df3a034da93cc090e1f0be3, type: 3}
+  m_PrefabInstance: {fileID: 470909631}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &470909634 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3117138625191409940, guid: 6fc20ee77df3a034da93cc090e1f0be3, type: 3}
@@ -698,22 +713,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bf27711b02086fc4fbf82f94581a1f69, type: 3}
   m_Name: 
   m_EditorClassIdentifier: com.mhze.gear-system.Runtime::MHZE.GearSystem.GearConstraint
-  gearA: {fileID: 0}
-  meshA: {fileID: 0}
-  radiusA: 0.5
+  gearA: {fileID: 2076319383}
+  meshA: {fileID: 314987458}
+  radiusA: 0.36
   axisA: 1
   toothCountA: 5
-  gearB: {fileID: 0}
-  meshB: {fileID: 0}
-  radiusB: 0.5
+  gearB: {fileID: 470909633}
+  meshB: {fileID: 95575522}
+  radiusB: 0.72
   axisB: 1
   toothCountB: 5
   toothHeight: 0.1
   toothWidth: 36
   meshOffset: 0
-  debugDraw: 0
+  debugDraw: 1
   debugLog: 0
-  reverseB: 0
 --- !u!1001 &2076319381
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -785,6 +799,11 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 0}
   m_SourcePrefab: {fileID: 100100000, guid: 6fc20ee77df3a034da93cc090e1f0be3, type: 3}
+--- !u!4 &2076319383 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2853912371937413033, guid: 6fc20ee77df3a034da93cc090e1f0be3, type: 3}
+  m_PrefabInstance: {fileID: 2076319381}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &2076319384 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3117138625191409940, guid: 6fc20ee77df3a034da93cc090e1f0be3, type: 3}
