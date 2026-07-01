@@ -724,10 +724,24 @@ MonoBehaviour:
   axisB: 1
   toothCountB: 24
   toothHeight: 0.1
-  toothWidth: 36
+  toothWidth: 0.1
   meshOffset: 0
+  overlapSphereRadius: 0.06
+  sphereRadiusOffsetA: 0.5
+  sphereRadiusOffsetB: 0.5
+  overlapCheckInterval: 1
+  jointSpring: 500
+  jointDamper: 10
+  jointMaxForce: 1000
+  springAxisX: 1
+  springAxisY: 1
+  springAxisZ: 1
+  debugColorA: {r: 1, g: 0, b: 0, a: 1}
+  debugColorB: {r: 0, g: 0, b: 1, a: 1}
   debugDraw: 1
+  debugShowOverlaps: 1
   debugLog: 0
+  createJoints: 1
 --- !u!1001 &2076319381
 PrefabInstance:
   m_ObjectHideFlags: 0
