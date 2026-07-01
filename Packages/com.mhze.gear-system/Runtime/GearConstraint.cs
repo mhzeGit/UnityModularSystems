@@ -43,7 +43,15 @@ namespace MHZE.GearSystem
         [Range(0f, 1f)]
         public float sphereRadiusOffsetB = 0.5f;
         [Tooltip("How often (frames) to check for sphere overlaps. 0 = disabled.")]
-        public int overlapCheckInterval = 30;
+        public int overlapCheckInterval = 1;
+        [Tooltip("Spring force pulling the two contact spheres together.")]
+        public float jointSpring = 500f;
+        [Tooltip("Damping for the joint spring.")]
+        public float jointDamper = 10f;
+        [Tooltip("Max distance for spring pull. Beyond this, the joint acts as a hard clamp.")]
+        public float jointMaxDistance = 0.1f;
+        [Tooltip("Maximum force the joint spring can apply.")]
+        public float jointMaxForce = 1000f;
         public Color debugColorA = Color.red;
         public Color debugColorB = Color.blue;
         public bool debugDraw;
@@ -57,7 +65,11 @@ namespace MHZE.GearSystem
         public System.Action<OverlapInfo> onOverlapEnded;
 
         private static readonly OverlapInfoComparer m_OverlapComparer = new OverlapInfoComparer();
-        private HashSet<OverlapInfo> m_PreviousOverlaps = new HashSet<OverlapInfo>(m_OverlapComparer);
+        private OverlapInfo m_ActiveOverlap;
+        private bool m_HasActiveOverlap;
+
+        public bool HasActiveOverlap => m_HasActiveOverlap;
+        public OverlapInfo ActiveOverlap => m_ActiveOverlap;
         private ConfigurableJoint m_ActiveJoint;
         private int m_FrameCounter;
 
@@ -73,6 +85,9 @@ namespace MHZE.GearSystem
             m_FrameCounter = 0;
 
             CheckOverlaps();
+
+            if (createJoints && m_ActiveJoint != null && m_HasActiveOverlap)
+                UpdateJointGO(m_ActiveOverlap);
         }
 
         public void CheckOverlaps()
@@ -85,57 +100,61 @@ namespace MHZE.GearSystem
             Vector3[] posB = GetSpherePositions(tB, radiusB, axisB, toothCountB, false, sphereRadiusOffsetB);
 
             float minDist = overlapSphereRadius * 2f;
-            var currentOverlaps = new HashSet<OverlapInfo>(m_OverlapComparer);
+            OverlapInfo? candidate = null;
 
-            for (int i = 0; i < posA.Length; i++)
+            for (int i = 0; i < posA.Length && candidate == null; i++)
             {
-                for (int j = 0; j < posB.Length; j++)
+                for (int j = 0; j < posB.Length && candidate == null; j++)
                 {
                     float dist = Vector3.Distance(posA[i], posB[j]);
                     if (dist < minDist)
                     {
-                        currentOverlaps.Add(new OverlapInfo
+                        candidate = new OverlapInfo
                         {
                             pointA = posA[i],
                             pointB = posB[j],
                             distance = dist,
                             transformA = tA,
                             transformB = tB
-                        });
+                        };
                     }
                 }
             }
 
-            foreach (var ov in currentOverlaps)
-            {
-                if (!m_PreviousOverlaps.Contains(ov))
-                    onOverlapStarted?.Invoke(ov);
-            }
+            bool hasCandidate = candidate.HasValue;
 
-            foreach (var ov in m_PreviousOverlaps)
+            if (hasCandidate && !m_HasActiveOverlap)
             {
-                if (!currentOverlaps.Contains(ov))
-                    onOverlapEnded?.Invoke(ov);
+                onOverlapStarted?.Invoke(candidate.Value);
+                if (createJoints)
+                    CreateJointGO(candidate.Value);
             }
-
-            if (createJoints)
+            else if (hasCandidate && m_HasActiveOverlap)
             {
-                foreach (var ov in currentOverlaps)
+                if (!m_OverlapComparer.Equals(candidate.Value, m_ActiveOverlap))
                 {
-                    if (!m_PreviousOverlaps.Contains(ov))
-                    {
-                        if (m_ActiveJoint == null)
-                            CreateJointGO(ov);
-                        else
-                            UpdateJointGO(ov);
-                    }
+                    onOverlapEnded?.Invoke(m_ActiveOverlap);
+                    onOverlapStarted?.Invoke(candidate.Value);
                 }
-
-                if (currentOverlaps.Count == 0 && m_ActiveJoint != null)
+                if (createJoints && m_ActiveJoint != null)
+                    UpdateJointGO(candidate.Value);
+            }
+            else if (!hasCandidate && m_HasActiveOverlap)
+            {
+                onOverlapEnded?.Invoke(m_ActiveOverlap);
+                if (createJoints)
                     DestroyJointGO();
             }
 
-            m_PreviousOverlaps = currentOverlaps;
+            if (hasCandidate)
+            {
+                m_ActiveOverlap = candidate.Value;
+                m_HasActiveOverlap = true;
+            }
+            else
+            {
+                m_HasActiveOverlap = false;
+            }
         }
 
         public Vector3[] GetSpherePositions(Transform t, float radius, GearAxis axis, float toothCount, bool onTeeth, float normalizedOffset)
@@ -216,12 +235,34 @@ namespace MHZE.GearSystem
             joint.connectedBody = rbB;
             joint.anchor = rbA.transform.InverseTransformPoint(ov.pointA);
             joint.connectedAnchor = rbB.transform.InverseTransformPoint(ov.pointB);
-            joint.xMotion = ConfigurableJointMotion.Locked;
-            joint.yMotion = ConfigurableJointMotion.Locked;
-            joint.zMotion = ConfigurableJointMotion.Locked;
+            joint.autoConfigureConnectedAnchor = false;
+
+            joint.xMotion = ConfigurableJointMotion.Limited;
+            joint.yMotion = ConfigurableJointMotion.Limited;
+            joint.zMotion = ConfigurableJointMotion.Limited;
             joint.angularXMotion = ConfigurableJointMotion.Free;
             joint.angularYMotion = ConfigurableJointMotion.Free;
             joint.angularZMotion = ConfigurableJointMotion.Free;
+
+            var drive = new JointDrive
+            {
+                positionSpring = jointSpring,
+                positionDamper = jointDamper,
+                maximumForce = jointMaxForce
+            };
+            joint.xDrive = drive;
+            joint.yDrive = drive;
+            joint.zDrive = drive;
+
+            joint.targetPosition = Vector3.zero;
+            joint.targetAngularVelocity = Vector3.zero;
+
+            joint.linearLimit = new SoftJointLimit
+            {
+                limit = jointMaxDistance,
+                bounciness = 0f,
+                contactDistance = 0f
+            };
 
             m_ActiveJoint = joint;
         }

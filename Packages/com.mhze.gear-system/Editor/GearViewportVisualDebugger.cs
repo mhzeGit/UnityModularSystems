@@ -22,30 +22,38 @@ namespace MHZE.GearSystem.Editor
                 Transform mB = constraint.meshB != null ? constraint.meshB : constraint.gearB;
 
                 OverlapInfo[] overlaps = constraint.debugShowOverlaps ? constraint.GetOverlaps() : null;
+                OverlapInfo activeOv = constraint.HasActiveOverlap ? constraint.ActiveOverlap : default;
 
                 float sphereOffsetA = constraint.sphereRadiusOffsetA * constraint.toothHeight;
                 float sphereOffsetB = constraint.sphereRadiusOffsetB * constraint.toothHeight;
 
                 DrawGear(mA, constraint.radiusA, constraint.axisA,
                     constraint.toothCountA, constraint.toothHeight, constraint.toothWidth,
-                    constraint.debugColorA, constraint.overlapSphereRadius, true, sphereOffsetA, overlaps);
+                    constraint.debugColorA, constraint.overlapSphereRadius, true, sphereOffsetA,
+                    overlaps, constraint.HasActiveOverlap, activeOv);
 
                 DrawGear(mB, constraint.radiusB, constraint.axisB,
                     constraint.toothCountB, constraint.toothHeight, constraint.toothWidth,
-                    constraint.debugColorB, constraint.overlapSphereRadius, false, sphereOffsetB, overlaps);
+                    constraint.debugColorB, constraint.overlapSphereRadius, false, sphereOffsetB,
+                    overlaps, constraint.HasActiveOverlap, activeOv);
 
                 if (overlaps != null && overlaps.Length > 0)
                 {
-                    Handles.color = Color.yellow;
                     foreach (var ov in overlaps)
+                    {
+                        bool isActive = constraint.HasActiveOverlap &&
+                            Vector3.Distance(ov.pointA, constraint.ActiveOverlap.pointA) < 0.0001f &&
+                            Vector3.Distance(ov.pointB, constraint.ActiveOverlap.pointB) < 0.0001f;
+                        Handles.color = isActive ? Color.yellow : new Color(1f, 0.7f, 0f);
                         Handles.DrawLine(ov.pointA, ov.pointB);
+                    }
                 }
             }
         }
 
         private static void DrawGear(Transform gearTransform, float radius, GearAxis axis,
             float toothCount, float toothHeight, float toothWidth, Color color, float sphereRadius, bool sphereOnTeeth,
-            float sphereRadiusOffset, OverlapInfo[] overlaps)
+            float sphereRadiusOffset, OverlapInfo[] overlaps, bool hasActiveOverlap, OverlapInfo activeOverlap)
         {
             if (gearTransform == null || radius <= 0f || toothCount <= 0f) return;
 
@@ -109,20 +117,29 @@ namespace MHZE.GearSystem.Editor
                 Vector3 pos = center + dir * (radius + sphereRadiusOffset);
 
                 bool overlapping = false;
+                bool isActive = false;
                 if (overlaps != null)
                 {
                     foreach (var ov in overlaps)
                     {
-                        if (Vector3.Distance(pos, ov.pointA) < 0.0001f ||
-                            Vector3.Distance(pos, ov.pointB) < 0.0001f)
+                        if (Vector3.Distance(pos, ov.pointA) < 0.0001f)
                         {
                             overlapping = true;
+                            if (hasActiveOverlap &&
+                                Vector3.Distance(ov.pointA, activeOverlap.pointA) < 0.0001f &&
+                                Vector3.Distance(ov.pointB, activeOverlap.pointB) < 0.0001f)
+                                isActive = true;
                             break;
                         }
                     }
                 }
 
-                Handles.color = overlapping ? Color.yellow : color;
+                if (isActive)
+                    Handles.color = Color.yellow;
+                else if (overlapping)
+                    Handles.color = new Color(1f, 0.7f, 0f);
+                else
+                    Handles.color = color;
                 DrawWireSphere(pos, sphereRadius);
             }
         }

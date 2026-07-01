@@ -25,6 +25,10 @@ namespace MHZE.GearSystem.Editor
         private SerializedProperty m_SphereRadiusOffsetA;
         private SerializedProperty m_SphereRadiusOffsetB;
         private SerializedProperty m_CreateJoints;
+        private SerializedProperty m_JointSpring;
+        private SerializedProperty m_JointDamper;
+        private SerializedProperty m_JointMaxDistance;
+        private SerializedProperty m_JointMaxForce;
         private SerializedProperty m_DebugColorA;
         private SerializedProperty m_DebugColorB;
         private SerializedProperty m_DebugShowOverlaps;
@@ -56,6 +60,10 @@ namespace MHZE.GearSystem.Editor
             m_SphereRadiusOffsetA = serializedObject.FindProperty("sphereRadiusOffsetA");
             m_SphereRadiusOffsetB = serializedObject.FindProperty("sphereRadiusOffsetB");
             m_CreateJoints = serializedObject.FindProperty("createJoints");
+            m_JointSpring = serializedObject.FindProperty("jointSpring");
+            m_JointDamper = serializedObject.FindProperty("jointDamper");
+            m_JointMaxDistance = serializedObject.FindProperty("jointMaxDistance");
+            m_JointMaxForce = serializedObject.FindProperty("jointMaxForce");
             m_DebugColorA = serializedObject.FindProperty("debugColorA");
             m_DebugColorB = serializedObject.FindProperty("debugColorB");
             m_DebugShowOverlaps = serializedObject.FindProperty("debugShowOverlaps");
@@ -80,7 +88,16 @@ namespace MHZE.GearSystem.Editor
                 EditorGUILayout.PropertyField(m_ToothWidth, new GUIContent("Tooth Width"));
                 EditorGUILayout.PropertyField(m_OverlapSphereRadius, new GUIContent("Overlap Sphere Radius"));
                 EditorGUILayout.PropertyField(m_OverlapCheckInterval, new GUIContent("Overlap Check Interval", "Frames between overlap checks. 0 = disabled."));
-                EditorGUILayout.PropertyField(m_CreateJoints, new GUIContent("Create Joints", "Create ConfigurableJoints at overlapping tooth sphere positions."));
+                EditorGUILayout.PropertyField(m_CreateJoints, new GUIContent("Create Joints", "Create spring joints at overlapping tooth sphere positions."));
+                if (m_CreateJoints.boolValue)
+                {
+                    EditorGUI.indentLevel++;
+                    EditorGUILayout.PropertyField(m_JointSpring, new GUIContent("Spring", "Spring force pulling contact spheres together."));
+                    EditorGUILayout.PropertyField(m_JointDamper, new GUIContent("Damper", "Damping for the joint spring."));
+                    EditorGUILayout.PropertyField(m_JointMaxDistance, new GUIContent("Max Distance", "Spring pulls within this distance; acts as hard clamp beyond."));
+                    EditorGUILayout.PropertyField(m_JointMaxForce, new GUIContent("Max Force", "Maximum force the spring can apply."));
+                    EditorGUI.indentLevel--;
+                }
                 EditorGUILayout.PropertyField(m_MeshOffset, new GUIContent("Mesh Offset", "Angular offset for gear mesh alignment (degrees)."));
                 EditorGUI.indentLevel--;
                 EditorGUILayout.Space(2);
