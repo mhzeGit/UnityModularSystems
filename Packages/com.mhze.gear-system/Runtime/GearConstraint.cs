@@ -24,6 +24,8 @@ namespace MHZE.GearSystem
         public float toothWidth = 36f;
         [Tooltip("Angular offset for gear mesh alignment (degrees).")]
         public float meshOffset;
+        public Color debugColorA = Color.red;
+        public Color debugColorB = Color.blue;
         public bool debugDraw;
         [Tooltip("Log debug values to console when enabled.")]
         public bool debugLog;

@@ -20,6 +20,8 @@ namespace MHZE.GearSystem.Editor
         private SerializedProperty m_ToothHeight;
         private SerializedProperty m_ToothWidth;
         private SerializedProperty m_MeshOffset;
+        private SerializedProperty m_DebugColorA;
+        private SerializedProperty m_DebugColorB;
         private SerializedProperty m_DebugDraw;
         private SerializedProperty m_DebugLog;
 
@@ -43,6 +45,8 @@ namespace MHZE.GearSystem.Editor
             m_ToothHeight = serializedObject.FindProperty("toothHeight");
             m_ToothWidth = serializedObject.FindProperty("toothWidth");
             m_MeshOffset = serializedObject.FindProperty("meshOffset");
+            m_DebugColorA = serializedObject.FindProperty("debugColorA");
+            m_DebugColorB = serializedObject.FindProperty("debugColorB");
             m_DebugDraw = serializedObject.FindProperty("debugDraw");
             m_DebugLog = serializedObject.FindProperty("debugLog");
         }
@@ -72,6 +76,8 @@ namespace MHZE.GearSystem.Editor
             if (m_ShowDebug)
             {
                 EditorGUI.indentLevel++;
+                EditorGUILayout.PropertyField(m_DebugColorA, new GUIContent("Debug Color A"));
+                EditorGUILayout.PropertyField(m_DebugColorB, new GUIContent("Debug Color B"));
                 EditorGUILayout.PropertyField(m_DebugDraw, new GUIContent("Debug Draw", "Draw gear gizmos in the Scene view."));
                 EditorGUILayout.PropertyField(m_DebugLog, new GUIContent("Debug Log", "Log constraint values to console every 60 frames."));
                 EditorGUI.indentLevel--;

@@ -22,10 +22,10 @@ namespace MHZE.GearSystem.Editor
                 Transform mB = constraint.meshB != null ? constraint.meshB : constraint.gearB;
 
                 DrawGear(mA, constraint.radiusA, constraint.axisA,
-                    constraint.toothCountA, constraint.toothHeight, constraint.toothWidth, Color.cyan);
+                    constraint.toothCountA, constraint.toothHeight, constraint.toothWidth, constraint.debugColorA);
 
                 DrawGear(mB, constraint.radiusB, constraint.axisB,
-                    constraint.toothCountB, constraint.toothHeight, constraint.toothWidth, Color.magenta);
+                    constraint.toothCountB, constraint.toothHeight, constraint.toothWidth, constraint.debugColorB);
             }
         }
 
@@ -41,17 +41,20 @@ namespace MHZE.GearSystem.Editor
                 tangent = Vector3.ProjectOnPlane(gearTransform.forward, normal).normalized;
 
             float outerRadius = radius + toothHeight;
-
-            // Radius circle
-            Handles.color = color;
-            Handles.DrawWireArc(center, normal, tangent, 360f, radius);
-
-            // Tooth profiles
-            Handles.color = color;
             float angleStep = 360f / toothCount;
             float halfWidth = toothWidth * 0.5f;
             float offsetAngle = (toothWidth / radius) * Mathf.Rad2Deg;
             int toothCountInt = Mathf.Max(1, Mathf.RoundToInt(toothCount));
+
+            Color fillColor = color;
+            fillColor.a = 0.15f;
+
+            // Filled gear body
+            Handles.color = fillColor;
+            Handles.DrawSolidDisc(center, normal, radius);
+
+            // Tooth fills and outlines
+            Handles.color = color;
 
             for (int i = 0; i < toothCountInt; i++)
             {
@@ -66,11 +69,21 @@ namespace MHZE.GearSystem.Editor
                 Vector3 outerL = outerC - tan * halfWidth;
                 Vector3 outerR = outerC + tan * halfWidth;
 
+                // Filled tooth
+                Handles.color = fillColor;
+                Handles.DrawAAConvexPolygon(innerL, innerR, outerR, outerL);
+
+                // Tooth outline
+                Handles.color = color;
                 Handles.DrawLine(innerL, innerR);
                 Handles.DrawLine(innerR, outerR);
                 Handles.DrawLine(outerR, outerL);
                 Handles.DrawLine(outerL, innerL);
             }
+
+            // Radius circle outline
+            Handles.color = color;
+            Handles.DrawWireArc(center, normal, tangent, 360f, radius);
         }
 
         private static Vector3 AxisToVector(GearAxis axis, Transform transform)
