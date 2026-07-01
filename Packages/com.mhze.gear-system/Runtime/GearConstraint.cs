@@ -54,8 +54,6 @@ namespace MHZE.GearSystem
         public float jointSpring = 500f;
         [Tooltip("Damping for the joint spring.")]
         public float jointDamper = 10f;
-        [Tooltip("Max distance for spring pull. Beyond this, the joint acts as a hard clamp.")]
-        public float jointMaxDistance = 0.1f;
         [Tooltip("Maximum force the joint spring can apply.")]
         public float jointMaxForce = 1000f;
         [Tooltip("Apply spring pull on gear A's local X axis.")]
@@ -326,12 +324,7 @@ namespace MHZE.GearSystem
             joint.targetPosition = Vector3.zero;
             joint.targetAngularVelocity = Vector3.zero;
 
-            joint.linearLimit = new SoftJointLimit
-            {
-                limit = jointMaxDistance,
-                bounciness = 0f,
-                contactDistance = 0f
-            };
+
 
             m_ActiveJoint = joint;
         }

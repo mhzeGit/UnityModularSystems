@@ -27,7 +27,6 @@ namespace MHZE.GearSystem.Editor
         private SerializedProperty m_CreateJoints;
         private SerializedProperty m_JointSpring;
         private SerializedProperty m_JointDamper;
-        private SerializedProperty m_JointMaxDistance;
         private SerializedProperty m_JointMaxForce;
         private SerializedProperty m_SpringAxisX;
         private SerializedProperty m_SpringAxisY;
@@ -65,7 +64,6 @@ namespace MHZE.GearSystem.Editor
             m_CreateJoints = serializedObject.FindProperty("createJoints");
             m_JointSpring = serializedObject.FindProperty("jointSpring");
             m_JointDamper = serializedObject.FindProperty("jointDamper");
-            m_JointMaxDistance = serializedObject.FindProperty("jointMaxDistance");
             m_JointMaxForce = serializedObject.FindProperty("jointMaxForce");
             m_SpringAxisX = serializedObject.FindProperty("springAxisX");
             m_SpringAxisY = serializedObject.FindProperty("springAxisY");
@@ -100,7 +98,6 @@ namespace MHZE.GearSystem.Editor
                     EditorGUI.indentLevel++;
                     EditorGUILayout.PropertyField(m_JointSpring, new GUIContent("Spring", "Spring force pulling contact spheres together."));
                     EditorGUILayout.PropertyField(m_JointDamper, new GUIContent("Damper", "Damping for the joint spring."));
-                    EditorGUILayout.PropertyField(m_JointMaxDistance, new GUIContent("Max Distance", "Spring pulls within this distance; acts as hard clamp beyond."));
                     EditorGUILayout.PropertyField(m_JointMaxForce, new GUIContent("Max Force", "Maximum force the spring can apply."));
                     EditorGUILayout.LabelField("Spring Axes", EditorStyles.boldLabel);
                     EditorGUI.indentLevel++;
