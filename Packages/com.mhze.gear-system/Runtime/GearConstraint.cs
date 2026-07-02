@@ -1,340 +1,411 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace MHZE.GearSystem
 {
     public enum GearAxis { X, Y, Z }
 
-    [ExecuteAlways]
+    [System.Serializable]
+    public struct OverlapInfo
+    {
+        public Vector3 pointA;
+        public Vector3 pointB;
+        public float distance;
+        public Transform transformA;
+        public Transform transformB;
+        public int toothIndexA;
+        public int toothIndexB;
+        public readonly bool IsSamePair(in OverlapInfo other)
+        {
+            return toothIndexA == other.toothIndexA && toothIndexB == other.toothIndexB;
+        }
+    }
+
     [AddComponentMenu("Mechanical/Gear Constraint")]
     public class GearConstraint : MonoBehaviour
     {
-        [Header("Gear A")]
-        [SerializeField] private Transform m_GearA;
-        [SerializeField] private float m_RadiusA = 0.5f;
-        [SerializeField] private GearAxis m_AxisA = GearAxis.Y;
-        [Header("Gear B")]
-        [SerializeField] private Transform m_GearB;
-        [SerializeField] private float m_RadiusB = 0.5f;
-        [SerializeField] private GearAxis m_AxisB = GearAxis.Y;
+        public Transform gearA;
+        public Transform meshA;
+        public float radiusA = 0.5f;
+        public GearAxis axisA = GearAxis.Y;
+        public float toothCountA = 5f;
 
-        [Header("Visual")]
-        [SerializeField] private float m_ToothDensity = 5f;
-        [SerializeField] private float m_ToothHeight = 0.1f;
-        [SerializeField] private bool m_DebugDraw;
+        public Transform gearB;
+        public Transform meshB;
+        public float radiusB = 0.5f;
+        public GearAxis axisB = GearAxis.Y;
+        public float toothCountB = 5f;
 
-        [Header("Limit")]
-        [SerializeField]
-        [Tooltip("Maximum constraint torque (Nm). 0 = unlimited.")]
-        private float m_MaxTorque = 0f;
-
-        [SerializeField]
+        public float toothHeight = 0.1f;
+        [Tooltip("Angular width of one tooth (degrees). Used for mesh offset alignment.")]
+        public float toothWidth = 0.1f;
+        [Tooltip("Angular offset for gear mesh alignment (degrees).")]
+        public float meshOffset;
+        public float overlapSphereRadius = 0.06f;
+        [Tooltip("Sphere radial offset for gear A. 0 = at radius, 1 = at tooth tip.")]
+        [Range(0f, 1f)]
+        public float sphereRadiusOffsetA = 0.5f;
+        [Tooltip("Sphere radial offset for gear B. 0 = at radius, 1 = at tooth tip.")]
+        [Range(0f, 1f)]
+        public float sphereRadiusOffsetB = 0.5f;
+        [Tooltip("How often (frames) to check for sphere overlaps. 0 = disabled.")]
+        public int overlapCheckInterval = 1;
+        [Tooltip("Spring force pulling the two contact spheres together.")]
+        public float jointSpring = 500f;
+        [Tooltip("Damping for the joint spring.")]
+        public float jointDamper = 10f;
+        [Tooltip("Maximum force the joint spring can apply.")]
+        public float jointMaxForce = 1000f;
+        public Color debugColorA = Color.red;
+        public Color debugColorB = Color.blue;
+        public bool debugDraw;
+        public bool debugShowOverlaps;
         [Tooltip("Log debug values to console when enabled.")]
-        private bool m_DebugLog;
+        public bool debugLog;
 
-        private Quaternion m_PrevWorldRotA;
-        private Quaternion m_PrevWorldRotB;
-        private Vector3 m_PrevWorldPosA;
-        private Vector3 m_PrevWorldPosB;
-        private bool m_HasInitialized;
+        [Tooltip("Automatically create joint GameObjects at overlapping tooth sphere positions.")]
+        public bool createJoints = true;
+        public System.Action<OverlapInfo> onOverlapStarted;
+        public System.Action<OverlapInfo> onOverlapEnded;
 
-        public Transform gearA { get => m_GearA; set => m_GearA = value; }
-        public Transform gearB { get => m_GearB; set => m_GearB = value; }
-        public GearAxis axisA { get => m_AxisA; set => m_AxisA = value; }
-        public GearAxis axisB { get => m_AxisB; set => m_AxisB = value; }
-        public float radiusA { get => m_RadiusA; set => m_RadiusA = value; }
-        public float radiusB { get => m_RadiusB; set => m_RadiusB = value; }
-        public float toothDensity { get => m_ToothDensity; set => m_ToothDensity = value; }
-        public float toothHeight { get => m_ToothHeight; set => m_ToothHeight = value; }
-        public bool debugDraw { get => m_DebugDraw; set => m_DebugDraw = value; }
-        public float maxTorque { get => m_MaxTorque; set => m_MaxTorque = value; }
-        public bool debugLog { get => m_DebugLog; set => m_DebugLog = value; }
+        [Tooltip("Spawn a helper GameObject at gear A that continuously orients its axis toward gear B.")]
+        public bool spawnLookAt;
 
-        public static Vector3 GetAxisVector(GearAxis axis)
+        private static readonly OverlapInfoComparer m_OverlapComparer = new OverlapInfoComparer();
+        private OverlapInfo m_ActiveOverlap;
+        private bool m_HasActiveOverlap;
+        private OverlapInfo m_LastActiveOverlap;
+        private bool m_HasLastActive;
+
+        public bool HasActiveOverlap => m_HasActiveOverlap;
+        public OverlapInfo ActiveOverlap => m_ActiveOverlap;
+        private ConfigurableJoint m_ActiveJoint;
+        private GearLookAt m_LookAt;
+        private int m_FrameCounter;
+
+        private Transform EffectiveTransformA => meshA != null ? meshA : gearA;
+        private Transform EffectiveTransformB => meshB != null ? meshB : gearB;
+
+        private void Update()
         {
-            return axis switch
-            {
-                GearAxis.X => Vector3.right,
-                GearAxis.Z => Vector3.forward,
-                _ => Vector3.up
-            };
-        }
+            UpdateLookAt();
 
-        private static void GetReferenceAxes(GearAxis axis, out Vector3 axisDir, out Vector3 b1, out Vector3 b2)
-        {
-            switch (axis)
+            if (overlapCheckInterval <= 0) return;
+
+            m_FrameCounter++;
+            if (m_FrameCounter < overlapCheckInterval) return;
+            m_FrameCounter = 0;
+
+            CheckOverlaps();
+
+            if (m_ActiveJoint != null)
             {
-                case GearAxis.X:
-                    axisDir = Vector3.right; b1 = Vector3.up; b2 = Vector3.forward;
-                    break;
-                case GearAxis.Z:
-                    axisDir = Vector3.forward; b1 = Vector3.right; b2 = Vector3.up;
-                    break;
-                default:
-                    axisDir = Vector3.up; b1 = Vector3.right; b2 = Vector3.forward;
-                    break;
+                if (!createJoints)
+                    DestroyJointGO();
+                else if (m_HasActiveOverlap)
+                    UpdateJointGO(m_ActiveOverlap);
             }
         }
 
-        private void OnDrawGizmos()
+        private void UpdateLookAt()
         {
-            if (!m_DebugDraw) return;
-            GearConstraintDebugger.Draw(this);
+            if (m_LookAt == null && spawnLookAt)
+                SpawnLookAt();
+            else if (m_LookAt != null && !spawnLookAt)
+                DestroyLookAt();
         }
 
-        public static void DrawGearGizmo(Transform gearTransform, float radius, GearAxis axis, float rotationOffset, float toothDensity, float toothHeight)
+        private void SpawnLookAt()
         {
-            if (gearTransform == null || radius <= 0f) return;
-
-            GetReferenceAxes(axis, out Vector3 axisDir, out Vector3 b1, out Vector3 b2);
-
-            float outerRadius = radius + toothHeight;
-            float halfDepth = 0.05f;
-            int toothCount = Mathf.RoundToInt(2f * Mathf.PI * radius * toothDensity);
-            if (toothCount % 2 != 0) toothCount++;
-            toothCount = Mathf.Max(4, toothCount);
-            int segments = toothCount * 2;
-
-            Vector3 topCenter = axisDir * halfDepth;
-            Vector3 botCenter = -axisDir * halfDepth;
-
-            Color bodyColor = new Color(0.3f, 0.6f, 1f, 0.8f);
-            Color toothColor = new Color(0.2f, 0.5f, 0.9f, 0.8f);
-
-            var prevMatrix = Gizmos.matrix;
-            Quaternion offsetRot = Quaternion.AngleAxis(rotationOffset, axisDir);
-            Gizmos.matrix = gearTransform.localToWorldMatrix * Matrix4x4.Rotate(offsetRot);
-
-            Gizmos.color = bodyColor;
-            DrawGizmoCircle(topCenter, b1, b2, radius, segments);
-            DrawGizmoCircle(botCenter, b1, b2, radius, segments);
-
-            for (int i = 0; i < segments; i += 4)
-            {
-                float angle = 2f * Mathf.PI * i / segments;
-                Vector3 dir = b1 * Mathf.Cos(angle) + b2 * Mathf.Sin(angle);
-                Gizmos.DrawLine(topCenter + dir * radius, botCenter + dir * radius);
-            }
-
-            Gizmos.color = toothColor;
-            float toothHalfWidth = Mathf.PI / toothCount * 0.35f;
-
-            for (int i = 0; i < toothCount; i++)
-            {
-                float angle = 2f * Mathf.PI * i / toothCount;
-
-                Vector3 dirLeft = b1 * Mathf.Cos(angle - toothHalfWidth) + b2 * Mathf.Sin(angle - toothHalfWidth);
-                Vector3 dirRight = b1 * Mathf.Cos(angle + toothHalfWidth) + b2 * Mathf.Sin(angle + toothHalfWidth);
-
-                Vector3 tlInner = topCenter + dirLeft * radius;
-                Vector3 tlOuter = topCenter + dirLeft * outerRadius;
-                Vector3 trInner = topCenter + dirRight * radius;
-                Vector3 trOuter = topCenter + dirRight * outerRadius;
-
-                Vector3 blInner = botCenter + dirLeft * radius;
-                Vector3 blOuter = botCenter + dirLeft * outerRadius;
-                Vector3 brInner = botCenter + dirRight * radius;
-                Vector3 brOuter = botCenter + dirRight * outerRadius;
-
-                Gizmos.DrawLine(tlInner, tlOuter);
-                Gizmos.DrawLine(tlOuter, trOuter);
-                Gizmos.DrawLine(trOuter, trInner);
-
-                Gizmos.DrawLine(blInner, blOuter);
-                Gizmos.DrawLine(blOuter, brOuter);
-                Gizmos.DrawLine(brOuter, brInner);
-
-                Gizmos.DrawLine(tlOuter, blOuter);
-                Gizmos.DrawLine(trOuter, brOuter);
-                Gizmos.DrawLine(tlInner, blInner);
-            }
-            Gizmos.matrix = prevMatrix;
+            if (gearA == null || gearB == null) return;
+            m_LookAt = GearLookAt.Spawn(gearA, gearB, axisA);
         }
 
-        private static void DrawGizmoCircle(Vector3 center, Vector3 b1, Vector3 b2, float radius, int segments)
+        private void DestroyLookAt()
         {
-            Vector3 prev = center + b1 * radius;
-            for (int i = 1; i <= segments; i++)
+            if (m_LookAt != null)
             {
-                float angle = 2f * Mathf.PI * i / segments;
-                Vector3 dir = b1 * Mathf.Cos(angle) + b2 * Mathf.Sin(angle);
-                Vector3 curr = center + dir * radius;
-                Gizmos.DrawLine(prev, curr);
-                prev = curr;
+                if (m_LookAt.gameObject != null)
+                    Destroy(m_LookAt.gameObject);
+                m_LookAt = null;
             }
         }
 
-        private void OnEnable()
+        public void CheckOverlaps()
         {
-            TryInitialize();
-        }
+            Transform tA = EffectiveTransformA;
+            Transform tB = EffectiveTransformB;
+            if (tA == null || tB == null) return;
 
-        private void OnDisable()
-        {
-            m_HasInitialized = false;
-        }
+            Vector3[] posA = GetSpherePositions(tA, radiusA, axisA, toothCountA, true, sphereRadiusOffsetA);
+            Vector3[] posB = GetSpherePositions(tB, radiusB, axisB, toothCountB, false, sphereRadiusOffsetB);
 
-        private void TryInitialize()
-        {
-            if (m_GearA != null && m_GearB != null && m_RadiusA > 0f && m_RadiusB > 0f)
+            float minDistSq = (overlapSphereRadius + overlapSphereRadius) * (overlapSphereRadius + overlapSphereRadius);
+            OverlapInfo? closestOv = null;
+            OverlapInfo? currentActiveOv = null;
+            OverlapInfo? differentOv = null;
+            float bestDistSq = float.MaxValue;
+            bool lastActiveStillPresent = false;
+
+            for (int i = 0; i < posA.Length; i++)
             {
-                m_PrevWorldRotA = m_GearA.rotation;
-                m_PrevWorldRotB = m_GearB.rotation;
-                m_PrevWorldPosA = m_GearA.position;
-                m_PrevWorldPosB = m_GearB.position;
-                m_HasInitialized = true;
+                for (int j = 0; j < posB.Length; j++)
+                {
+                    float distSq = (posA[i] - posB[j]).sqrMagnitude;
+                    if (distSq < minDistSq)
+                    {
+                        bool isActive = m_HasActiveOverlap && i == m_ActiveOverlap.toothIndexA && j == m_ActiveOverlap.toothIndexB;
+                        bool isLastActive = m_HasLastActive && i == m_LastActiveOverlap.toothIndexA && j == m_LastActiveOverlap.toothIndexB;
+
+                        if (isLastActive)
+                            lastActiveStillPresent = true;
+
+                        var ov = new OverlapInfo
+                        {
+                            pointA = posA[i],
+                            pointB = posB[j],
+                            distance = Mathf.Sqrt(distSq),
+                            transformA = tA,
+                            transformB = tB,
+                            toothIndexA = i,
+                            toothIndexB = j
+                        };
+
+                        if (isActive)
+                            currentActiveOv = ov;
+                        else if (m_HasActiveOverlap && differentOv == null && !isLastActive)
+                            differentOv = ov;
+
+                        if (!isLastActive && distSq < bestDistSq)
+                        {
+                            bestDistSq = distSq;
+                            closestOv = ov;
+                        }
+                    }
+                }
             }
-        }
 
-        private void LateUpdate()
-        {
-            if (!m_HasInitialized)
+            if (!lastActiveStillPresent)
+                m_HasLastActive = false;
+
+            if (m_HasActiveOverlap)
             {
-                TryInitialize();
+                if (currentActiveOv.HasValue)
+                {
+                    if (differentOv.HasValue)
+                    {
+                        m_LastActiveOverlap = m_ActiveOverlap;
+                        m_HasLastActive = true;
+                        onOverlapEnded?.Invoke(m_ActiveOverlap);
+                        m_ActiveOverlap = differentOv.Value;
+                        onOverlapStarted?.Invoke(m_ActiveOverlap);
+                        if (createJoints)
+                        {
+                            if (m_ActiveJoint != null)
+                                UpdateJointGO(m_ActiveOverlap);
+                            else
+                                CreateJointGO(m_ActiveOverlap);
+                        }
+                    }
+                    else
+                    {
+                        m_ActiveOverlap = currentActiveOv.Value;
+                        if (createJoints && m_ActiveJoint != null)
+                            UpdateJointGO(m_ActiveOverlap);
+                    }
+                    return;
+                }
+
+                if (closestOv.HasValue)
+                {
+                    m_LastActiveOverlap = m_ActiveOverlap;
+                    m_HasLastActive = true;
+                    onOverlapEnded?.Invoke(m_ActiveOverlap);
+                    m_ActiveOverlap = closestOv.Value;
+                    onOverlapStarted?.Invoke(m_ActiveOverlap);
+                    if (createJoints)
+                    {
+                        DestroyJointGO();
+                        CreateJointGO(m_ActiveOverlap);
+                    }
+                }
+                else
+                {
+                    if (createJoints && m_ActiveJoint != null)
+                        DestroyJointGO();
+                }
                 return;
             }
 
-            if (m_GearA == null || m_GearB == null) return;
-            if (m_RadiusA <= 0f || m_RadiusB <= 0f) return;
-
-            Vector3 posA = m_GearA.position;
-            Vector3 posB = m_GearB.position;
-
-            Vector3 deltaPosA = posA - m_PrevWorldPosA;
-            Vector3 deltaPosB = posB - m_PrevWorldPosB;
-
-            Vector3 axisDirA = GetWorldAxis(m_GearA, m_AxisA);
-            Vector3 axisDirB = GetWorldAxis(m_GearB, m_AxisB);
-
-            float radiusSum = m_RadiusA + m_RadiusB;
-
-            Quaternion preOrbitalRotA = m_GearA.rotation;
-            Quaternion preOrbitalRotB = m_GearB.rotation;
-
-            float orbitalA = ComputeOrbitalAngle(deltaPosA, m_PrevWorldPosA, posA, posB, axisDirA, m_RadiusA, radiusSum, out float sweepDegA);
-            float orbitalB = ComputeOrbitalAngle(deltaPosB, m_PrevWorldPosB, posB, posA, axisDirB, m_RadiusB, radiusSum, out float sweepDegB);
-
-            if (!Mathf.Approximately(orbitalA, 0f))
+            if (closestOv.HasValue)
             {
-                m_GearA.rotation = Quaternion.AngleAxis(orbitalA, axisDirA) * m_GearA.rotation;
+                m_ActiveOverlap = closestOv.Value;
+                m_HasActiveOverlap = true;
+                onOverlapStarted?.Invoke(m_ActiveOverlap);
+                if (createJoints)
+                    CreateJointGO(m_ActiveOverlap);
             }
-
-            if (!Mathf.Approximately(orbitalB, 0f))
-            {
-                m_GearB.rotation = Quaternion.AngleAxis(orbitalB, axisDirB) * m_GearB.rotation;
-            }
-
-            Quaternion worldA = m_GearA.rotation;
-            Quaternion worldB = m_GearB.rotation;
-
-            Quaternion deltaRotA = worldA * Quaternion.Inverse(m_PrevWorldRotA);
-            Quaternion deltaRotB = worldB * Quaternion.Inverse(m_PrevWorldRotB);
-
-            float deltaA = ExtractSignedAngle(deltaRotA, axisDirA);
-            float deltaB = ExtractSignedAngle(deltaRotB, axisDirB);
-
-            float couplingDeltaA = deltaA - orbitalA;
-            float couplingDeltaB = deltaB - orbitalB;
-
-            Quaternion rawDeltaRotA = preOrbitalRotA * Quaternion.Inverse(m_PrevWorldRotA);
-            Quaternion rawDeltaRotB = preOrbitalRotB * Quaternion.Inverse(m_PrevWorldRotB);
-            float rawExternalA = ExtractSignedAngle(rawDeltaRotA, axisDirA);
-            float rawExternalB = ExtractSignedAngle(rawDeltaRotB, axisDirB);
-
-            const float correlationEpsilon = 0.001f;
-            if (Mathf.Abs(rawExternalA - sweepDegA) < correlationEpsilon && Mathf.Abs(sweepDegA) > correlationEpsilon)
-            {
-                couplingDeltaA = 0f;
-            }
-            if (Mathf.Abs(rawExternalB - sweepDegB) < correlationEpsilon && Mathf.Abs(sweepDegB) > correlationEpsilon)
-            {
-                couplingDeltaB = 0f;
-            }
-
-            float ratio = m_RadiusA / m_RadiusB;
-            float threshold = 0.001f;
-
-            float scaledA = couplingDeltaA * m_RadiusA;
-            float scaledB = couplingDeltaB * m_RadiusB;
-
-            if (Mathf.Abs(scaledA) > Mathf.Abs(scaledB) && Mathf.Abs(scaledA) > threshold)
-            {
-                Quaternion applyB = Quaternion.AngleAxis(-couplingDeltaA * ratio, axisDirB);
-                m_GearB.rotation = applyB * worldB;
-
-                if (m_DebugLog)
-                    Debug.Log(
-                        $"[GearConstraint] A→B  ΔA={deltaA:F3}°  ΔB={deltaB:F3}°  " +
-                        $"orbA={orbitalA:F3}°  cplA={couplingDeltaA:F3}°  ratio={ratio:F4}",
-                        this);
-            }
-            else if (Mathf.Abs(scaledB) > threshold)
-            {
-                Quaternion applyA = Quaternion.AngleAxis(-couplingDeltaB / ratio, axisDirA);
-                m_GearA.rotation = applyA * worldA;
-
-                if (m_DebugLog)
-                    Debug.Log(
-                        $"[GearConstraint] B→A  ΔA={deltaA:F3}°  ΔB={deltaB:F3}°  " +
-                        $"orbB={orbitalB:F3}°  cplB={couplingDeltaB:F3}°  ratio={ratio:F4}",
-                        this);
-            }
-
-            m_PrevWorldRotA = m_GearA.rotation;
-            m_PrevWorldRotB = m_GearB.rotation;
-            m_PrevWorldPosA = m_GearA.position;
-            m_PrevWorldPosB = m_GearB.position;
         }
 
-        private static Vector3 GetWorldAxis(Transform t, GearAxis axis)
+        public Vector3[] GetSpherePositions(Transform t, float radius, GearAxis axis, float toothCount, bool onTeeth, float normalizedOffset)
         {
-            return axis switch
+            Vector3 center = t.position;
+            Vector3 nml = AxisToVector(axis, t);
+            Vector3 tan = Vector3.ProjectOnPlane(t.right, nml).normalized;
+            if (tan.sqrMagnitude < 0.001f)
+                tan = Vector3.ProjectOnPlane(t.forward, nml).normalized;
+
+            float angleStep = 360f / toothCount;
+            float offsetAngle = (toothWidth / radius) * Mathf.Rad2Deg;
+            float sphereOffset = onTeeth ? 0f : angleStep * 0.5f;
+            int count = Mathf.Max(1, Mathf.RoundToInt(toothCount));
+
+            float radialOffset = normalizedOffset * toothHeight;
+
+            Vector3[] positions = new Vector3[count];
+            for (int i = 0; i < count; i++)
             {
-                GearAxis.X => t.right,
-                GearAxis.Y => t.up,
-                GearAxis.Z => t.forward,
-                _ => t.up
+                Vector3 dir = Quaternion.AngleAxis(i * angleStep + offsetAngle + sphereOffset, nml) * tan;
+                positions[i] = center + dir * (radius + radialOffset);
+            }
+            return positions;
+        }
+
+        public OverlapInfo[] GetOverlaps()
+        {
+            Transform tA = EffectiveTransformA;
+            Transform tB = EffectiveTransformB;
+            if (tA == null || tB == null) return System.Array.Empty<OverlapInfo>();
+
+            Vector3[] posA = GetSpherePositions(tA, radiusA, axisA, toothCountA, true, sphereRadiusOffsetA);
+            Vector3[] posB = GetSpherePositions(tB, radiusB, axisB, toothCountB, false, sphereRadiusOffsetB);
+
+            float minDist = overlapSphereRadius * 2f;
+            var overlaps = new List<OverlapInfo>();
+
+            for (int i = 0; i < posA.Length; i++)
+            {
+                for (int j = 0; j < posB.Length; j++)
+                {
+                    float dist = Vector3.Distance(posA[i], posB[j]);
+                    if (dist < minDist)
+                    {
+                        overlaps.Add(new OverlapInfo
+                        {
+                            pointA = posA[i],
+                            pointB = posB[j],
+                            distance = dist,
+                            transformA = tA,
+                            transformB = tB,
+                            toothIndexA = i,
+                            toothIndexB = j
+                        });
+                    }
+                }
+            }
+            return overlaps.ToArray();
+        }
+
+        private static Vector3 AxisToVector(GearAxis axis, Transform transform)
+        {
+            switch (axis)
+            {
+                case GearAxis.X: return transform.right;
+                case GearAxis.Y: return transform.up;
+                case GearAxis.Z: return transform.forward;
+                default: return transform.up;
+            }
+        }
+
+        private Vector3 GetLookAtUpDownAxis()
+        {
+            if (m_LookAt == null)
+                return Vector3.up;
+
+            switch (axisA)
+            {
+                case GearAxis.X: return m_LookAt.transform.up;
+                case GearAxis.Y: return m_LookAt.transform.right;
+                case GearAxis.Z: return m_LookAt.transform.up;
+                default: return m_LookAt.transform.up;
+            }
+        }
+
+        private void CreateJointGO(OverlapInfo ov)
+        {
+            Rigidbody rbA = gearA != null ? gearA.GetComponent<Rigidbody>() : null;
+            Rigidbody rbB = gearB != null ? gearB.GetComponent<Rigidbody>() : null;
+            if (rbA == null || rbB == null) return;
+
+            ConfigurableJoint joint = gearA.gameObject.AddComponent<ConfigurableJoint>();
+            joint.connectedBody = rbB;
+            joint.anchor = rbA.transform.InverseTransformPoint(ov.pointA);
+            joint.connectedAnchor = rbB.transform.InverseTransformPoint(ov.pointB);
+            joint.autoConfigureConnectedAnchor = false;
+
+            Vector3 worldUpDown = GetLookAtUpDownAxis();
+            joint.axis = rbA.transform.InverseTransformDirection(worldUpDown).normalized;
+            joint.secondaryAxis = Vector3.zero;
+
+            joint.xMotion = ConfigurableJointMotion.Limited;
+            joint.yMotion = ConfigurableJointMotion.Free;
+            joint.zMotion = ConfigurableJointMotion.Free;
+            joint.angularXMotion = ConfigurableJointMotion.Free;
+            joint.angularYMotion = ConfigurableJointMotion.Free;
+            joint.angularZMotion = ConfigurableJointMotion.Free;
+
+            joint.xDrive = new JointDrive
+            {
+                positionSpring = jointSpring,
+                positionDamper = jointDamper,
+                maximumForce = jointMaxForce
             };
+
+            joint.targetPosition = Vector3.zero;
+            joint.targetAngularVelocity = Vector3.zero;
+
+            m_ActiveJoint = joint;
         }
 
-        private static float ExtractSignedAngle(Quaternion delta, Vector3 axis)
+        private void UpdateJointGO(OverlapInfo ov)
         {
-            delta.ToAngleAxis(out float angle, out Vector3 rotationAxis);
-            float sign = Mathf.Sign(Vector3.Dot(rotationAxis, axis));
-            return angle * sign;
+            Rigidbody rbA = gearA != null ? gearA.GetComponent<Rigidbody>() : null;
+            Rigidbody rbB = gearB != null ? gearB.GetComponent<Rigidbody>() : null;
+            if (rbA == null || rbB == null) return;
+
+            m_ActiveJoint.anchor = rbA.transform.InverseTransformPoint(ov.pointA);
+            m_ActiveJoint.connectedAnchor = rbB.transform.InverseTransformPoint(ov.pointB);
+
+            Vector3 worldUpDown = GetLookAtUpDownAxis();
+            m_ActiveJoint.axis = rbA.transform.InverseTransformDirection(worldUpDown).normalized;
         }
 
-        private static float ComputeOrbitalAngle(
-            Vector3 deltaPos, Vector3 prevPos, Vector3 currPos, Vector3 otherPos,
-            Vector3 axisDir, float ownRadius, float radiusSum, out float sweepDegrees)
+        private void DestroyJointGO()
         {
-            sweepDegrees = 0f;
+            if (m_ActiveJoint != null)
+            {
+                Destroy(m_ActiveJoint);
+                m_ActiveJoint = null;
+            }
+        }
 
-            if (deltaPos.sqrMagnitude < 1e-12f)
-                return 0f;
+        private void OnDestroy()
+        {
+            DestroyJointGO();
+            DestroyLookAt();
+        }
 
-            Vector3 rPrev = prevPos - otherPos;
-            Vector3 rCurr = currPos - otherPos;
+        private class OverlapInfoComparer : IEqualityComparer<OverlapInfo>
+        {
+            public bool Equals(OverlapInfo a, OverlapInfo b)
+            {
+                return a.toothIndexA == b.toothIndexA && a.toothIndexB == b.toothIndexB;
+            }
 
-            Vector3 rPrevProj = rPrev - Vector3.Dot(rPrev, axisDir) * axisDir;
-            Vector3 rCurrProj = rCurr - Vector3.Dot(rCurr, axisDir) * axisDir;
-
-            float prevMag = rPrevProj.magnitude;
-            float currMag = rCurrProj.magnitude;
-
-            if (prevMag < 1e-8f || currMag < 1e-8f)
-                return 0f;
-
-            float dot = Vector3.Dot(rPrevProj, rCurrProj);
-            float cross = Vector3.Dot(Vector3.Cross(rCurrProj, rPrevProj), axisDir);
-
-            float orbitalDtheta = Mathf.Atan2(cross, dot);
-
-            sweepDegrees = orbitalDtheta * Mathf.Rad2Deg;
-
-            if (Mathf.Abs(orbitalDtheta) * Mathf.Rad2Deg < 1e-4f)
-                return 0f;
-
-            return -(orbitalDtheta * radiusSum / ownRadius) * Mathf.Rad2Deg;
+            public int GetHashCode(OverlapInfo obj)
+            {
+                return obj.toothIndexA ^ (obj.toothIndexB << 16);
+            }
         }
     }
 }

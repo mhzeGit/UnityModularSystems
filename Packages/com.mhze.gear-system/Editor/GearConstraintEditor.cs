@@ -3,40 +3,73 @@ using UnityEngine;
 
 namespace MHZE.GearSystem.Editor
 {
-    [CustomEditor(typeof(GearConstraint))]
+    [CustomEditor(typeof(GearConstraint), true)]
     [CanEditMultipleObjects]
     public class GearConstraintEditor : UnityEditor.Editor
     {
         private SerializedProperty m_GearA;
+        private SerializedProperty m_MeshA;
         private SerializedProperty m_GearB;
+        private SerializedProperty m_MeshB;
         private SerializedProperty m_RadiusA;
         private SerializedProperty m_RadiusB;
         private SerializedProperty m_AxisA;
         private SerializedProperty m_AxisB;
-        private SerializedProperty m_ToothDensity;
+        private SerializedProperty m_ToothCountA;
+        private SerializedProperty m_ToothCountB;
         private SerializedProperty m_ToothHeight;
+        private SerializedProperty m_ToothWidth;
+        private SerializedProperty m_MeshOffset;
+        private SerializedProperty m_OverlapSphereRadius;
+        private SerializedProperty m_OverlapCheckInterval;
+        private SerializedProperty m_SphereRadiusOffsetA;
+        private SerializedProperty m_SphereRadiusOffsetB;
+        private SerializedProperty m_CreateJoints;
+        private SerializedProperty m_JointSpring;
+        private SerializedProperty m_JointDamper;
+        private SerializedProperty m_JointMaxForce;
+        private SerializedProperty m_DebugColorA;
+        private SerializedProperty m_DebugColorB;
+        private SerializedProperty m_DebugShowOverlaps;
         private SerializedProperty m_DebugDraw;
-        private SerializedProperty m_MaxTorque;
         private SerializedProperty m_DebugLog;
+        private SerializedProperty m_SpawnLookAt;
 
         private bool m_ShowGearA = true;
         private bool m_ShowGearB = true;
         private bool m_ShowVisual;
         private bool m_ShowDebug;
+        private bool m_ShowLookAt;
 
         private void OnEnable()
         {
-            m_GearA = serializedObject.FindProperty("m_GearA");
-            m_GearB = serializedObject.FindProperty("m_GearB");
-            m_RadiusA = serializedObject.FindProperty("m_RadiusA");
-            m_RadiusB = serializedObject.FindProperty("m_RadiusB");
-            m_AxisA = serializedObject.FindProperty("m_AxisA");
-            m_AxisB = serializedObject.FindProperty("m_AxisB");
-            m_ToothDensity = serializedObject.FindProperty("m_ToothDensity");
-            m_ToothHeight = serializedObject.FindProperty("m_ToothHeight");
-            m_DebugDraw = serializedObject.FindProperty("m_DebugDraw");
-            m_MaxTorque = serializedObject.FindProperty("m_MaxTorque");
-            m_DebugLog = serializedObject.FindProperty("m_DebugLog");
+            m_GearA = serializedObject.FindProperty("gearA");
+            m_MeshA = serializedObject.FindProperty("meshA");
+            m_GearB = serializedObject.FindProperty("gearB");
+            m_MeshB = serializedObject.FindProperty("meshB");
+            m_RadiusA = serializedObject.FindProperty("radiusA");
+            m_RadiusB = serializedObject.FindProperty("radiusB");
+            m_AxisA = serializedObject.FindProperty("axisA");
+            m_AxisB = serializedObject.FindProperty("axisB");
+            m_ToothCountA = serializedObject.FindProperty("toothCountA");
+            m_ToothCountB = serializedObject.FindProperty("toothCountB");
+            m_ToothHeight = serializedObject.FindProperty("toothHeight");
+            m_ToothWidth = serializedObject.FindProperty("toothWidth");
+            m_MeshOffset = serializedObject.FindProperty("meshOffset");
+            m_OverlapSphereRadius = serializedObject.FindProperty("overlapSphereRadius");
+            m_OverlapCheckInterval = serializedObject.FindProperty("overlapCheckInterval");
+            m_SphereRadiusOffsetA = serializedObject.FindProperty("sphereRadiusOffsetA");
+            m_SphereRadiusOffsetB = serializedObject.FindProperty("sphereRadiusOffsetB");
+            m_CreateJoints = serializedObject.FindProperty("createJoints");
+            m_JointSpring = serializedObject.FindProperty("jointSpring");
+            m_JointDamper = serializedObject.FindProperty("jointDamper");
+            m_JointMaxForce = serializedObject.FindProperty("jointMaxForce");
+            m_DebugColorA = serializedObject.FindProperty("debugColorA");
+            m_DebugColorB = serializedObject.FindProperty("debugColorB");
+            m_DebugShowOverlaps = serializedObject.FindProperty("debugShowOverlaps");
+            m_DebugDraw = serializedObject.FindProperty("debugDraw");
+            m_DebugLog = serializedObject.FindProperty("debugLog");
+            m_SpawnLookAt = serializedObject.FindProperty("spawnLookAt");
         }
 
         public override void OnInspectorGUI()
@@ -45,43 +78,69 @@ namespace MHZE.GearSystem.Editor
 
             EditorGUILayout.Space(4);
 
-            DrawGearSection("Gear A", m_GearA, m_RadiusA, m_AxisA, ref m_ShowGearA);
-            DrawGearSection("Gear B", m_GearB, m_RadiusB, m_AxisB, ref m_ShowGearB);
+            DrawGearSection("Gear A", m_GearA, m_MeshA, m_RadiusA, m_AxisA, m_ToothCountA, m_SphereRadiusOffsetA, ref m_ShowGearA);
+            DrawGearSection("Gear B", m_GearB, m_MeshB, m_RadiusB, m_AxisB, m_ToothCountB, m_SphereRadiusOffsetB, ref m_ShowGearB);
 
             m_ShowVisual = EditorGUILayout.Foldout(m_ShowVisual, "Visual", true, EditorStyles.foldoutHeader);
             if (m_ShowVisual)
             {
                 EditorGUI.indentLevel++;
-                EditorGUILayout.PropertyField(m_ToothDensity, new GUIContent("Tooth Density"));
                 EditorGUILayout.PropertyField(m_ToothHeight, new GUIContent("Tooth Height"));
+                EditorGUILayout.PropertyField(m_ToothWidth, new GUIContent("Tooth Width"));
+                EditorGUILayout.PropertyField(m_OverlapSphereRadius, new GUIContent("Overlap Sphere Radius"));
+                EditorGUILayout.PropertyField(m_OverlapCheckInterval, new GUIContent("Overlap Check Interval", "Frames between overlap checks. 0 = disabled."));
+                EditorGUILayout.PropertyField(m_CreateJoints, new GUIContent("Create Joints", "Create spring joints at overlapping tooth sphere positions."));
+                if (m_CreateJoints.boolValue)
+                {
+                    EditorGUI.indentLevel++;
+                    EditorGUILayout.PropertyField(m_JointSpring, new GUIContent("Spring", "Spring force pulling contact spheres together."));
+                    EditorGUILayout.PropertyField(m_JointDamper, new GUIContent("Damper", "Damping for the joint spring."));
+                    EditorGUILayout.PropertyField(m_JointMaxForce, new GUIContent("Max Force", "Maximum force the spring can apply."));
+                    EditorGUI.indentLevel--;
+                }
+                EditorGUILayout.PropertyField(m_MeshOffset, new GUIContent("Mesh Offset", "Angular offset for gear mesh alignment (degrees)."));
                 EditorGUI.indentLevel--;
                 EditorGUILayout.Space(2);
             }
 
             EditorGUILayout.Space(2);
-            EditorGUILayout.PropertyField(m_MaxTorque, new GUIContent("Max Torque", "Maximum constraint torque (Nm). 0 = unlimited."));
-
             m_ShowDebug = EditorGUILayout.Foldout(m_ShowDebug, "Debug", true, EditorStyles.foldoutHeader);
             if (m_ShowDebug)
             {
                 EditorGUI.indentLevel++;
+                EditorGUILayout.PropertyField(m_DebugColorA, new GUIContent("Debug Color A"));
+                EditorGUILayout.PropertyField(m_DebugColorB, new GUIContent("Debug Color B"));
                 EditorGUILayout.PropertyField(m_DebugDraw, new GUIContent("Debug Draw", "Draw gear gizmos in the Scene view."));
+                EditorGUILayout.PropertyField(m_DebugShowOverlaps, new GUIContent("Debug Show Overlaps", "Highlight overlapping spheres."));
                 EditorGUILayout.PropertyField(m_DebugLog, new GUIContent("Debug Log", "Log constraint values to console every 60 frames."));
+                EditorGUI.indentLevel--;
+            }
+
+            EditorGUILayout.Space(2);
+            m_ShowLookAt = EditorGUILayout.Foldout(m_ShowLookAt, "Look At", true, EditorStyles.foldoutHeader);
+            if (m_ShowLookAt)
+            {
+                EditorGUI.indentLevel++;
+                EditorGUILayout.PropertyField(m_SpawnLookAt, new GUIContent("Spawn Look At",
+                    "Required: spawns a helper GameObject that defines the joint's drive axis. The joint only applies spring force along the UP/DOWN axis of this LookAt transform."));
                 EditorGUI.indentLevel--;
             }
 
             serializedObject.ApplyModifiedProperties();
         }
 
-        private static void DrawGearSection(string label, SerializedProperty transformProp, SerializedProperty radiusProp, SerializedProperty axisProp, ref bool show)
+        private static void DrawGearSection(string label, SerializedProperty transformProp, SerializedProperty meshProp, SerializedProperty radiusProp, SerializedProperty axisProp, SerializedProperty toothCountProp, SerializedProperty sphereOffsetProp, ref bool show)
         {
             show = EditorGUILayout.Foldout(show, label, true, EditorStyles.foldoutHeader);
             if (!show) return;
 
             EditorGUI.indentLevel++;
             EditorGUILayout.PropertyField(transformProp, new GUIContent("Transform"));
+            EditorGUILayout.PropertyField(meshProp, new GUIContent("Mesh Transform"));
             EditorGUILayout.PropertyField(radiusProp, new GUIContent("Radius"));
             EditorGUILayout.PropertyField(axisProp, new GUIContent("Axis"));
+            EditorGUILayout.PropertyField(toothCountProp, new GUIContent("Tooth Count"));
+            EditorGUILayout.Slider(sphereOffsetProp, 0f, 1f, new GUIContent("Sphere Offset", "0 = at radius, 1 = at tooth tip."));
             EditorGUI.indentLevel--;
             EditorGUILayout.Space(2);
         }

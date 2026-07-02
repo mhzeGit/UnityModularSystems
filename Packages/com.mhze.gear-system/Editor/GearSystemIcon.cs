@@ -25,7 +25,9 @@ namespace MHZE.GearSystem.Editor
                 {
                     var scriptPath = AssetDatabase.GUIDToAssetPath(scriptGuid);
                     var script = AssetDatabase.LoadAssetAtPath<MonoScript>(scriptPath);
-                    if (script != null && script.GetClass() == typeof(GearConstraint))
+                    if (script == null) continue;
+                    var scriptType = script.GetClass();
+                    if (scriptType != null && typeof(GearConstraint).IsAssignableFrom(scriptType))
                     {
                         var importer = AssetImporter.GetAtPath(scriptPath) as MonoImporter;
                         if (importer != null && importer.GetIcon() != icon)
