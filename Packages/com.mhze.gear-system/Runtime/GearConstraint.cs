@@ -146,6 +146,7 @@ namespace MHZE.GearSystem
             OverlapInfo? differentOv = null;
             float bestDistSq = float.MaxValue;
             bool lastActiveStillPresent = false;
+            int overlapCount = 0;
 
             for (int i = 0; i < posA.Length; i++)
             {
@@ -154,6 +155,8 @@ namespace MHZE.GearSystem
                     float distSq = (posA[i] - posB[j]).sqrMagnitude;
                     if (distSq < minDistSq)
                     {
+                        if (overlapCount >= 2) continue;
+                        overlapCount++;
                         bool isActive = m_HasActiveOverlap && i == m_ActiveOverlap.toothIndexA && j == m_ActiveOverlap.toothIndexB;
                         bool isLastActive = m_HasLastActive && i == m_LastActiveOverlap.toothIndexA && j == m_LastActiveOverlap.toothIndexB;
 
@@ -282,6 +285,7 @@ namespace MHZE.GearSystem
 
             float minDist = overlapSphereRadius * 2f;
             var overlaps = new List<OverlapInfo>();
+            int overlapCount = 0;
 
             for (int i = 0; i < posA.Length; i++)
             {
@@ -290,6 +294,8 @@ namespace MHZE.GearSystem
                     float dist = Vector3.Distance(posA[i], posB[j]);
                     if (dist < minDist)
                     {
+                        if (overlapCount >= 2) continue;
+                        overlapCount++;
                         overlaps.Add(new OverlapInfo
                         {
                             pointA = posA[i],
