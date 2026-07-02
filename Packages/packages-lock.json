@@ -17,6 +17,14 @@
       },
       "hash": "85c101f5329ec1b0c6f70cba44614166dd78f53c"
     },
+    "com.mhze.air-particle-physics": {
+      "version": "file:com.mhze.air-particle-physics",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.mhze.argevent": "1.0.0"
+      }
+    },
     "com.mhze.argevent": {
       "version": "https://github.com/mhzeGit/ArgEventSystem.git?path=Packages/com.mhze.argevent",
       "depth": 0,

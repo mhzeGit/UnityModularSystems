@@ -1,0 +1,14 @@
+{
+  "name": "com.mhze.air-particle-physics.Runtime",
+  "rootNamespace": "MHZE.AirParticlePhysics",
+  "references": [
+    "com.mhze.argevent.Runtime"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": []
+}

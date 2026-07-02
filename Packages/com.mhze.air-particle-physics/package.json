@@ -1,0 +1,15 @@
+{
+  "name": "com.mhze.air-particle-physics",
+  "version": "1.0.0",
+  "displayName": "Air Particle Physics",
+  "description": "A system for simulating airborne particles influenced by wind, gravity, and environmental forces.",
+  "unity": "2021.3",
+  "author": {
+    "name": "MHZE",
+    "email": "mhze.uk@gmail.com",
+    "url": "https://github.com/mhzeGit/"
+  },
+  "dependencies": {
+    "com.mhze.argevent": "1.0.0"
+  }
+}
