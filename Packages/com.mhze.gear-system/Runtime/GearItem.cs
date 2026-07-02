@@ -31,15 +31,16 @@ namespace MHZE.GearSystem
     [System.Serializable]
     public struct GearPair : System.IEquatable<GearPair>
     {
-        private readonly int m_ID;
-        private readonly int m_OtherID;
+        private readonly EntityId m_ID;
+        private readonly EntityId m_OtherID;
 
         public GearPair(GearItem a, GearItem b)
         {
-            int idA = a.GetInstanceID();
-            int idB = b.GetInstanceID();
-            m_ID = idA < idB ? idA : idB;
-            m_OtherID = idA < idB ? idB : idA;
+            EntityId idA = a.GetEntityId();
+            EntityId idB = b.GetEntityId();
+            bool order = idA.GetHashCode() < idB.GetHashCode();
+            m_ID = order ? idA : idB;
+            m_OtherID = order ? idB : idA;
         }
 
         public bool Equals(GearPair other)
@@ -54,12 +55,12 @@ namespace MHZE.GearSystem
 
         public override int GetHashCode()
         {
-            return m_ID ^ (m_OtherID << 16);
+            return m_ID.GetHashCode() ^ (m_OtherID.GetHashCode() << 16);
         }
 
         public bool ContainsInstance(GearItem item)
         {
-            int id = item.GetInstanceID();
+            EntityId id = item.GetEntityId();
             return m_ID == id || m_OtherID == id;
         }
     }
