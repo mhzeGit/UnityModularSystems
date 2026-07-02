@@ -37,6 +37,7 @@ namespace MHZE.GearSystem
             if (m_GearA == null || m_GearB == null) return;
 
             transform.position = m_GearA.position;
+            transform.rotation = m_GearA.rotation;
 
             Vector3 direction = (m_GearB.position - m_GearA.position).normalized;
             if (direction.sqrMagnitude < 0.0001f) return;
@@ -44,15 +45,24 @@ namespace MHZE.GearSystem
             switch (m_Axis)
             {
                 case GearAxis.X:
-                    transform.rotation = Quaternion.LookRotation(direction, m_GearA.right);
+                {
+                    Vector3 targetDir = Vector3.ProjectOnPlane(direction, transform.right).normalized;
+                    float angle = Vector3.SignedAngle(transform.forward, targetDir, transform.right);
+                    transform.rotation = Quaternion.AngleAxis(angle, transform.right) * transform.rotation;
                     break;
+                }
                 case GearAxis.Y:
-                    transform.rotation = Quaternion.LookRotation(direction, m_GearA.up);
+                {
+                    Vector3 targetDir = Vector3.ProjectOnPlane(direction, transform.up).normalized;
+                    float angle = Vector3.SignedAngle(transform.forward, targetDir, transform.up);
+                    transform.rotation = Quaternion.AngleAxis(angle, transform.up) * transform.rotation;
                     break;
+                }
                 case GearAxis.Z:
                 {
-                    Vector3 up = Vector3.Cross(direction, m_GearA.forward).normalized;
-                    transform.rotation = Quaternion.LookRotation(m_GearA.forward, up);
+                    Vector3 targetDir = Vector3.ProjectOnPlane(direction, transform.forward).normalized;
+                    float angle = Vector3.SignedAngle(transform.right, targetDir, transform.forward);
+                    transform.rotation = Quaternion.AngleAxis(angle, transform.forward) * transform.rotation;
                     break;
                 }
             }
