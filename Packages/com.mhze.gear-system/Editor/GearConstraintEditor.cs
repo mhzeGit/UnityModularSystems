@@ -28,9 +28,6 @@ namespace MHZE.GearSystem.Editor
         private SerializedProperty m_JointSpring;
         private SerializedProperty m_JointDamper;
         private SerializedProperty m_JointMaxForce;
-        private SerializedProperty m_SpringAxisX;
-        private SerializedProperty m_SpringAxisY;
-        private SerializedProperty m_SpringAxisZ;
         private SerializedProperty m_DebugColorA;
         private SerializedProperty m_DebugColorB;
         private SerializedProperty m_DebugShowOverlaps;
@@ -67,9 +64,6 @@ namespace MHZE.GearSystem.Editor
             m_JointSpring = serializedObject.FindProperty("jointSpring");
             m_JointDamper = serializedObject.FindProperty("jointDamper");
             m_JointMaxForce = serializedObject.FindProperty("jointMaxForce");
-            m_SpringAxisX = serializedObject.FindProperty("springAxisX");
-            m_SpringAxisY = serializedObject.FindProperty("springAxisY");
-            m_SpringAxisZ = serializedObject.FindProperty("springAxisZ");
             m_DebugColorA = serializedObject.FindProperty("debugColorA");
             m_DebugColorB = serializedObject.FindProperty("debugColorB");
             m_DebugShowOverlaps = serializedObject.FindProperty("debugShowOverlaps");
@@ -102,12 +96,6 @@ namespace MHZE.GearSystem.Editor
                     EditorGUILayout.PropertyField(m_JointSpring, new GUIContent("Spring", "Spring force pulling contact spheres together."));
                     EditorGUILayout.PropertyField(m_JointDamper, new GUIContent("Damper", "Damping for the joint spring."));
                     EditorGUILayout.PropertyField(m_JointMaxForce, new GUIContent("Max Force", "Maximum force the spring can apply."));
-                    EditorGUILayout.LabelField("Spring Axes", EditorStyles.boldLabel);
-                    EditorGUI.indentLevel++;
-                    EditorGUILayout.PropertyField(m_SpringAxisX, new GUIContent("X", "Apply spring on gear A's local X axis."));
-                    EditorGUILayout.PropertyField(m_SpringAxisY, new GUIContent("Y", "Apply spring on gear A's local Y axis."));
-                    EditorGUILayout.PropertyField(m_SpringAxisZ, new GUIContent("Z", "Apply spring on gear A's local Z axis."));
-                    EditorGUI.indentLevel--;
                     EditorGUI.indentLevel--;
                 }
                 EditorGUILayout.PropertyField(m_MeshOffset, new GUIContent("Mesh Offset", "Angular offset for gear mesh alignment (degrees)."));
@@ -134,7 +122,7 @@ namespace MHZE.GearSystem.Editor
             {
                 EditorGUI.indentLevel++;
                 EditorGUILayout.PropertyField(m_SpawnLookAt, new GUIContent("Spawn Look At",
-                    "Spawns a helper GameObject at gear A that continuously orients gear A's axis toward gear B."));
+                    "Required: spawns a helper GameObject that defines the joint's drive axis. The joint only applies spring force along the UP/DOWN axis of this LookAt transform."));
                 EditorGUI.indentLevel--;
             }
 

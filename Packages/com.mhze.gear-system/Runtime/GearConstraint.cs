@@ -56,12 +56,6 @@ namespace MHZE.GearSystem
         public float jointDamper = 10f;
         [Tooltip("Maximum force the joint spring can apply.")]
         public float jointMaxForce = 1000f;
-        [Tooltip("Apply spring pull on gear A's local X axis.")]
-        public bool springAxisX = true;
-        [Tooltip("Apply spring pull on gear A's local Y axis.")]
-        public bool springAxisY = true;
-        [Tooltip("Apply spring pull on gear A's local Z axis.")]
-        public bool springAxisZ = true;
         public Color debugColorA = Color.red;
         public Color debugColorB = Color.blue;
         public bool debugDraw;
@@ -85,7 +79,6 @@ namespace MHZE.GearSystem
 
         public bool HasActiveOverlap => m_HasActiveOverlap;
         public OverlapInfo ActiveOverlap => m_ActiveOverlap;
-        private bool HasSpringAxis => springAxisX || springAxisY || springAxisZ;
         private ConfigurableJoint m_ActiveJoint;
         private GearLookAt m_LookAt;
         private int m_FrameCounter;
@@ -105,10 +98,13 @@ namespace MHZE.GearSystem
 
             CheckOverlaps();
 
-            if (!HasSpringAxis && m_ActiveJoint != null)
-                DestroyJointGO();
-            else if (createJoints && m_ActiveJoint != null && m_HasActiveOverlap)
-                UpdateJointGO(m_ActiveOverlap);
+            if (m_ActiveJoint != null)
+            {
+                if (!createJoints)
+                    DestroyJointGO();
+                else if (m_HasActiveOverlap)
+                    UpdateJointGO(m_ActiveOverlap);
+            }
         }
 
         private void UpdateLookAt()
@@ -203,7 +199,7 @@ namespace MHZE.GearSystem
                         onOverlapEnded?.Invoke(m_ActiveOverlap);
                         m_ActiveOverlap = differentOv.Value;
                         onOverlapStarted?.Invoke(m_ActiveOverlap);
-                        if (createJoints && HasSpringAxis)
+                        if (createJoints)
                         {
                             if (m_ActiveJoint != null)
                                 UpdateJointGO(m_ActiveOverlap);
@@ -214,7 +210,7 @@ namespace MHZE.GearSystem
                     else
                     {
                         m_ActiveOverlap = currentActiveOv.Value;
-                        if (createJoints && HasSpringAxis && m_ActiveJoint != null)
+                        if (createJoints && m_ActiveJoint != null)
                             UpdateJointGO(m_ActiveOverlap);
                     }
                     return;
@@ -227,7 +223,7 @@ namespace MHZE.GearSystem
                     onOverlapEnded?.Invoke(m_ActiveOverlap);
                     m_ActiveOverlap = closestOv.Value;
                     onOverlapStarted?.Invoke(m_ActiveOverlap);
-                    if (createJoints && HasSpringAxis)
+                    if (createJoints)
                     {
                         DestroyJointGO();
                         CreateJointGO(m_ActiveOverlap);
@@ -235,7 +231,7 @@ namespace MHZE.GearSystem
                 }
                 else
                 {
-                    if (createJoints && HasSpringAxis && m_ActiveJoint != null)
+                    if (createJoints && m_ActiveJoint != null)
                         DestroyJointGO();
                 }
                 return;
@@ -246,7 +242,7 @@ namespace MHZE.GearSystem
                 m_ActiveOverlap = closestOv.Value;
                 m_HasActiveOverlap = true;
                 onOverlapStarted?.Invoke(m_ActiveOverlap);
-                if (createJoints && HasSpringAxis)
+                if (createJoints)
                     CreateJointGO(m_ActiveOverlap);
             }
         }
@@ -321,6 +317,20 @@ namespace MHZE.GearSystem
             }
         }
 
+        private Vector3 GetLookAtUpDownAxis()
+        {
+            if (m_LookAt == null)
+                return Vector3.up;
+
+            switch (axisA)
+            {
+                case GearAxis.X: return m_LookAt.transform.up;
+                case GearAxis.Y: return m_LookAt.transform.right;
+                case GearAxis.Z: return m_LookAt.transform.up;
+                default: return m_LookAt.transform.up;
+            }
+        }
+
         private void CreateJointGO(OverlapInfo ov)
         {
             Rigidbody rbA = gearA != null ? gearA.GetComponent<Rigidbody>() : null;
@@ -333,28 +343,26 @@ namespace MHZE.GearSystem
             joint.connectedAnchor = rbB.transform.InverseTransformPoint(ov.pointB);
             joint.autoConfigureConnectedAnchor = false;
 
-            joint.xMotion = springAxisX ? ConfigurableJointMotion.Limited : ConfigurableJointMotion.Free;
-            joint.yMotion = springAxisY ? ConfigurableJointMotion.Limited : ConfigurableJointMotion.Free;
-            joint.zMotion = springAxisZ ? ConfigurableJointMotion.Limited : ConfigurableJointMotion.Free;
+            Vector3 worldUpDown = GetLookAtUpDownAxis();
+            joint.axis = rbA.transform.InverseTransformDirection(worldUpDown).normalized;
+            joint.secondaryAxis = Vector3.zero;
+
+            joint.xMotion = ConfigurableJointMotion.Limited;
+            joint.yMotion = ConfigurableJointMotion.Free;
+            joint.zMotion = ConfigurableJointMotion.Free;
             joint.angularXMotion = ConfigurableJointMotion.Free;
             joint.angularYMotion = ConfigurableJointMotion.Free;
             joint.angularZMotion = ConfigurableJointMotion.Free;
 
-            var drive = new JointDrive
+            joint.xDrive = new JointDrive
             {
                 positionSpring = jointSpring,
                 positionDamper = jointDamper,
                 maximumForce = jointMaxForce
             };
 
-            if (springAxisX) joint.xDrive = drive;
-            if (springAxisY) joint.yDrive = drive;
-            if (springAxisZ) joint.zDrive = drive;
-
             joint.targetPosition = Vector3.zero;
             joint.targetAngularVelocity = Vector3.zero;
-
-
 
             m_ActiveJoint = joint;
         }
@@ -367,6 +375,9 @@ namespace MHZE.GearSystem
 
             m_ActiveJoint.anchor = rbA.transform.InverseTransformPoint(ov.pointA);
             m_ActiveJoint.connectedAnchor = rbB.transform.InverseTransformPoint(ov.pointB);
+
+            Vector3 worldUpDown = GetLookAtUpDownAxis();
+            m_ActiveJoint.axis = rbA.transform.InverseTransformDirection(worldUpDown).normalized;
         }
 
         private void DestroyJointGO()
