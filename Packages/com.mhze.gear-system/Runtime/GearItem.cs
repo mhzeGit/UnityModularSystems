@@ -56,6 +56,12 @@ namespace MHZE.GearSystem
         {
             return m_ID ^ (m_OtherID << 16);
         }
+
+        public bool ContainsInstance(GearItem item)
+        {
+            int id = item.GetInstanceID();
+            return m_ID == id || m_OtherID == id;
+        }
     }
 
     public class GearItem : MonoBehaviour
@@ -96,45 +102,70 @@ namespace MHZE.GearSystem
         [Tooltip("Log debug values to console when enabled.")]
         public bool debugLog;
 
-        private static HashSet<GearPair> m_ActiveConstraints = new HashSet<GearPair>();
+        private static Dictionary<GearPair, int> m_OverlapCounts = new Dictionary<GearPair, int>();
+        private static Dictionary<GearPair, GameObject> m_ConstraintObjects = new Dictionary<GearPair, GameObject>();
 
-        private void Awake()
+        public void OnChildTriggerEnter(Transform triggerTransform, Collider other)
         {
-            for (int i = 0; i < gears.Count; i++)
-            {
-                if (gears[i].meshTransform != null)
-                {
-                    var trigger = gears[i].meshTransform.gameObject.AddComponent<GearMeshTrigger>();
-                    trigger.owner = this;
-                    trigger.gearIndex = i;
-                }
-            }
+            int gearIndex = ResolveGearIndex(triggerTransform);
+            if (gearIndex < 0) return;
+
+            GearItem otherItem = other.GetComponentInParent<GearItem>();
+            if (otherItem == null) return;
+
+            int otherIndex = otherItem.ResolveGearIndex(other.transform);
+            if (otherIndex < 0) return;
+
+            var pair = new GearPair(this, otherItem);
+
+            m_OverlapCounts.TryGetValue(pair, out int count);
+            m_OverlapCounts[pair] = count + 1;
+
+            if (count > 0) return;
+
+            GameObject constraintGO = CreateGearConstraint(otherItem, gearIndex, otherIndex);
+            m_ConstraintObjects[pair] = constraintGO;
         }
 
-        internal void OnChildTriggerEnter(int gearIndex, Collider other)
+        public void OnChildTriggerExit(Transform triggerTransform, Collider other)
         {
+            int gearIndex = ResolveGearIndex(triggerTransform);
+            if (gearIndex < 0) return;
+
             GearItem otherItem = other.GetComponentInParent<GearItem>();
             if (otherItem == null) return;
 
             var pair = new GearPair(this, otherItem);
-            if (m_ActiveConstraints.Contains(pair)) return;
 
-            int otherIndex = -1;
-            for (int i = 0; i < otherItem.gears.Count; i++)
+            if (!m_OverlapCounts.TryGetValue(pair, out int count) || count <= 0) return;
+
+            count--;
+            if (count > 0)
             {
-                if (otherItem.gears[i].meshTransform == other.transform)
-                {
-                    otherIndex = i;
-                    break;
-                }
+                m_OverlapCounts[pair] = count;
+                return;
             }
-            if (otherIndex < 0) return;
 
-            CreateGearConstraint(otherItem, gearIndex, otherIndex);
-            m_ActiveConstraints.Add(pair);
+            m_OverlapCounts.Remove(pair);
+
+            if (m_ConstraintObjects.TryGetValue(pair, out GameObject constraintGO))
+            {
+                Destroy(constraintGO);
+                m_ConstraintObjects.Remove(pair);
+            }
         }
 
-        private void CreateGearConstraint(GearItem other, int localIndex, int otherIndex)
+        private int ResolveGearIndex(Transform t)
+        {
+            for (int i = 0; i < gears.Count; i++)
+            {
+                if (gears[i].meshTransform == t)
+                    return i;
+            }
+            return -1;
+        }
+
+        private GameObject CreateGearConstraint(GearItem other, int localIndex, int otherIndex)
         {
             GearDefinition localDef = gears[localIndex];
             GearDefinition otherDef = other.gears[otherIndex];
@@ -169,17 +200,31 @@ namespace MHZE.GearSystem
             constraint.debugLog = debugLog;
             constraint.createJoints = createJoints;
             constraint.spawnLookAt = spawnLookAt;
+
+            return go;
         }
 
-        private class GearMeshTrigger : MonoBehaviour
+        private void OnDestroy()
         {
-            public GearItem owner;
-            public int gearIndex;
-
-            private void OnTriggerEnter(Collider other)
+            List<GearPair> toRemove = null;
+            foreach (var kvp in m_ConstraintObjects)
             {
-                owner.OnChildTriggerEnter(gearIndex, other);
+                if (kvp.Key.ContainsInstance(this))
+                {
+                    if (toRemove == null) toRemove = new List<GearPair>();
+                    toRemove.Add(kvp.Key);
+                    Destroy(kvp.Value);
+                }
+            }
+            if (toRemove != null)
+            {
+                foreach (var key in toRemove)
+                {
+                    m_OverlapCounts.Remove(key);
+                    m_ConstraintObjects.Remove(key);
+                }
             }
         }
+
     }
 }
