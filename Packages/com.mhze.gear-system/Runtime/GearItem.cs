@@ -4,153 +4,182 @@ using UnityEngine;
 namespace MHZE.GearSystem
 {
     [System.Serializable]
-    public struct GearColliderEntry
+    public struct GearDefinition
     {
-        public GameObject colliderObject;
+        public Transform meshTransform;
         public float radius;
+        public GearAxis axis;
+        public float toothCount;
+        [Range(0f, 1f)]
+        public float sphereRadiusOffset;
+
+        public GearDefinition(
+            Transform meshTransform = null,
+            float radius = 0.5f,
+            GearAxis axis = GearAxis.Y,
+            float toothCount = 5f,
+            float sphereRadiusOffset = 0.5f)
+        {
+            this.meshTransform = meshTransform;
+            this.radius = radius;
+            this.axis = axis;
+            this.toothCount = toothCount;
+            this.sphereRadiusOffset = sphereRadiusOffset;
+        }
     }
 
-    [AddComponentMenu("Mechanical/Gear Item")]
+    [System.Serializable]
+    public struct GearPair : System.IEquatable<GearPair>
+    {
+        private readonly int m_ID;
+        private readonly int m_OtherID;
+
+        public GearPair(GearItem a, GearItem b)
+        {
+            int idA = a.GetInstanceID();
+            int idB = b.GetInstanceID();
+            m_ID = idA < idB ? idA : idB;
+            m_OtherID = idA < idB ? idB : idA;
+        }
+
+        public bool Equals(GearPair other)
+        {
+            return m_ID == other.m_ID && m_OtherID == other.m_OtherID;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is GearPair other && Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            return m_ID ^ (m_OtherID << 16);
+        }
+    }
+
     public class GearItem : MonoBehaviour
     {
-        [Header("Gear")]
-        [SerializeField] private Transform m_GearTransform;
-        [SerializeField] private Transform m_MeshTransform;
-        [SerializeField] private GearAxis m_Axis = GearAxis.Y;
-        [SerializeField] private float m_ToothCount = 5f;
-        [SerializeField] private float m_ToothHeight = 0.1f;
-        [SerializeField] private float m_ToothWidth = 36f;
-        [Header("Collider Radii")]
-        [SerializeField] private List<GearColliderEntry> m_ColliderRadii = new List<GearColliderEntry>();
+        public Transform gearTransform;
+        public List<GearDefinition> gears = new List<GearDefinition>();
 
-        private const float DefaultRadius = 0.5f;
+        [Header("Visual")]
+        public float toothHeight = 0.1f;
+        [Tooltip("Angular width of one tooth (degrees). Used for mesh offset alignment.")]
+        public float toothWidth = 0.1f;
+        [Tooltip("Angular offset for gear mesh alignment (degrees).")]
+        public float meshOffset;
+        public float overlapSphereRadius = 0.06f;
 
-        private Collider m_Collider;
-        private readonly Dictionary<GearItem, GameObject> m_Constraints = new Dictionary<GearItem, GameObject>();
-        private readonly Dictionary<GearItem, float> m_PendingRadiusOverrides = new Dictionary<GearItem, float>();
+        [Header("Overlap Detection")]
+        [Tooltip("How often (frames) to check for sphere overlaps. 0 = disabled.")]
+        public int overlapCheckInterval = 1;
 
-        public GearAxis axis { get => m_Axis; set => m_Axis = value; }
-        public float toothCount { get => m_ToothCount; set => m_ToothCount = value; }
-        public float toothHeight { get => m_ToothHeight; set => m_ToothHeight = value; }
-        public float toothWidth { get => m_ToothWidth; set => m_ToothWidth = value; }
-        public Transform gearTransform { get => m_GearTransform; set => m_GearTransform = value; }
-        public Transform meshTransform { get => m_MeshTransform; set => m_MeshTransform = value; }
+        [Header("Joint Physics")]
+        [Tooltip("Spring force pulling the two contact spheres together.")]
+        public float jointSpring = 500f;
+        [Tooltip("Damping for the joint spring.")]
+        public float jointDamper = 10f;
+        [Tooltip("Maximum force the joint spring can apply.")]
+        public float jointMaxForce = 1000f;
+
+        [Header("Behavior")]
+        [Tooltip("Automatically create joint GameObjects at overlapping tooth sphere positions.")]
+        public bool createJoints = true;
+        [Tooltip("Spawn a helper GameObject at gear A that continuously orients its axis toward gear B.")]
+        public bool spawnLookAt;
+
+        [Header("Debug")]
+        public bool debugDraw;
+        [Tooltip("Highlight overlapping spheres.")]
+        public bool debugShowOverlaps;
+        [Tooltip("Log debug values to console when enabled.")]
+        public bool debugLog;
+
+        private static HashSet<GearPair> m_ActiveConstraints = new HashSet<GearPair>();
 
         private void Awake()
         {
-            if (m_GearTransform == null)
-                m_GearTransform = transform;
-
-            for (int i = 0; i < m_ColliderRadii.Count; i++)
+            for (int i = 0; i < gears.Count; i++)
             {
-                var entry = m_ColliderRadii[i];
-                if (entry.colliderObject != null)
+                if (gears[i].meshTransform != null)
                 {
-                    if (entry.colliderObject.TryGetComponent(out Collider col))
-                        col.isTrigger = true;
-
-                    var proxy = entry.colliderObject.GetComponent<GearColliderProxy>();
-                    if (proxy == null)
-                        proxy = entry.colliderObject.AddComponent<GearColliderProxy>();
-                    proxy.gearItem = this;
-                    proxy.entryIndex = i;
+                    var trigger = gears[i].meshTransform.gameObject.AddComponent<GearMeshTrigger>();
+                    trigger.owner = this;
+                    trigger.gearIndex = i;
                 }
             }
-
-            if (m_ColliderRadii.Count == 0 && !TryGetComponent(out m_Collider))
-            {
-                m_Collider = gameObject.AddComponent<BoxCollider>();
-                m_Collider.isTrigger = true;
-            }
         }
 
-        private void OnTriggerEnter(Collider other)
+        internal void OnChildTriggerEnter(int gearIndex, Collider other)
         {
-            GearItem otherGear = other.GetComponentInParent<GearItem>();
-            if (otherGear == null) return;
-            if (otherGear == this) return;
-            if (GetInstanceID() >= otherGear.GetInstanceID()) return;
-            if (m_Constraints.ContainsKey(otherGear)) return;
+            GearItem otherItem = other.GetComponentInParent<GearItem>();
+            if (otherItem == null) return;
 
-            if (!m_PendingRadiusOverrides.TryGetValue(otherGear, out float thisRadius))
-                thisRadius = DefaultRadius;
-            m_PendingRadiusOverrides.Remove(otherGear);
+            var pair = new GearPair(this, otherItem);
+            if (m_ActiveConstraints.Contains(pair)) return;
 
-            if (!otherGear.m_PendingRadiusOverrides.TryGetValue(this, out float otherRadius))
-                otherRadius = DefaultRadius;
-            otherGear.m_PendingRadiusOverrides.Remove(this);
+            int otherIndex = -1;
+            for (int i = 0; i < otherItem.gears.Count; i++)
+            {
+                if (otherItem.gears[i].meshTransform == other.transform)
+                {
+                    otherIndex = i;
+                    break;
+                }
+            }
+            if (otherIndex < 0) return;
 
-            GameObject constraintGO = new GameObject($"GearConstraint_{name}_{otherGear.name}");
-            constraintGO.transform.SetParent(null);
-
-            GearConstraint constraint = constraintGO.AddComponent<GearConstraint>();
-            constraint.gearA = m_GearTransform;
-            constraint.meshA = m_MeshTransform;
-            constraint.gearB = otherGear.m_GearTransform;
-            constraint.meshB = otherGear.m_MeshTransform;
-            constraint.radiusA = thisRadius;
-            constraint.radiusB = otherRadius;
-            constraint.axisA = m_Axis;
-            constraint.axisB = otherGear.m_Axis;
-            constraint.toothCountA = m_ToothCount;
-            constraint.toothCountB = otherGear.m_ToothCount;
-            constraint.toothHeight = Mathf.Max(m_ToothHeight, otherGear.m_ToothHeight);
-            constraint.toothWidth = Mathf.Max(m_ToothWidth, otherGear.m_ToothWidth);
-
-            m_Constraints[otherGear] = constraintGO;
+            CreateGearConstraint(otherItem, gearIndex, otherIndex);
+            m_ActiveConstraints.Add(pair);
         }
 
-        private void OnTriggerExit(Collider other)
+        private void CreateGearConstraint(GearItem other, int localIndex, int otherIndex)
         {
-            GearItem otherGear = other.GetComponentInParent<GearItem>();
-            if (otherGear == null) return;
+            GearDefinition localDef = gears[localIndex];
+            GearDefinition otherDef = other.gears[otherIndex];
 
-            if (m_Constraints.TryGetValue(otherGear, out GameObject constraintGO))
-            {
-                m_Constraints.Remove(otherGear);
-                Destroy(constraintGO);
-            }
+            GameObject go = new GameObject("GearConstraint");
+            GearConstraint constraint = go.AddComponent<GearConstraint>();
+
+            constraint.gearA = gearTransform;
+            constraint.meshA = localDef.meshTransform;
+            constraint.radiusA = localDef.radius;
+            constraint.axisA = localDef.axis;
+            constraint.toothCountA = localDef.toothCount;
+            constraint.sphereRadiusOffsetA = localDef.sphereRadiusOffset;
+
+            constraint.gearB = other.gearTransform;
+            constraint.meshB = otherDef.meshTransform;
+            constraint.radiusB = otherDef.radius;
+            constraint.axisB = otherDef.axis;
+            constraint.toothCountB = otherDef.toothCount;
+            constraint.sphereRadiusOffsetB = otherDef.sphereRadiusOffset;
+
+            constraint.toothHeight = toothHeight;
+            constraint.toothWidth = toothWidth;
+            constraint.meshOffset = meshOffset;
+            constraint.overlapSphereRadius = overlapSphereRadius;
+            constraint.overlapCheckInterval = overlapCheckInterval;
+            constraint.jointSpring = jointSpring;
+            constraint.jointDamper = jointDamper;
+            constraint.jointMaxForce = jointMaxForce;
+            constraint.debugDraw = debugDraw;
+            constraint.debugShowOverlaps = debugShowOverlaps;
+            constraint.debugLog = debugLog;
+            constraint.createJoints = createJoints;
+            constraint.spawnLookAt = spawnLookAt;
         }
 
-        private void OnDestroy()
+        private class GearMeshTrigger : MonoBehaviour
         {
-            foreach (GameObject go in m_Constraints.Values)
+            public GearItem owner;
+            public int gearIndex;
+
+            private void OnTriggerEnter(Collider other)
             {
-                if (go != null)
-                    Destroy(go);
+                owner.OnChildTriggerEnter(gearIndex, other);
             }
-            m_Constraints.Clear();
-        }
-
-        internal void OnChildTriggerEnter(int entryIndex, Collider other)
-        {
-            GearItem otherGear = other.GetComponentInParent<GearItem>();
-            if (otherGear == null || otherGear == this) return;
-
-            float entryRadius = m_ColliderRadii[entryIndex].radius;
-
-            if (m_Constraints.TryGetValue(otherGear, out GameObject constraintGO))
-            {
-                var constraint = constraintGO.GetComponent<GearConstraint>();
-                if (constraint != null)
-                    constraint.radiusA = entryRadius;
-            }
-            else
-            {
-                m_PendingRadiusOverrides[otherGear] = entryRadius;
-            }
-        }
-    }
-
-    public class GearColliderProxy : MonoBehaviour
-    {
-        [HideInInspector] public GearItem gearItem;
-        [HideInInspector] public int entryIndex = -1;
-
-        private void OnTriggerEnter(Collider other)
-        {
-            if (gearItem != null && entryIndex >= 0)
-                gearItem.OnChildTriggerEnter(entryIndex, other);
         }
     }
 }

@@ -423,10 +423,10 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 6311718367719508075, guid: 6fc20ee77df3a034da93cc090e1f0be3, type: 3}
+    - targetCorrespondingSourceObject: {fileID: 4065501521306286798, guid: 6fc20ee77df3a034da93cc090e1f0be3, type: 3}
       insertIndex: -1
       addedObject: {fileID: 0}
-    - targetCorrespondingSourceObject: {fileID: 4065501521306286798, guid: 6fc20ee77df3a034da93cc090e1f0be3, type: 3}
+    - targetCorrespondingSourceObject: {fileID: 6311718367719508075, guid: 6fc20ee77df3a034da93cc090e1f0be3, type: 3}
       insertIndex: -1
       addedObject: {fileID: 0}
   m_SourcePrefab: {fileID: 100100000, guid: 6fc20ee77df3a034da93cc090e1f0be3, type: 3}
@@ -685,7 +685,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1549641837
 Transform:
   m_ObjectHideFlags: 0
@@ -733,9 +733,6 @@ MonoBehaviour:
   jointSpring: 500
   jointDamper: 10
   jointMaxForce: 1000
-  springAxisX: 1
-  springAxisY: 1
-  springAxisZ: 1
   debugColorA: {r: 1, g: 0, b: 0, a: 1}
   debugColorB: {r: 0, g: 0, b: 1, a: 1}
   debugDraw: 1
@@ -803,14 +800,18 @@ PrefabInstance:
       propertyPath: m_IsTrigger
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8799389246546398456, guid: 6fc20ee77df3a034da93cc090e1f0be3, type: 3}
+      propertyPath: m_IsKinematic
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 6311718367719508075, guid: 6fc20ee77df3a034da93cc090e1f0be3, type: 3}
+    - targetCorrespondingSourceObject: {fileID: 4065501521306286798, guid: 6fc20ee77df3a034da93cc090e1f0be3, type: 3}
       insertIndex: -1
       addedObject: {fileID: 0}
-    - targetCorrespondingSourceObject: {fileID: 4065501521306286798, guid: 6fc20ee77df3a034da93cc090e1f0be3, type: 3}
+    - targetCorrespondingSourceObject: {fileID: 6311718367719508075, guid: 6fc20ee77df3a034da93cc090e1f0be3, type: 3}
       insertIndex: -1
       addedObject: {fileID: 0}
   m_SourcePrefab: {fileID: 100100000, guid: 6fc20ee77df3a034da93cc090e1f0be3, type: 3}
