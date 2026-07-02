@@ -1,0 +1,14 @@
+{
+  "name": "com.mhze.air-particle-physics.Editor",
+  "rootNamespace": "MHZE.AirParticlePhysics.Editor",
+  "references": [
+    "com.mhze.air-particle-physics.Runtime"
+  ],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": []
+}
