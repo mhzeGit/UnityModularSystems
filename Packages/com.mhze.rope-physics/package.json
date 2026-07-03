@@ -1,0 +1,12 @@
+{
+  "name": "com.mhze.rope-physics",
+  "version": "1.0.0",
+  "displayName": "Rope Physics",
+  "description": "A system for simulating rope physics.",
+  "unity": "2021.3",
+  "author": {
+    "name": "MHZE",
+    "email": "mhze.uk@gmail.com",
+    "url": "https://github.com/mhzeGit/"
+  }
+}
