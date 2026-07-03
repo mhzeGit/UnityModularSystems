@@ -475,7 +475,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8a8ba9ec07925784697601ba12f47a32, type: 3}
   m_Name: 
   m_EditorClassIdentifier: com.mhze.air-particle-physics.Runtime::MHZE.AirParticlePhysics.AirParticleBoxVolume
-  _size: {x: 10, y: 10, z: 10}
+  _size: {x: 50, y: 10, z: 50}
+  _cellDensity: 0.21
 --- !u!4 &380679297
 Transform:
   m_ObjectHideFlags: 0
@@ -485,51 +486,7 @@ Transform:
   m_GameObject: {fileID: 380679295}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &794678275
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 794678277}
-  - component: {fileID: 794678276}
-  m_Layer: 0
-  m_Name: airParticleSystem
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &794678276
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 794678275}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2fce1c6f91708094788244c94c2382c1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.mhze.air-particle-physics.Runtime::MHZE.AirParticlePhysics.AirParticlePhysicsSystem
---- !u!4 &794678277
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 794678275}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 4.4, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -780,6 +737,37 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: -0.5, z: 0}
+  m_LocalScale: {x: 10, y: 10, z: 10}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1425584118
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1425584119}
+  m_Layer: 0
+  m_Name: Debug
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1425584119
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1425584118}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -815,17 +803,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: com.mhze.air-particle-physics.Runtime::MHZE.AirParticlePhysics.AirParticleSystem
   _volume: {fileID: 380679296}
-  _maxParticles: 1000
-  _spawnRate: 20
-  _wind: {x: 0, y: 0, z: 0}
-  _gravity: -9.81
-  _damping: 0.995
-  _startSpeed: 2
-  _lifetime: 5
-  _size: 0.1
-  _useGravity: 1
-  _bounceOnBounds: 1
-  _bounceElasticity: 0.5
 --- !u!4 &1846481348
 Transform:
   m_ObjectHideFlags: 0
@@ -845,7 +822,6 @@ Transform:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 794678277}
   - {fileID: 76022609}
   - {fileID: 961739753}
   - {fileID: 203844589}
@@ -853,3 +829,4 @@ SceneRoots:
   - {fileID: 1173188793}
   - {fileID: 1846481348}
   - {fileID: 380679297}
+  - {fileID: 1425584119}
