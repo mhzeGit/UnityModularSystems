@@ -1,0 +1,19 @@
+{
+  "name": "com.mhze.rope-physics.Editor",
+  "rootNamespace": "MHZE.RopePhysics.Editor",
+  "references": [
+    "com.mhze.rope-physics.Runtime",
+    "Unity.Burst",
+    "Unity.Collections",
+    "Unity.Mathematics"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": []
+}

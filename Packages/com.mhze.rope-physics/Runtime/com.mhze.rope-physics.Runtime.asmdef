@@ -1,0 +1,16 @@
+{
+  "name": "com.mhze.rope-physics.Runtime",
+  "rootNamespace": "MHZE.RopePhysics",
+  "references": [
+    "Unity.Burst",
+    "Unity.Collections",
+    "Unity.Mathematics"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": true,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": []
+}
