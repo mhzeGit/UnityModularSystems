@@ -368,12 +368,6 @@ namespace MHZE.GearSystem
             return Hash128.Compute(canonical).ToString();
         }
 
-        private void OnDestroy()
-        {
-            if (generatedMesh != null)
-                DestroyImmediate(generatedMesh, true);
-        }
-
         private void OnValidate()
         {
             gearDensity = Mathf.Max(0.1f, gearDensity);
@@ -386,6 +380,20 @@ namespace MHZE.GearSystem
             if (Application.isPlaying) return;
 
             m_PreviousGeometryHash = GetGeometryHash();
+
+#if UNITY_EDITOR
+            if (generatedMesh == null && !string.IsNullOrEmpty(m_GeneratedMeshAssetPath))
+            {
+                Mesh mesh = UnityEditor.AssetDatabase.LoadAssetAtPath<Mesh>(m_GeneratedMeshAssetPath);
+                if (mesh != null)
+                {
+                    generatedMesh = mesh;
+                    MeshFilter mf = GetComponent<MeshFilter>();
+                    if (mf != null && mf.sharedMesh == null)
+                        mf.sharedMesh = mesh;
+                }
+            }
+#endif
         }
     }
 }

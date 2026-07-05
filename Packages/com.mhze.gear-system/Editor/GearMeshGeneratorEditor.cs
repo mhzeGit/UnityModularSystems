@@ -39,6 +39,11 @@ namespace MHZE.GearSystem.Editor
             m_RotationOffset = serializedObject.FindProperty("rotationOffset");
             m_GenerateOnAwake = serializedObject.FindProperty("generateOnAwake");
             m_GeneratedMesh = serializedObject.FindProperty("generatedMesh");
+
+            var targetsArray = targets;
+            m_PreviousGeometryHashes = new string[targetsArray.Length];
+            for (int i = 0; i < targetsArray.Length; i++)
+                m_PreviousGeometryHashes[i] = ((GearMeshGenerator)targetsArray[i]).GetGeometryHash();
         }
 
         public override void OnInspectorGUI()
@@ -113,31 +118,19 @@ namespace MHZE.GearSystem.Editor
 
         private void GenerateAndSave(GearMeshGenerator gen)
         {
-            // ── Delete the previous owned mesh asset by stored path ──
             string oldAssetPath = gen.m_GeneratedMeshAssetPath;
-            if (!string.IsNullOrEmpty(oldAssetPath))
-            {
-                gen.generatedMesh = null;
-                gen.m_GeneratedMeshAssetPath = null;
-
-                MeshFilter mf = gen.GetComponent<MeshFilter>();
-                if (mf != null) mf.sharedMesh = null;
-
-                if (AssetDatabase.LoadAssetAtPath<Mesh>(oldAssetPath) != null)
-                    AssetDatabase.DeleteAsset(oldAssetPath);
-            }
-            else if (gen.generatedMesh != null)
-            {
-                // Non-owned or runtime mesh — disconnect without deleting
-                gen.generatedMesh = null;
-
-                MeshFilter mf = gen.GetComponent<MeshFilter>();
-                if (mf != null) mf.sharedMesh = null;
-            }
 
             string prefabPath = PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(gen);
             if (!string.IsNullOrEmpty(prefabPath))
             {
+                // For prefabs, clean up old asset before generating sub-asset
+                if (!string.IsNullOrEmpty(oldAssetPath))
+                {
+                    gen.generatedMesh = null;
+                    gen.m_GeneratedMeshAssetPath = null;
+                    if (AssetDatabase.LoadAssetAtPath<Mesh>(oldAssetPath) != null)
+                        AssetDatabase.DeleteAsset(oldAssetPath);
+                }
                 GenerateNewSubAsset(gen, prefabPath);
             }
             else
@@ -155,8 +148,7 @@ namespace MHZE.GearSystem.Editor
             string hash = gen.GetGeometryHash();
             string cachePath = Path.Combine(dir, $"GearMesh_{hash}.asset");
 
-            // If the old owned asset already points to the correct cache path,
-            // just verify it's still on disk and assign it — no delete-recreate.
+            // Cache hit — same path and asset exists, just ensure it's assigned
             if (gen.m_GeneratedMeshAssetPath == cachePath)
             {
                 Mesh existingMesh = AssetDatabase.LoadAssetAtPath<Mesh>(cachePath);
@@ -173,48 +165,35 @@ namespace MHZE.GearSystem.Editor
                 }
             }
 
-            // ── Delete the previous owned mesh asset by stored path ──
-            // Use m_GeneratedMeshAssetPath directly because gen.generatedMesh
-            // may have already been destroyed by OnValidate → Generate().
             string oldAssetPath = gen.m_GeneratedMeshAssetPath;
-            if (!string.IsNullOrEmpty(oldAssetPath))
+
+            // Load or generate the new mesh FIRST, before touching sharedMesh
+            Mesh newMesh = AssetDatabase.LoadAssetAtPath<Mesh>(cachePath);
+            if (newMesh == null)
             {
-                gen.generatedMesh = null;
-                gen.m_GeneratedMeshAssetPath = null;
+                gen.Generate();
+                newMesh = gen.generatedMesh;
+                if (newMesh == null) return;
+                newMesh.name = Path.GetFileNameWithoutExtension(cachePath);
+                AssetDatabase.CreateAsset(newMesh, cachePath);
+            }
 
-                MeshFilter mf = gen.GetComponent<MeshFilter>();
-                if (mf != null) mf.sharedMesh = null;
+            // Assign the new mesh (no null window in scene view)
+            gen.generatedMesh = newMesh;
+            gen.m_GeneratedMeshAssetPath = cachePath;
 
+            MeshFilter mf2 = gen.GetComponent<MeshFilter>();
+            if (mf2 == null) mf2 = gen.gameObject.AddComponent<MeshFilter>();
+            MeshRenderer mr2 = gen.GetComponent<MeshRenderer>();
+            if (mr2 == null) mr2 = gen.gameObject.AddComponent<MeshRenderer>();
+            mf2.sharedMesh = newMesh;
+
+            // Delete old asset only after new mesh is live
+            if (!string.IsNullOrEmpty(oldAssetPath) && oldAssetPath != cachePath)
+            {
                 if (AssetDatabase.LoadAssetAtPath<Mesh>(oldAssetPath) != null)
                     AssetDatabase.DeleteAsset(oldAssetPath);
             }
-
-            // Try to reuse existing cached mesh with matching geometry
-            Mesh cachedMesh = AssetDatabase.LoadAssetAtPath<Mesh>(cachePath);
-            if (cachedMesh != null)
-            {
-                MeshFilter mf = gen.GetComponent<MeshFilter>();
-                if (mf == null) mf = gen.gameObject.AddComponent<MeshFilter>();
-                MeshRenderer mr = gen.GetComponent<MeshRenderer>();
-                if (mr == null) mr = gen.gameObject.AddComponent<MeshRenderer>();
-
-                mf.sharedMesh = cachedMesh;
-                gen.generatedMesh = cachedMesh;
-                gen.m_GeneratedMeshAssetPath = cachePath;
-
-                AssetDatabase.SaveAssets();
-                EditorUtility.SetDirty(gen);
-                return;
-            }
-
-            // Generate new mesh and save with hash-based name
-            gen.Generate();
-            Mesh newMesh = gen.generatedMesh;
-            if (newMesh == null) return;
-
-            newMesh.name = Path.GetFileNameWithoutExtension(cachePath);
-            AssetDatabase.CreateAsset(newMesh, cachePath);
-            gen.m_GeneratedMeshAssetPath = cachePath;
 
             AssetDatabase.SaveAssets();
             EditorUtility.SetDirty(gen);
