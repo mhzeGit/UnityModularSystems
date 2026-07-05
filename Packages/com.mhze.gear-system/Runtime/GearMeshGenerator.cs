@@ -6,8 +6,8 @@ namespace MHZE.GearSystem
     public class GearMeshGenerator : MonoBehaviour
     {
         [Header("Gear Geometry")]
-        [Min(3)]
-        public int toothCount = 12;
+        [Min(0.1f)]
+        public float gearDensity = 24f;
         [Min(0.01f)]
         public float pitchRadius = 0.5f;
         [Min(0.001f)]
@@ -33,8 +33,12 @@ namespace MHZE.GearSystem
         public Mesh generatedMesh;
         [HideInInspector]
         public string m_GeneratedMeshAssetPath;
+        [HideInInspector]
+        [SerializeField]
+        private string m_PreviousGeometryHash;
 
         public float CenterHoleRadius => pitchRadius * centerHoleRadiusFraction;
+        public int ToothCount => Mathf.Max(3, Mathf.RoundToInt(gearDensity * pitchRadius));
 
         private void Awake()
         {
@@ -62,7 +66,7 @@ namespace MHZE.GearSystem
                 mr = gameObject.AddComponent<MeshRenderer>();
 
             Mesh mesh = BuildGearMesh();
-            mesh.name = $"Gear_{toothCount}t_{pitchRadius:F2}r";
+            mesh.name = $"Gear_{ToothCount}t_{pitchRadius:F2}r";
 
             mf.sharedMesh = mesh;
             generatedMesh = mesh;
@@ -82,7 +86,7 @@ namespace MHZE.GearSystem
         // ── Step 1: Build the base cylinder ──────────────────────────────
         private Mesh BuildBaseCylinder()
         {
-            int segs = toothCount * segmentsPerTooth;
+            int segs = ToothCount * segmentsPerTooth;
             float halfThick = thickness * 0.5f;
             float holeRadius = CenterHoleRadius;
             bool hasHole = holeRadius > 0.001f;
@@ -309,7 +313,8 @@ namespace MHZE.GearSystem
             Mesh baseMesh = BuildBaseCylinder();
             Mesh toothMesh = BuildToothMesh();
 
-            int combineCount = 1 + toothCount;
+            int tc = ToothCount;
+            int combineCount = 1 + tc;
             var combine = new CombineInstance[combineCount];
 
             // Base cylinder: identity transform
@@ -317,9 +322,9 @@ namespace MHZE.GearSystem
             combine[0].transform = Matrix4x4.identity;
 
             // Place teeth around the gear
-            float periodDeg = 360f / toothCount;
+            float periodDeg = 360f / tc;
 
-            for (int i = 0; i < toothCount; i++)
+            for (int i = 0; i < tc; i++)
             {
                 Quaternion rot = GetToothRotation(i * periodDeg + rotationOffset);
                 Vector3 pos = Vector3.zero;
@@ -347,7 +352,7 @@ namespace MHZE.GearSystem
 
         public string GetGeometryHash()
         {
-            string canonical = $"{toothCount}|{pitchRadius:F6}|{toothHeight:F6}|{toothWidth:F6}|{thickness:F6}|{axis}|{centerHoleRadiusFraction:F6}|{rotationOffset:F6}|{segmentsPerTooth}";
+            string canonical = $"{gearDensity:F6}|{pitchRadius:F6}|{toothHeight:F6}|{toothWidth:F6}|{thickness:F6}|{axis}|{centerHoleRadiusFraction:F6}|{rotationOffset:F6}|{segmentsPerTooth}";
             return Hash128.Compute(canonical).ToString();
         }
 
@@ -359,12 +364,21 @@ namespace MHZE.GearSystem
 
         private void OnValidate()
         {
-            toothCount = Mathf.Max(3, toothCount);
+            gearDensity = Mathf.Max(0.1f, gearDensity);
             toothWidth = Mathf.Max(0.001f, toothWidth);
             thickness = Mathf.Max(0.001f, thickness);
             pitchRadius = Mathf.Max(0.01f, pitchRadius);
             toothHeight = Mathf.Max(0.001f, toothHeight);
             segmentsPerTooth = Mathf.Max(3, segmentsPerTooth);
+
+            if (Application.isPlaying) return;
+
+            string currentHash = GetGeometryHash();
+            if (currentHash != m_PreviousGeometryHash)
+            {
+                m_PreviousGeometryHash = currentHash;
+                Generate();
+            }
         }
     }
 }

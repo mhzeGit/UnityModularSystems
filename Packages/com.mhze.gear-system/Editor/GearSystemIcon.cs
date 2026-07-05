@@ -21,7 +21,7 @@ namespace MHZE.GearSystem.Editor
             if (icon == null) return;
 
             SetIconForType<GearConstraint>("GearConstraint", icon);
-            SetIconForType<GearMeshGenerator>("GearMeshGenerator", icon);
+            SetIconForType<GearMeshGenerator>("GearMeshGenerator", EditorGUIUtility.IconContent("SettingsIcon").image as Texture2D);
         }
 
         private static void SetIconForType<T>(string searchFilter, Texture2D icon)

@@ -9,7 +9,8 @@ namespace MHZE.GearSystem
         public Transform meshTransform;
         public float radius;
         public GearAxis axis;
-        public float toothCount;
+        [Tooltip("Teeth per unit of pitch radius. Tooth count is auto-computed as density × radius.")]
+        public float gearDensity;
         [Range(0f, 1f)]
         public float sphereRadiusOffset;
 
@@ -17,13 +18,13 @@ namespace MHZE.GearSystem
             Transform meshTransform = null,
             float radius = 0.5f,
             GearAxis axis = GearAxis.Y,
-            float toothCount = 5f,
+            float gearDensity = 24f,
             float sphereRadiusOffset = 0.5f)
         {
             this.meshTransform = meshTransform;
             this.radius = radius;
             this.axis = axis;
-            this.toothCount = toothCount;
+            this.gearDensity = gearDensity;
             this.sphereRadiusOffset = sphereRadiusOffset;
         }
     }
@@ -178,14 +179,14 @@ namespace MHZE.GearSystem
             constraint.meshA = localDef.meshTransform;
             constraint.radiusA = localDef.radius;
             constraint.axisA = localDef.axis;
-            constraint.toothCountA = localDef.toothCount;
+            constraint.gearDensityA = localDef.gearDensity;
             constraint.sphereRadiusOffsetA = localDef.sphereRadiusOffset;
 
             constraint.gearB = other.gearTransform;
             constraint.meshB = otherDef.meshTransform;
             constraint.radiusB = otherDef.radius;
             constraint.axisB = otherDef.axis;
-            constraint.toothCountB = otherDef.toothCount;
+            constraint.gearDensityB = otherDef.gearDensity;
             constraint.sphereRadiusOffsetB = otherDef.sphereRadiusOffset;
 
             constraint.toothHeight = toothHeight;

@@ -178,12 +178,12 @@ MonoBehaviour:
   - meshTransform: {fileID: 3684015668735582324}
     radius: 0.36
     axis: 1
-    toothCount: 12
+    gearDensity: 33.33333333
     sphereRadiusOffset: 0.5
   - meshTransform: {fileID: 6691340547225457361}
     radius: 0.76
     axis: 1
-    toothCount: 24
+    gearDensity: 31.57894737
     sphereRadiusOffset: 0.5
   toothHeight: 0.1
   toothWidth: 0.1
@@ -373,7 +373,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10c7401957610d74c9088c436b9c0e80, type: 3}
   m_Name: 
   m_EditorClassIdentifier: com.mhze.gear-system.Runtime::MHZE.GearSystem.GearMeshGenerator
-  toothCount: 12
+  gearDensity: 33.33333333
   pitchRadius: 0.36
   toothHeight: 0.08
   toothWidth: 0.1
@@ -560,7 +560,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10c7401957610d74c9088c436b9c0e80, type: 3}
   m_Name: 
   m_EditorClassIdentifier: com.mhze.gear-system.Runtime::MHZE.GearSystem.GearMeshGenerator
-  toothCount: 24
+  gearDensity: 31.57894737
   pitchRadius: 0.76
   toothHeight: 0.08
   toothWidth: 0.1

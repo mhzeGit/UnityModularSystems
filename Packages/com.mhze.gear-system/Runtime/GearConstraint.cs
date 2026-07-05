@@ -28,13 +28,18 @@ namespace MHZE.GearSystem
         public Transform meshA;
         public float radiusA = 0.5f;
         public GearAxis axisA = GearAxis.Y;
-        public float toothCountA = 5f;
+        [Tooltip("Teeth per unit of pitch radius. Tooth count is auto-computed as density × radius.")]
+        public float gearDensityA = 24f;
 
         public Transform gearB;
         public Transform meshB;
         public float radiusB = 0.5f;
         public GearAxis axisB = GearAxis.Y;
-        public float toothCountB = 5f;
+        [Tooltip("Teeth per unit of pitch radius. Tooth count is auto-computed as density × radius.")]
+        public float gearDensityB = 24f;
+
+        public float ToothCountA => gearDensityA * radiusA;
+        public float ToothCountB => gearDensityB * radiusB;
 
         public float toothHeight = 0.1f;
         [Tooltip("Angular width of one tooth (degrees). Used for mesh offset alignment.")]
@@ -137,8 +142,8 @@ namespace MHZE.GearSystem
             Transform tB = EffectiveTransformB;
             if (tA == null || tB == null) return;
 
-            Vector3[] posA = GetSpherePositions(tA, radiusA, axisA, toothCountA, true, sphereRadiusOffsetA);
-            Vector3[] posB = GetSpherePositions(tB, radiusB, axisB, toothCountB, false, sphereRadiusOffsetB);
+            Vector3[] posA = GetSpherePositions(tA, radiusA, axisA, ToothCountA, true, sphereRadiusOffsetA);
+            Vector3[] posB = GetSpherePositions(tB, radiusB, axisB, ToothCountB, false, sphereRadiusOffsetB);
 
             float minDistSq = (overlapSphereRadius + overlapSphereRadius) * (overlapSphereRadius + overlapSphereRadius);
             OverlapInfo? closestOv = null;
@@ -280,8 +285,8 @@ namespace MHZE.GearSystem
             Transform tB = EffectiveTransformB;
             if (tA == null || tB == null) return System.Array.Empty<OverlapInfo>();
 
-            Vector3[] posA = GetSpherePositions(tA, radiusA, axisA, toothCountA, true, sphereRadiusOffsetA);
-            Vector3[] posB = GetSpherePositions(tB, radiusB, axisB, toothCountB, false, sphereRadiusOffsetB);
+            Vector3[] posA = GetSpherePositions(tA, radiusA, axisA, ToothCountA, true, sphereRadiusOffsetA);
+            Vector3[] posB = GetSpherePositions(tB, radiusB, axisB, ToothCountB, false, sphereRadiusOffsetB);
 
             float minDist = overlapSphereRadius * 2f;
             var overlaps = new List<OverlapInfo>();

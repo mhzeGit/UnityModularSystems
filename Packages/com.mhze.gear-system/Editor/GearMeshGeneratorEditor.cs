@@ -8,7 +8,7 @@ namespace MHZE.GearSystem.Editor
     [CanEditMultipleObjects]
     public class GearMeshGeneratorEditor : UnityEditor.Editor
     {
-        private SerializedProperty m_ToothCount;
+        private SerializedProperty m_GearDensity;
         private SerializedProperty m_PitchRadius;
         private SerializedProperty m_ToothHeight;
         private SerializedProperty m_ToothWidth;
@@ -23,10 +23,12 @@ namespace MHZE.GearSystem.Editor
         private bool m_ShowGeometry = true;
         private bool m_ShowQuality = true;
         private bool m_ShowAuto = true;
+        private bool m_IsAutoGenerating;
+        private string[] m_PreviousGeometryHashes;
 
         private void OnEnable()
         {
-            m_ToothCount = serializedObject.FindProperty("toothCount");
+            m_GearDensity = serializedObject.FindProperty("gearDensity");
             m_PitchRadius = serializedObject.FindProperty("pitchRadius");
             m_ToothHeight = serializedObject.FindProperty("toothHeight");
             m_ToothWidth = serializedObject.FindProperty("toothWidth");
@@ -53,6 +55,8 @@ namespace MHZE.GearSystem.Editor
 
             serializedObject.ApplyModifiedProperties();
 
+            AutoSaveIfGeometryChanged();
+
             EditorGUILayout.Space(6);
 
             if (GUILayout.Button("Generate Mesh", GUILayout.Height(32)))
@@ -75,7 +79,7 @@ namespace MHZE.GearSystem.Editor
             m_ShowGeometry = EditorGUILayout.Foldout(m_ShowGeometry, "Gear Geometry", true, EditorStyles.foldoutHeader);
             if (!m_ShowGeometry) return;
             EditorGUI.indentLevel++;
-            EditorGUILayout.PropertyField(m_ToothCount, new GUIContent("Tooth Count"));
+            EditorGUILayout.PropertyField(m_GearDensity, new GUIContent("Gear Density", "Teeth per unit of pitch radius. Same density = same tooth spacing regardless of radius."));
             EditorGUILayout.PropertyField(m_PitchRadius, new GUIContent("Pitch Radius"));
             EditorGUILayout.PropertyField(m_ToothHeight, new GUIContent("Tooth Height"));
                 EditorGUILayout.PropertyField(m_ToothWidth, new GUIContent("Tooth Width", "Absolute width of one tooth at the pitch circle (world units). Stays constant regardless of radius and tooth count."));
@@ -109,24 +113,22 @@ namespace MHZE.GearSystem.Editor
 
         private void GenerateAndSave(GearMeshGenerator gen)
         {
-            Mesh oldMesh = gen.generatedMesh;
-            string oldPath = oldMesh != null ? AssetDatabase.GetAssetPath(oldMesh) : "";
-            bool isOwned = !string.IsNullOrEmpty(oldPath) && oldPath == gen.m_GeneratedMeshAssetPath;
-
-            // ── Delete our old asset (if we own it) ──
-            // If the mesh was inherited from a duplicate (path mismatch),
-            // leave the original's asset alone.
-            if (isOwned)
+            // ── Delete the previous owned mesh asset by stored path ──
+            string oldAssetPath = gen.m_GeneratedMeshAssetPath;
+            if (!string.IsNullOrEmpty(oldAssetPath))
             {
                 gen.generatedMesh = null;
+                gen.m_GeneratedMeshAssetPath = null;
 
                 MeshFilter mf = gen.GetComponent<MeshFilter>();
                 if (mf != null) mf.sharedMesh = null;
 
-                AssetDatabase.DeleteAsset(oldPath);
+                if (AssetDatabase.LoadAssetAtPath<Mesh>(oldAssetPath) != null)
+                    AssetDatabase.DeleteAsset(oldAssetPath);
             }
-            else if (!string.IsNullOrEmpty(oldPath))
+            else if (gen.generatedMesh != null)
             {
+                // Non-owned or runtime mesh — disconnect without deleting
                 gen.generatedMesh = null;
 
                 MeshFilter mf = gen.GetComponent<MeshFilter>();
@@ -152,6 +154,40 @@ namespace MHZE.GearSystem.Editor
 
             string hash = gen.GetGeometryHash();
             string cachePath = Path.Combine(dir, $"GearMesh_{hash}.asset");
+
+            // If the old owned asset already points to the correct cache path,
+            // just verify it's still on disk and assign it — no delete-recreate.
+            if (gen.m_GeneratedMeshAssetPath == cachePath)
+            {
+                Mesh existingMesh = AssetDatabase.LoadAssetAtPath<Mesh>(cachePath);
+                if (existingMesh != null)
+                {
+                    MeshFilter mf = gen.GetComponent<MeshFilter>();
+                    if (mf == null) mf = gen.gameObject.AddComponent<MeshFilter>();
+                    MeshRenderer mr = gen.GetComponent<MeshRenderer>();
+                    if (mr == null) mr = gen.gameObject.AddComponent<MeshRenderer>();
+                    mf.sharedMesh = existingMesh;
+                    gen.generatedMesh = existingMesh;
+                    EditorUtility.SetDirty(gen);
+                    return;
+                }
+            }
+
+            // ── Delete the previous owned mesh asset by stored path ──
+            // Use m_GeneratedMeshAssetPath directly because gen.generatedMesh
+            // may have already been destroyed by OnValidate → Generate().
+            string oldAssetPath = gen.m_GeneratedMeshAssetPath;
+            if (!string.IsNullOrEmpty(oldAssetPath))
+            {
+                gen.generatedMesh = null;
+                gen.m_GeneratedMeshAssetPath = null;
+
+                MeshFilter mf = gen.GetComponent<MeshFilter>();
+                if (mf != null) mf.sharedMesh = null;
+
+                if (AssetDatabase.LoadAssetAtPath<Mesh>(oldAssetPath) != null)
+                    AssetDatabase.DeleteAsset(oldAssetPath);
+            }
 
             // Try to reuse existing cached mesh with matching geometry
             Mesh cachedMesh = AssetDatabase.LoadAssetAtPath<Mesh>(cachePath);
@@ -224,6 +260,39 @@ namespace MHZE.GearSystem.Editor
             if (mf != null) mf.sharedMesh = null;
 
             EditorUtility.SetDirty(gen);
+        }
+
+        private void AutoSaveIfGeometryChanged()
+        {
+            if (EditorApplication.isPlaying || m_IsAutoGenerating) return;
+
+            var targetsArray = targets;
+            if (m_PreviousGeometryHashes == null || m_PreviousGeometryHashes.Length != targetsArray.Length)
+                m_PreviousGeometryHashes = new string[targetsArray.Length];
+
+            bool changed = false;
+            for (int i = 0; i < targetsArray.Length; i++)
+            {
+                var gen = (GearMeshGenerator)targetsArray[i];
+                string hash = gen.GetGeometryHash();
+                if (hash != m_PreviousGeometryHashes[i])
+                {
+                    m_PreviousGeometryHashes[i] = hash;
+                    changed = true;
+                }
+            }
+
+            if (!changed) return;
+
+            m_IsAutoGenerating = true;
+            foreach (var t in targetsArray)
+            {
+                var gen = (GearMeshGenerator)t;
+                string prefabPath = PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(gen);
+                if (string.IsNullOrEmpty(prefabPath))
+                    GenerateNewOrReuseStandalone(gen);
+            }
+            m_IsAutoGenerating = false;
         }
     }
 }

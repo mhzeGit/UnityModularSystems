@@ -28,12 +28,12 @@ namespace MHZE.GearSystem.Editor
                 float sphereOffsetB = constraint.sphereRadiusOffsetB * constraint.toothHeight;
 
                 DrawGear(mA, constraint.radiusA, constraint.axisA,
-                    constraint.toothCountA, constraint.toothHeight, constraint.toothWidth,
+                    constraint.ToothCountA, constraint.toothHeight, constraint.toothWidth,
                     constraint.debugColorA, constraint.overlapSphereRadius, true, sphereOffsetA,
                     overlaps, constraint.HasActiveOverlap, activeOv);
 
                 DrawGear(mB, constraint.radiusB, constraint.axisB,
-                    constraint.toothCountB, constraint.toothHeight, constraint.toothWidth,
+                    constraint.ToothCountB, constraint.toothHeight, constraint.toothWidth,
                     constraint.debugColorB, constraint.overlapSphereRadius, false, sphereOffsetB,
                     overlaps, constraint.HasActiveOverlap, activeOv);
 
