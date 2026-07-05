@@ -30,12 +30,14 @@ namespace MHZE.GearSystem.Editor
                 DrawGear(mA, constraint.radiusA, constraint.axisA,
                     constraint.ToothCountA, constraint.toothHeight, constraint.toothWidth,
                     constraint.debugColorA, constraint.overlapSphereRadius, true, sphereOffsetA,
-                    overlaps, constraint.HasActiveOverlap, activeOv);
+                    overlaps, constraint.HasActiveOverlap, activeOv,
+                    constraint.meshOffset);
 
                 DrawGear(mB, constraint.radiusB, constraint.axisB,
                     constraint.ToothCountB, constraint.toothHeight, constraint.toothWidth,
                     constraint.debugColorB, constraint.overlapSphereRadius, false, sphereOffsetB,
-                    overlaps, constraint.HasActiveOverlap, activeOv);
+                    overlaps, constraint.HasActiveOverlap, activeOv,
+                    constraint.meshOffset);
 
                 if (overlaps != null && overlaps.Length > 0)
                 {
@@ -52,7 +54,8 @@ namespace MHZE.GearSystem.Editor
 
         private static void DrawGear(Transform gearTransform, float radius, GearAxis axis,
             float toothCount, float toothHeight, float toothWidth, Color color, float sphereRadius, bool sphereOnTeeth,
-            float sphereRadiusOffset, OverlapInfo[] overlaps, bool hasActiveOverlap, OverlapInfo activeOverlap)
+            float sphereRadiusOffset, OverlapInfo[] overlaps, bool hasActiveOverlap, OverlapInfo activeOverlap,
+            float meshOffset)
         {
             if (gearTransform == null || radius <= 0f || toothCount <= 0f) return;
 
@@ -65,7 +68,7 @@ namespace MHZE.GearSystem.Editor
             float outerRadius = radius + toothHeight;
             float angleStep = 360f / toothCount;
             float halfWidth = toothWidth * 0.5f;
-            float offsetAngle = (toothWidth / radius) * Mathf.Rad2Deg;
+            float offsetAngle = (toothWidth / radius) * Mathf.Rad2Deg + meshOffset * angleStep;
             int toothCountInt = Mathf.Max(1, Mathf.RoundToInt(toothCount));
 
             Color fillColor = color;

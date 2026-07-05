@@ -98,7 +98,7 @@ namespace MHZE.GearSystem.Editor
                     EditorGUILayout.PropertyField(m_JointMaxForce, new GUIContent("Max Force", "Maximum force the spring can apply."));
                     EditorGUI.indentLevel--;
                 }
-                EditorGUILayout.PropertyField(m_MeshOffset, new GUIContent("Mesh Offset", "Angular offset for gear mesh alignment (degrees)."));
+                EditorGUILayout.Slider(m_MeshOffset, 0f, 1f, new GUIContent("Mesh Offset", "Fraction of one tooth pitch for mesh alignment."));
                 EditorGUI.indentLevel--;
                 EditorGUILayout.Space(2);
             }

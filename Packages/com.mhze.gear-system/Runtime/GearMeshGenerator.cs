@@ -19,7 +19,7 @@ namespace MHZE.GearSystem
         public GearAxis axis = GearAxis.Y;
         [Range(0f, 0.85f)]
         public float centerHoleRadiusFraction = 0f;
-        [Range(0f, 360f)]
+        [Range(0f, 1f)]
         public float rotationOffset;
 
         [Header("Mesh Quality")]
@@ -53,7 +53,7 @@ namespace MHZE.GearSystem
                 if (Application.isPlaying)
                     Destroy(generatedMesh);
                 else
-                    DestroyImmediate(generatedMesh);
+                    DestroyImmediate(generatedMesh, true);
                 generatedMesh = null;
             }
 
@@ -326,7 +326,7 @@ namespace MHZE.GearSystem
 
             for (int i = 0; i < tc; i++)
             {
-                Quaternion rot = GetToothRotation(i * periodDeg + rotationOffset);
+                Quaternion rot = GetToothRotation(i * periodDeg + rotationOffset * periodDeg);
                 Vector3 pos = Vector3.zero;
                 combine[1 + i].mesh = toothMesh;
                 combine[1 + i].transform = Matrix4x4.TRS(pos, rot, Vector3.one);
@@ -336,6 +336,18 @@ namespace MHZE.GearSystem
             result.CombineMeshes(combine, true, true);
             result.RecalculateNormals();
             result.RecalculateBounds();
+
+            if (Application.isPlaying)
+            {
+                Destroy(baseMesh);
+                Destroy(toothMesh);
+            }
+            else
+            {
+                DestroyImmediate(baseMesh, true);
+                DestroyImmediate(toothMesh, true);
+            }
+
             return result;
         }
 
@@ -358,8 +370,8 @@ namespace MHZE.GearSystem
 
         private void OnDestroy()
         {
-            if (generatedMesh != null && Application.isPlaying)
-                Destroy(generatedMesh);
+            if (generatedMesh != null)
+                DestroyImmediate(generatedMesh, true);
         }
 
         private void OnValidate()
@@ -373,12 +385,7 @@ namespace MHZE.GearSystem
 
             if (Application.isPlaying) return;
 
-            string currentHash = GetGeometryHash();
-            if (currentHash != m_PreviousGeometryHash)
-            {
-                m_PreviousGeometryHash = currentHash;
-                Generate();
-            }
+            m_PreviousGeometryHash = GetGeometryHash();
         }
     }
 }

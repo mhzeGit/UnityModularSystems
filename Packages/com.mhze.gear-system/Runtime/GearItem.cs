@@ -75,7 +75,8 @@ namespace MHZE.GearSystem
         public float toothHeight = 0.1f;
         [Tooltip("Angular width of one tooth (degrees). Used for mesh offset alignment.")]
         public float toothWidth = 0.1f;
-        [Tooltip("Angular offset for gear mesh alignment (degrees).")]
+        [Range(0f, 1f)]
+        [Tooltip("Fraction of one tooth pitch to offset sphere positions for mesh alignment.")]
         public float meshOffset;
         public float overlapSphereRadius = 0.06f;
 

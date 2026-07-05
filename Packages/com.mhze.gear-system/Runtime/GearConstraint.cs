@@ -44,7 +44,8 @@ namespace MHZE.GearSystem
         public float toothHeight = 0.1f;
         [Tooltip("Angular width of one tooth (degrees). Used for mesh offset alignment.")]
         public float toothWidth = 0.1f;
-        [Tooltip("Angular offset for gear mesh alignment (degrees).")]
+        [Range(0f, 1f)]
+        [Tooltip("Fraction of one tooth pitch to offset sphere positions for mesh alignment.")]
         public float meshOffset;
         public float overlapSphereRadius = 0.06f;
         [Tooltip("Sphere radial offset for gear A. 0 = at radius, 1 = at tooth tip.")]
@@ -264,7 +265,7 @@ namespace MHZE.GearSystem
                 tan = Vector3.ProjectOnPlane(t.forward, nml).normalized;
 
             float angleStep = 360f / toothCount;
-            float offsetAngle = (toothWidth / radius) * Mathf.Rad2Deg;
+            float offsetAngle = (toothWidth / radius) * Mathf.Rad2Deg + meshOffset * angleStep;
             float sphereOffset = onTeeth ? 0f : angleStep * 0.5f;
             int count = Mathf.Max(1, Mathf.RoundToInt(toothCount));
 

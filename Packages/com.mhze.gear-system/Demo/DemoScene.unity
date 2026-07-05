@@ -501,19 +501,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10c7401957610d74c9088c436b9c0e80, type: 3}
   m_Name: 
   m_EditorClassIdentifier: com.mhze.gear-system.Runtime::MHZE.GearSystem.GearMeshGenerator
-  gearDensity: 32.25806452
-  pitchRadius: 0.62
+  gearDensity: 36
+  pitchRadius: 0.59
   toothHeight: 0.08
   toothWidth: 0.1
   thickness: 0.08
   axis: 1
   centerHoleRadiusFraction: 0.15
-  rotationOffset: 0
+  rotationOffset: 0.4
   segmentsPerTooth: 8
   generateOnAwake: 0
-  generatedMesh: {fileID: 4300000, guid: 26f1c04bd32d82640831a11645c0653e, type: 2}
-  m_GeneratedMeshAssetPath: Assets/GeneratedMeshes\GearMesh_ce0786ddefbeaad1605d7f9b0471a750.asset
-  m_PreviousGeometryHash: ce0786ddefbeaad1605d7f9b0471a750
+  generatedMesh: {fileID: 4300000, guid: 033941786314520428f15cc8fab5d9b3, type: 2}
+  m_GeneratedMeshAssetPath: Assets/GeneratedMeshes\GearMesh_bd82a019fc97db81df1b723fe55edc99.asset
+  m_PreviousGeometryHash: bd82a019fc97db81df1b723fe55edc99
 --- !u!114 &323802183
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -639,7 +639,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 323802180}
-  m_Mesh: {fileID: 4300000, guid: 26f1c04bd32d82640831a11645c0653e, type: 2}
+  m_Mesh: {fileID: 4300000, guid: 033941786314520428f15cc8fab5d9b3, type: 2}
 --- !u!4 &397388040 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3117138625191409940, guid: 6fc20ee77df3a034da93cc090e1f0be3, type: 3}
@@ -820,19 +820,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10c7401957610d74c9088c436b9c0e80, type: 3}
   m_Name: 
   m_EditorClassIdentifier: com.mhze.gear-system.Runtime::MHZE.GearSystem.GearMeshGenerator
-  gearDensity: 35.41666667
+  gearDensity: 36
   pitchRadius: 0.48
   toothHeight: 0.08
   toothWidth: 0.1
   thickness: 0.08
   axis: 1
   centerHoleRadiusFraction: 0.15
-  rotationOffset: 0
+  rotationOffset: 0.4
   segmentsPerTooth: 8
   generateOnAwake: 0
-  generatedMesh: {fileID: 4300000, guid: cf5663b80b200354a92c64ba27fb953d, type: 2}
-  m_GeneratedMeshAssetPath: Assets/GeneratedMeshes\GearMesh_a5b2c06ebf119a164b52a51e1c8c0687.asset
-  m_PreviousGeometryHash: a5b2c06ebf119a164b52a51e1c8c0687
+  generatedMesh: {fileID: 4300000, guid: 1c7d23905a9a754429386a80884951a9, type: 2}
+  m_GeneratedMeshAssetPath: Assets/GeneratedMeshes\GearMesh_d61b51c6b82da08aec489d01f6e47f0e.asset
+  m_PreviousGeometryHash: d61b51c6b82da08aec489d01f6e47f0e
 --- !u!114 &519941450
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -958,7 +958,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 519941447}
-  m_Mesh: {fileID: 4300000, guid: cf5663b80b200354a92c64ba27fb953d, type: 2}
+  m_Mesh: {fileID: 4300000, guid: 1c7d23905a9a754429386a80884951a9, type: 2}
 --- !u!1 &604712593
 GameObject:
   m_ObjectHideFlags: 0
@@ -1040,19 +1040,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10c7401957610d74c9088c436b9c0e80, type: 3}
   m_Name: 
   m_EditorClassIdentifier: com.mhze.gear-system.Runtime::MHZE.GearSystem.GearMeshGenerator
-  gearDensity: 31.57894737
-  pitchRadius: 0.76
+  gearDensity: 36
+  pitchRadius: 0.7
   toothHeight: 0.08
   toothWidth: 0.1
   thickness: 0.08
   axis: 1
   centerHoleRadiusFraction: 0.15
-  rotationOffset: 0
+  rotationOffset: 0.4
   segmentsPerTooth: 8
   generateOnAwake: 0
-  generatedMesh: {fileID: 4300000, guid: c7a48d8703685674c9d740cd5f1fa1e9, type: 2}
-  m_GeneratedMeshAssetPath: Assets/GeneratedMeshes\GearMesh_5d317a07524bd4c40853df1c002e1836.asset
-  m_PreviousGeometryHash: 5d317a07524bd4c40853df1c002e1836
+  generatedMesh: {fileID: 4300000, guid: 51a39d69df2b0ae44b9b9c481a5d6041, type: 2}
+  m_GeneratedMeshAssetPath: Assets/GeneratedMeshes\GearMesh_78bd0671e367a7170dc669fe23d1eec9.asset
+  m_PreviousGeometryHash: 78bd0671e367a7170dc669fe23d1eec9
 --- !u!114 &707480657
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1178,7 +1178,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 707480654}
-  m_Mesh: {fileID: 4300000, guid: c7a48d8703685674c9d740cd5f1fa1e9, type: 2}
+  m_Mesh: {fileID: 4300000, guid: 51a39d69df2b0ae44b9b9c481a5d6041, type: 2}
 --- !u!1001 &752195606
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2132,19 +2132,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10c7401957610d74c9088c436b9c0e80, type: 3}
   m_Name: 
   m_EditorClassIdentifier: com.mhze.gear-system.Runtime::MHZE.GearSystem.GearMeshGenerator
-  gearDensity: 33.33333333
+  gearDensity: 36
   pitchRadius: 0.24
   toothHeight: 0.08
   toothWidth: 0.1
   thickness: 0.08
   axis: 1
   centerHoleRadiusFraction: 0.15
-  rotationOffset: 0
+  rotationOffset: 0.4
   segmentsPerTooth: 3
   generateOnAwake: 0
-  generatedMesh: {fileID: 4300000, guid: e239b47f5c3afe04f9aaec14e508bcdd, type: 2}
-  m_GeneratedMeshAssetPath: Assets/GeneratedMeshes\GearMesh_7573749ba3fa491cd0da0454748809ee.asset
-  m_PreviousGeometryHash: 7573749ba3fa491cd0da0454748809ee
+  generatedMesh: {fileID: 4300000, guid: 9ca05c928bddad04286134c36ff97d0d, type: 2}
+  m_GeneratedMeshAssetPath: Assets/GeneratedMeshes\GearMesh_ab3f3a7336317a9bfdc70b7a2b87f77f.asset
+  m_PreviousGeometryHash: ab3f3a7336317a9bfdc70b7a2b87f77f
 --- !u!33 &1790836576604147998
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -2152,7 +2152,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2611629670113412097}
-  m_Mesh: {fileID: 4300000, guid: 976474c2262cbad4aae36621af129467, type: 2}
+  m_Mesh: {fileID: 4300000, guid: 02a9c86fe1cdb5f43b4ca4fe6bfd8296, type: 2}
 --- !u!114 &2287966087823274494
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2514,7 +2514,7 @@ Transform:
   m_GameObject: {fileID: 6268105205934255972}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.116, y: 1.32, z: 0}
+  m_LocalPosition: {x: -0.187, y: 1.32, z: 0.007}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2634,27 +2634,27 @@ MonoBehaviour:
   - meshTransform: {fileID: 4650430095586290718}
     radius: 0.24
     axis: 1
-    gearDensity: 33.33333333
+    gearDensity: 36
     sphereRadiusOffset: 0.5
   - meshTransform: {fileID: 3419797776790937275}
     radius: 0.36
     axis: 1
-    gearDensity: 33.33333333
+    gearDensity: 36
     sphereRadiusOffset: 0.5
   - meshTransform: {fileID: 519941448}
     radius: 0.48
     axis: 1
-    gearDensity: 35.41666667
+    gearDensity: 36
     sphereRadiusOffset: 0.5
   - meshTransform: {fileID: 323802181}
     radius: 0.62
     axis: 1
-    gearDensity: 32.25806452
+    gearDensity: 36
     sphereRadiusOffset: 0.5
   - meshTransform: {fileID: 707480655}
-    radius: 0.76
+    radius: 0.7
     axis: 1
-    gearDensity: 31.57894737
+    gearDensity: 36
     sphereRadiusOffset: 0.5
   toothHeight: 0.1
   toothWidth: 0.1
@@ -2676,7 +2676,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5459054499941627556}
-  m_Mesh: {fileID: 4300000, guid: e239b47f5c3afe04f9aaec14e508bcdd, type: 2}
+  m_Mesh: {fileID: 4300000, guid: 9ca05c928bddad04286134c36ff97d0d, type: 2}
 --- !u!114 &8796677464631762756
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2689,19 +2689,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10c7401957610d74c9088c436b9c0e80, type: 3}
   m_Name: 
   m_EditorClassIdentifier: com.mhze.gear-system.Runtime::MHZE.GearSystem.GearMeshGenerator
-  gearDensity: 33.33333333
+  gearDensity: 36
   pitchRadius: 0.36
   toothHeight: 0.08
   toothWidth: 0.1
   thickness: 0.08
   axis: 1
   centerHoleRadiusFraction: 0.15
-  rotationOffset: 0
+  rotationOffset: 0.4
   segmentsPerTooth: 8
   generateOnAwake: 0
-  generatedMesh: {fileID: 4300000, guid: 976474c2262cbad4aae36621af129467, type: 2}
-  m_GeneratedMeshAssetPath: Assets/GeneratedMeshes\GearMesh_88b2d7b20612843d59e8348e5caa35fe.asset
-  m_PreviousGeometryHash: 88b2d7b20612843d59e8348e5caa35fe
+  generatedMesh: {fileID: 4300000, guid: 02a9c86fe1cdb5f43b4ca4fe6bfd8296, type: 2}
+  m_GeneratedMeshAssetPath: Assets/GeneratedMeshes\GearMesh_fdc1bc8d4547b433fff413eb20771b7c.asset
+  m_PreviousGeometryHash: fdc1bc8d4547b433fff413eb20771b7c
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

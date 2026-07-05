@@ -86,7 +86,7 @@ namespace MHZE.GearSystem.Editor
             EditorGUILayout.PropertyField(m_Thickness, new GUIContent("Thickness"));
             EditorGUILayout.PropertyField(m_Axis, new GUIContent("Axis"));
                 EditorGUILayout.PropertyField(m_CenterHoleRadiusFraction, new GUIContent("Center Hole Size", "Fraction of pitch radius (0 = solid disc)"));
-                EditorGUILayout.PropertyField(m_RotationOffset, new GUIContent("Rotation Offset", "Rotate all teeth around the gear axis (degrees). Useful for aligning teeth between meshing gears."));
+                EditorGUILayout.Slider(m_RotationOffset, 0f, 1f, new GUIContent("Rotation Offset", "Fraction of one tooth pitch to offset all teeth. Useful for aligning teeth between meshing gears."));
                 EditorGUI.indentLevel--;
             EditorGUILayout.Space(2);
         }
