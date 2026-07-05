@@ -19,6 +19,8 @@ namespace MHZE.GearSystem
         public GearAxis axis = GearAxis.Y;
         [Range(0f, 0.85f)]
         public float centerHoleRadiusFraction = 0f;
+        [Range(0f, 360f)]
+        public float rotationOffset;
 
         [Header("Mesh Quality")]
         [Range(3, 32)]
@@ -189,14 +191,31 @@ namespace MHZE.GearSystem
 
             if (hasHole)
             {
-                // Front cap: annulus between hole ring and outer ring
+                // Separate inner ring for caps (not shared with inner wall)
+                // so normals stay sharp at the hole edge.
+                int capHoleFront = verts.Count;
+                for (int i = 0; i < segs; i++)
+                {
+                    float angleRad = i * 2f * Mathf.PI / segs;
+                    Vector3 radial = new Vector3(Mathf.Cos(angleRad) * holeRadius, 0, Mathf.Sin(angleRad) * holeRadius);
+                    verts.Add(GearVertex(axis, radial, -halfThick));
+                }
+                int capHoleBack = verts.Count;
+                for (int i = 0; i < segs; i++)
+                {
+                    float angleRad = i * 2f * Mathf.PI / segs;
+                    Vector3 radial = new Vector3(Mathf.Cos(angleRad) * holeRadius, 0, Mathf.Sin(angleRad) * holeRadius);
+                    verts.Add(GearVertex(axis, radial, halfThick));
+                }
+
+                // Front cap: annulus between capHoleFront and capOuterFront
                 for (int i = 0; i < segs; i++)
                 {
                     int next = (i + 1) % segs;
                     int oi = capOuterFront + i;
                     int on = capOuterFront + next;
-                    int ii = holeVertFrontStart + i * 2;
-                    int inn = holeVertFrontStart + next * 2;
+                    int ii = capHoleFront + i;
+                    int inn = capHoleFront + next;
                     tris.Add(oi);
                     tris.Add(on);
                     tris.Add(ii);
@@ -204,14 +223,14 @@ namespace MHZE.GearSystem
                     tris.Add(inn);
                     tris.Add(ii);
                 }
-                // Back cap: annulus between hole ring and outer ring (reversed)
+                // Back cap: annulus between capHoleBack and capOuterBack (reversed)
                 for (int i = 0; i < segs; i++)
                 {
                     int next = (i + 1) % segs;
                     int oi = capOuterBack + i;
                     int on = capOuterBack + next;
-                    int ii = holeVertFrontStart + i * 2 + 1;
-                    int inn = holeVertFrontStart + next * 2 + 1;
+                    int ii = capHoleBack + i;
+                    int inn = capHoleBack + next;
                     tris.Add(oi);
                     tris.Add(ii);
                     tris.Add(on);
@@ -351,7 +370,7 @@ namespace MHZE.GearSystem
 
             for (int i = 0; i < toothCount; i++)
             {
-                Quaternion rot = GetToothRotation(i * periodDeg);
+                Quaternion rot = GetToothRotation(i * periodDeg + rotationOffset);
                 Vector3 pos = Vector3.zero;
                 combine[1 + i].mesh = toothMesh;
                 combine[1 + i].transform = Matrix4x4.TRS(pos, rot, Vector3.one);
@@ -377,13 +396,8 @@ namespace MHZE.GearSystem
 
         private void OnDestroy()
         {
-            if (generatedMesh != null)
-            {
-                if (Application.isPlaying)
-                    Destroy(generatedMesh);
-                else
-                    DestroyImmediate(generatedMesh);
-            }
+            if (generatedMesh != null && Application.isPlaying)
+                Destroy(generatedMesh);
         }
 
         private void OnValidate()
