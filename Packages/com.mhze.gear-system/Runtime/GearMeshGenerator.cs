@@ -12,8 +12,8 @@ namespace MHZE.GearSystem
         public float pitchRadius = 0.5f;
         [Min(0.001f)]
         public float toothHeight = 0.1f;
-        [Range(1f, 179f)]
-        public float toothWidthAngle = 15f;
+        [Min(0.001f)]
+        public float toothWidth = 0.13f;
         [Min(0.001f)]
         public float thickness = 0.2f;
         public GearAxis axis = GearAxis.Y;
@@ -28,10 +28,11 @@ namespace MHZE.GearSystem
 
         [Header("Auto Generation")]
         public bool generateOnAwake;
-        public bool assignMeshCollider;
 
         [Header("Output")]
         public Mesh generatedMesh;
+        [HideInInspector]
+        public string m_GeneratedMeshAssetPath;
 
         public float CenterHoleRadius => pitchRadius * centerHoleRadiusFraction;
 
@@ -65,14 +66,6 @@ namespace MHZE.GearSystem
 
             mf.sharedMesh = mesh;
             generatedMesh = mesh;
-
-            if (assignMeshCollider)
-            {
-                MeshCollider mc = GetComponent<MeshCollider>();
-                if (mc == null)
-                    mc = gameObject.AddComponent<MeshCollider>();
-                mc.sharedMesh = mesh;
-            }
         }
 
         private static Vector3 GearVertex(GearAxis a, Vector3 radial, float axialOffset)
@@ -90,175 +83,133 @@ namespace MHZE.GearSystem
         private Mesh BuildBaseCylinder()
         {
             int segs = toothCount * segmentsPerTooth;
-            float period = 360f / toothCount;
             float halfThick = thickness * 0.5f;
-            float halfTooth = toothWidthAngle * 0.5f;
             float holeRadius = CenterHoleRadius;
             bool hasHole = holeRadius > 0.001f;
 
             var verts = new System.Collections.Generic.List<Vector3>();
             var tris = new System.Collections.Generic.List<int>();
 
-            // Outer wall – iterate over each gap region between teeth explicitly.
-            // For each tooth gap [i*period+halfTooth, (i+1)*period-halfTooth],
-            // create wall vertex pairs at regular intervals covering the full gap.
-            for (int ti = 0; ti < toothCount; ti++)
+            // Each face ring is a separate vertex copy so RecalculateNormals
+            // never blends normals across different face types.
+
+            // Wall front ring – vertices at pitchRadius, y = -halfThick
+            int wallFront = verts.Count;
+            for (int i = 0; i < segs; i++)
             {
-                float gapStartDeg = ti * period + halfTooth;
-                float gapEndDeg = (ti + 1) * period - halfTooth;
-                float gapWidthDeg = gapEndDeg - gapStartDeg;
-
-                if (gapWidthDeg <= 0f) continue;
-
-                int numGapSegs = Mathf.Max(1, Mathf.RoundToInt(gapWidthDeg / (period / segmentsPerTooth)));
-                int prevFront = -1;
-                int prevBack = -1;
-
-                for (int j = 0; j <= numGapSegs; j++)
-                {
-                    float t = (float)j / numGapSegs;
-                    float angleRad = (gapStartDeg + t * gapWidthDeg) * Mathf.Deg2Rad;
-                    float cos = Mathf.Cos(angleRad);
-                    float sin = Mathf.Sin(angleRad);
-                    Vector3 radial = new Vector3(cos * pitchRadius, 0, sin * pitchRadius);
-
-                    int idxFront = verts.Count;
-                    verts.Add(GearVertex(axis, radial, -halfThick));
-                    int idxBack = verts.Count;
-                    verts.Add(GearVertex(axis, radial, halfThick));
-
-                    if (j > 0)
-                    {
-                        tris.Add(prevFront);
-                        tris.Add(prevBack);
-                        tris.Add(idxFront);
-                        tris.Add(idxFront);
-                        tris.Add(prevBack);
-                        tris.Add(idxBack);
-                    }
-
-                    prevFront = idxFront;
-                    prevBack = idxBack;
-                }
+                float a = i * 2f * Mathf.PI / segs;
+                Vector3 r = new Vector3(Mathf.Cos(a) * pitchRadius, 0, Mathf.Sin(a) * pitchRadius);
+                verts.Add(GearVertex(axis, r, -halfThick));
+            }
+            // Wall back ring – vertices at pitchRadius, y = +halfThick
+            int wallBack = verts.Count;
+            for (int i = 0; i < segs; i++)
+            {
+                float a = i * 2f * Mathf.PI / segs;
+                Vector3 r = new Vector3(Mathf.Cos(a) * pitchRadius, 0, Mathf.Sin(a) * pitchRadius);
+                verts.Add(GearVertex(axis, r, halfThick));
+            }
+            // Wall quads (all segments)
+            for (int i = 0; i < segs; i++)
+            {
+                int n = (i + 1) % segs;
+                int fi = wallFront + i, fn = wallFront + n;
+                int bi = wallBack + i, bn = wallBack + n;
+                tris.Add(fi); tris.Add(bi); tris.Add(bn);
+                tris.Add(fi); tris.Add(bn); tris.Add(fn);
             }
 
-            // Inner wall (hole) – full circle
+            // Cap outer ring – separate copies so wall↔cap edge stays hard
+            int capOuterFront = verts.Count;
+            for (int i = 0; i < segs; i++)
+            {
+                float a = i * 2f * Mathf.PI / segs;
+                Vector3 r = new Vector3(Mathf.Cos(a) * pitchRadius, 0, Mathf.Sin(a) * pitchRadius);
+                verts.Add(GearVertex(axis, r, -halfThick));
+            }
+            int capOuterBack = verts.Count;
+            for (int i = 0; i < segs; i++)
+            {
+                float a = i * 2f * Mathf.PI / segs;
+                Vector3 r = new Vector3(Mathf.Cos(a) * pitchRadius, 0, Mathf.Sin(a) * pitchRadius);
+                verts.Add(GearVertex(axis, r, halfThick));
+            }
+
+            // Inner wall (hole cylinder) – separate vertices
             int holeVertFrontStart = -1;
-            int holeVertBackStart = -1;
             if (hasHole)
             {
                 holeVertFrontStart = verts.Count;
                 for (int i = 0; i < segs; i++)
                 {
-                    float angleRad = i * 2f * Mathf.PI / segs;
-                    Vector3 radial = new Vector3(Mathf.Cos(angleRad) * holeRadius, 0, Mathf.Sin(angleRad) * holeRadius);
-                    verts.Add(GearVertex(axis, radial, -halfThick));
-                    verts.Add(GearVertex(axis, radial, halfThick));
+                    float a = i * 2f * Mathf.PI / segs;
+                    Vector3 r = new Vector3(Mathf.Cos(a) * holeRadius, 0, Mathf.Sin(a) * holeRadius);
+                    verts.Add(GearVertex(axis, r, -halfThick));
+                    verts.Add(GearVertex(axis, r, halfThick));
                 }
-
                 for (int i = 0; i < segs; i++)
                 {
-                    int next = (i + 1) % segs;
-                    int fi0 = holeVertFrontStart + i * 2;
-                    int fi1 = holeVertFrontStart + next * 2;
-                    int bi0 = holeVertFrontStart + i * 2 + 1;
-                    int bi1 = holeVertFrontStart + next * 2 + 1;
-                    tris.Add(fi0);
-                    tris.Add(fi1);
-                    tris.Add(bi0);
-                    tris.Add(fi1);
-                    tris.Add(bi1);
-                    tris.Add(bi0);
+                    int n = (i + 1) % segs;
+                    int fi0 = holeVertFrontStart + i * 2, fi1 = holeVertFrontStart + n * 2;
+                    int bi0 = holeVertFrontStart + i * 2 + 1, bi1 = holeVertFrontStart + n * 2 + 1;
+                    tris.Add(fi0); tris.Add(fi1); tris.Add(bi0);
+                    tris.Add(fi1); tris.Add(bi1); tris.Add(bi0);
                 }
             }
 
-            // Front cap – full disc/annulus from center/hole to pitchRadius
-            // Build continuous outer ring for the caps (full circle, all segments)
-            int capOuterFront = verts.Count;
-            for (int i = 0; i < segs; i++)
-            {
-                float angleRad = i * 2f * Mathf.PI / segs;
-                Vector3 radial = new Vector3(Mathf.Cos(angleRad) * pitchRadius, 0, Mathf.Sin(angleRad) * pitchRadius);
-                verts.Add(GearVertex(axis, radial, -halfThick));
-            }
-            int capOuterBack = verts.Count;
-            for (int i = 0; i < segs; i++)
-            {
-                float angleRad = i * 2f * Mathf.PI / segs;
-                Vector3 radial = new Vector3(Mathf.Cos(angleRad) * pitchRadius, 0, Mathf.Sin(angleRad) * pitchRadius);
-                verts.Add(GearVertex(axis, radial, halfThick));
-            }
-
+            // Cap inner ring – separate from inner wall for sharp normals
             if (hasHole)
             {
-                // Separate inner ring for caps (not shared with inner wall)
-                // so normals stay sharp at the hole edge.
                 int capHoleFront = verts.Count;
                 for (int i = 0; i < segs; i++)
                 {
-                    float angleRad = i * 2f * Mathf.PI / segs;
-                    Vector3 radial = new Vector3(Mathf.Cos(angleRad) * holeRadius, 0, Mathf.Sin(angleRad) * holeRadius);
-                    verts.Add(GearVertex(axis, radial, -halfThick));
+                    float a = i * 2f * Mathf.PI / segs;
+                    Vector3 r = new Vector3(Mathf.Cos(a) * holeRadius, 0, Mathf.Sin(a) * holeRadius);
+                    verts.Add(GearVertex(axis, r, -halfThick));
                 }
                 int capHoleBack = verts.Count;
                 for (int i = 0; i < segs; i++)
                 {
-                    float angleRad = i * 2f * Mathf.PI / segs;
-                    Vector3 radial = new Vector3(Mathf.Cos(angleRad) * holeRadius, 0, Mathf.Sin(angleRad) * holeRadius);
-                    verts.Add(GearVertex(axis, radial, halfThick));
+                    float a = i * 2f * Mathf.PI / segs;
+                    Vector3 r = new Vector3(Mathf.Cos(a) * holeRadius, 0, Mathf.Sin(a) * holeRadius);
+                    verts.Add(GearVertex(axis, r, halfThick));
                 }
 
-                // Front cap: annulus between capHoleFront and capOuterFront
                 for (int i = 0; i < segs; i++)
                 {
-                    int next = (i + 1) % segs;
-                    int oi = capOuterFront + i;
-                    int on = capOuterFront + next;
-                    int ii = capHoleFront + i;
-                    int inn = capHoleFront + next;
-                    tris.Add(oi);
-                    tris.Add(on);
-                    tris.Add(ii);
-                    tris.Add(on);
-                    tris.Add(inn);
-                    tris.Add(ii);
+                    int n = (i + 1) % segs;
+                    int oi = capOuterFront + i, on = capOuterFront + n;
+                    int ii = capHoleFront + i, inn = capHoleFront + n;
+                    tris.Add(oi); tris.Add(on); tris.Add(ii);
+                    tris.Add(on); tris.Add(inn); tris.Add(ii);
                 }
-                // Back cap: annulus between capHoleBack and capOuterBack (reversed)
                 for (int i = 0; i < segs; i++)
                 {
-                    int next = (i + 1) % segs;
-                    int oi = capOuterBack + i;
-                    int on = capOuterBack + next;
-                    int ii = capHoleBack + i;
-                    int inn = capHoleBack + next;
-                    tris.Add(oi);
-                    tris.Add(ii);
-                    tris.Add(on);
-                    tris.Add(on);
-                    tris.Add(ii);
-                    tris.Add(inn);
+                    int n = (i + 1) % segs;
+                    int oi = capOuterBack + i, on = capOuterBack + n;
+                    int ii = capHoleBack + i, inn = capHoleBack + n;
+                    tris.Add(oi); tris.Add(ii); tris.Add(on);
+                    tris.Add(on); tris.Add(ii); tris.Add(inn);
                 }
             }
             else
             {
-                // Front cap: triangle fan from center
                 int centerFront = verts.Count;
                 verts.Add(GearVertex(axis, Vector3.zero, -halfThick));
                 for (int i = 0; i < segs; i++)
                 {
-                    int next = (i + 1) % segs;
+                    int n = (i + 1) % segs;
                     tris.Add(centerFront);
                     tris.Add(capOuterFront + i);
-                    tris.Add(capOuterFront + next);
+                    tris.Add(capOuterFront + n);
                 }
-                // Back cap: triangle fan from center (reversed)
                 int centerBack = verts.Count;
                 verts.Add(GearVertex(axis, Vector3.zero, halfThick));
                 for (int i = 0; i < segs; i++)
                 {
-                    int next = (i + 1) % segs;
+                    int n = (i + 1) % segs;
                     tris.Add(centerBack);
-                    tris.Add(capOuterBack + next);
+                    tris.Add(capOuterBack + n);
                     tris.Add(capOuterBack + i);
                 }
             }
@@ -272,7 +223,7 @@ namespace MHZE.GearSystem
         // ── Step 2: Build a single tooth ─────────────────────────────────
         private Mesh BuildToothMesh()
         {
-            float halfTooth = toothWidthAngle * 0.5f * Mathf.Deg2Rad;
+            float halfTooth = toothWidth * 0.5f / pitchRadius;
             float halfTip = halfTooth * 0.65f;
             float halfThick = thickness * 0.5f;
             float r = pitchRadius;
@@ -403,7 +354,7 @@ namespace MHZE.GearSystem
         private void OnValidate()
         {
             toothCount = Mathf.Max(3, toothCount);
-            toothWidthAngle = Mathf.Clamp(toothWidthAngle, 1f, 179f);
+            toothWidth = Mathf.Max(0.001f, toothWidth);
             thickness = Mathf.Max(0.001f, thickness);
             pitchRadius = Mathf.Max(0.01f, pitchRadius);
             toothHeight = Mathf.Max(0.001f, toothHeight);

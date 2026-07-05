@@ -11,14 +11,13 @@ namespace MHZE.GearSystem.Editor
         private SerializedProperty m_ToothCount;
         private SerializedProperty m_PitchRadius;
         private SerializedProperty m_ToothHeight;
-        private SerializedProperty m_ToothWidthAngle;
+        private SerializedProperty m_ToothWidth;
         private SerializedProperty m_Thickness;
         private SerializedProperty m_Axis;
         private SerializedProperty m_CenterHoleRadiusFraction;
         private SerializedProperty m_SegmentsPerTooth;
         private SerializedProperty m_RotationOffset;
         private SerializedProperty m_GenerateOnAwake;
-        private SerializedProperty m_AssignMeshCollider;
         private SerializedProperty m_GeneratedMesh;
 
         private bool m_ShowGeometry = true;
@@ -30,14 +29,13 @@ namespace MHZE.GearSystem.Editor
             m_ToothCount = serializedObject.FindProperty("toothCount");
             m_PitchRadius = serializedObject.FindProperty("pitchRadius");
             m_ToothHeight = serializedObject.FindProperty("toothHeight");
-            m_ToothWidthAngle = serializedObject.FindProperty("toothWidthAngle");
+            m_ToothWidth = serializedObject.FindProperty("toothWidth");
             m_Thickness = serializedObject.FindProperty("thickness");
             m_Axis = serializedObject.FindProperty("axis");
             m_CenterHoleRadiusFraction = serializedObject.FindProperty("centerHoleRadiusFraction");
             m_SegmentsPerTooth = serializedObject.FindProperty("segmentsPerTooth");
             m_RotationOffset = serializedObject.FindProperty("rotationOffset");
             m_GenerateOnAwake = serializedObject.FindProperty("generateOnAwake");
-            m_AssignMeshCollider = serializedObject.FindProperty("assignMeshCollider");
             m_GeneratedMesh = serializedObject.FindProperty("generatedMesh");
         }
 
@@ -52,6 +50,8 @@ namespace MHZE.GearSystem.Editor
             DrawAutoFoldout();
 
             EditorGUILayout.PropertyField(m_GeneratedMesh, new GUIContent("Generated Mesh"));
+
+            serializedObject.ApplyModifiedProperties();
 
             EditorGUILayout.Space(6);
 
@@ -68,8 +68,6 @@ namespace MHZE.GearSystem.Editor
                 foreach (var t in targets)
                     ClearMesh((GearMeshGenerator)t);
             }
-
-            serializedObject.ApplyModifiedProperties();
         }
 
         private void DrawGeometryFoldout()
@@ -80,7 +78,7 @@ namespace MHZE.GearSystem.Editor
             EditorGUILayout.PropertyField(m_ToothCount, new GUIContent("Tooth Count"));
             EditorGUILayout.PropertyField(m_PitchRadius, new GUIContent("Pitch Radius"));
             EditorGUILayout.PropertyField(m_ToothHeight, new GUIContent("Tooth Height"));
-            EditorGUILayout.PropertyField(m_ToothWidthAngle, new GUIContent("Tooth Width (deg)"));
+                EditorGUILayout.PropertyField(m_ToothWidth, new GUIContent("Tooth Width", "Absolute width of one tooth at the pitch circle (world units). Stays constant regardless of radius and tooth count."));
             EditorGUILayout.PropertyField(m_Thickness, new GUIContent("Thickness"));
             EditorGUILayout.PropertyField(m_Axis, new GUIContent("Axis"));
                 EditorGUILayout.PropertyField(m_CenterHoleRadiusFraction, new GUIContent("Center Hole Size", "Fraction of pitch radius (0 = solid disc)"));
@@ -104,69 +102,72 @@ namespace MHZE.GearSystem.Editor
             m_ShowAuto = EditorGUILayout.Foldout(m_ShowAuto, "Auto Generation", true, EditorStyles.foldoutHeader);
             if (!m_ShowAuto) return;
             EditorGUI.indentLevel++;
-            EditorGUILayout.PropertyField(m_GenerateOnAwake, new GUIContent("Generate On Awake"));
-            EditorGUILayout.PropertyField(m_AssignMeshCollider, new GUIContent("Assign Mesh Collider"));
+                EditorGUILayout.PropertyField(m_GenerateOnAwake, new GUIContent("Generate On Awake"));
             EditorGUI.indentLevel--;
             EditorGUILayout.Space(2);
         }
 
         private void GenerateAndSave(GearMeshGenerator gen)
         {
-            // 1. Delete old mesh asset if it exists
             Mesh oldMesh = gen.generatedMesh;
-            if (oldMesh != null)
+            string oldPath = oldMesh != null ? AssetDatabase.GetAssetPath(oldMesh) : "";
+            bool isOwned = !string.IsNullOrEmpty(oldPath) && oldPath == gen.m_GeneratedMeshAssetPath;
+
+            // ── Delete our old asset (if we own it) ──
+            // If the mesh was inherited from a duplicate (path mismatch),
+            // leave the original's asset alone.
+            if (isOwned)
             {
-                string oldPath = AssetDatabase.GetAssetPath(oldMesh);
-                if (!string.IsNullOrEmpty(oldPath))
-                {
-                    // It's a saved asset — delete the file first, then clear references.
-                    // Setting generatedMesh to null prevents Generate() from trying to
-                    // DestroyImmediate an already-deleted object.
-                    gen.generatedMesh = null;
+                gen.generatedMesh = null;
 
-                    MeshFilter mf = gen.GetComponent<MeshFilter>();
-                    if (mf != null) mf.sharedMesh = null;
+                MeshFilter mf = gen.GetComponent<MeshFilter>();
+                if (mf != null) mf.sharedMesh = null;
 
-                    MeshCollider mc = gen.GetComponent<MeshCollider>();
-                    if (mc != null) mc.sharedMesh = null;
+                AssetDatabase.DeleteAsset(oldPath);
+            }
+            else if (!string.IsNullOrEmpty(oldPath))
+            {
+                // Inherited mesh — just disconnect references without deleting
+                gen.generatedMesh = null;
 
-                    AssetDatabase.DeleteAsset(oldPath);
-                    AssetDatabase.Refresh();
-                }
-                // else: not an asset — Generate() will DestroyImmediate it
+                MeshFilter mf = gen.GetComponent<MeshFilter>();
+                if (mf != null) mf.sharedMesh = null;
             }
 
-            // 2. Generate new mesh
+            // ── Generate new mesh ──
             gen.Generate();
-
-            // 3. Save as asset so it persists in prefabs
             Mesh newMesh = gen.generatedMesh;
-            if (newMesh == null || !AssetDatabase.GetAssetPath(newMesh).Equals(""))
-                return;
+            if (newMesh == null) return;
+
+            // ── Save as new asset with a unique name ──
+            string newPath;
 
             string prefabPath = PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(gen);
             if (!string.IsNullOrEmpty(prefabPath))
             {
                 // Save as sub-asset of the prefab
                 var prefabAsset = AssetDatabase.LoadAssetAtPath<Object>(prefabPath);
-                if (prefabAsset != null)
-                {
-                    newMesh.name = $"{gen.gameObject.name}_GearMesh";
-                    AssetDatabase.AddObjectToAsset(newMesh, prefabAsset);
-                }
+                if (prefabAsset == null) return;
+
+                newMesh.name = $"{gen.gameObject.name}_GearMesh";
+                AssetDatabase.AddObjectToAsset(newMesh, prefabAsset);
+                newPath = prefabPath;
             }
             else
             {
-                // Not part of a prefab — save as a standalone asset
+                // Save as standalone asset with a unique GUID-based filename
                 string dir = "Assets/GeneratedMeshes";
                 if (!Directory.Exists(dir))
                     Directory.CreateDirectory(dir);
 
-                string path = Path.Combine(dir, $"{gen.gameObject.name}_GearMesh.asset");
-                path = AssetDatabase.GenerateUniqueAssetPath(path);
-                newMesh.name = Path.GetFileNameWithoutExtension(path);
-                AssetDatabase.CreateAsset(newMesh, path);
+                string guid = System.Guid.NewGuid().ToString("N");
+                newPath = Path.Combine(dir, $"{gen.gameObject.name}_{guid}_GearMesh.asset");
+                newMesh.name = Path.GetFileNameWithoutExtension(newPath);
+                AssetDatabase.CreateAsset(newMesh, newPath);
             }
+
+            // ── Record ownership ──
+            gen.m_GeneratedMeshAssetPath = newPath;
 
             AssetDatabase.SaveAssets();
             EditorUtility.SetDirty(gen);
@@ -174,27 +175,25 @@ namespace MHZE.GearSystem.Editor
 
         private void ClearMesh(GearMeshGenerator gen)
         {
-            // If the mesh is a saved asset, delete it
             if (gen.generatedMesh != null)
             {
                 string path = AssetDatabase.GetAssetPath(gen.generatedMesh);
                 if (!string.IsNullOrEmpty(path))
                 {
                     gen.generatedMesh = null;
+                    gen.m_GeneratedMeshAssetPath = null;
                     AssetDatabase.DeleteAsset(path);
                 }
                 else
                 {
                     DestroyImmediate(gen.generatedMesh);
                     gen.generatedMesh = null;
+                    gen.m_GeneratedMeshAssetPath = null;
                 }
             }
 
             MeshFilter mf = gen.GetComponent<MeshFilter>();
             if (mf != null) mf.sharedMesh = null;
-
-            MeshCollider mc = gen.GetComponent<MeshCollider>();
-            if (mc != null) mc.sharedMesh = null;
 
             EditorUtility.SetDirty(gen);
         }
