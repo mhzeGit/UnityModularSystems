@@ -127,47 +127,75 @@ namespace MHZE.GearSystem.Editor
             }
             else if (!string.IsNullOrEmpty(oldPath))
             {
-                // Inherited mesh — just disconnect references without deleting
                 gen.generatedMesh = null;
 
                 MeshFilter mf = gen.GetComponent<MeshFilter>();
                 if (mf != null) mf.sharedMesh = null;
             }
 
-            // ── Generate new mesh ──
+            string prefabPath = PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(gen);
+            if (!string.IsNullOrEmpty(prefabPath))
+            {
+                GenerateNewSubAsset(gen, prefabPath);
+            }
+            else
+            {
+                GenerateNewOrReuseStandalone(gen);
+            }
+        }
+
+        private void GenerateNewOrReuseStandalone(GearMeshGenerator gen)
+        {
+            string dir = "Assets/GeneratedMeshes";
+            if (!Directory.Exists(dir))
+                Directory.CreateDirectory(dir);
+
+            string hash = gen.GetGeometryHash();
+            string cachePath = Path.Combine(dir, $"GearMesh_{hash}.asset");
+
+            // Try to reuse existing cached mesh with matching geometry
+            Mesh cachedMesh = AssetDatabase.LoadAssetAtPath<Mesh>(cachePath);
+            if (cachedMesh != null)
+            {
+                MeshFilter mf = gen.GetComponent<MeshFilter>();
+                if (mf == null) mf = gen.gameObject.AddComponent<MeshFilter>();
+                MeshRenderer mr = gen.GetComponent<MeshRenderer>();
+                if (mr == null) mr = gen.gameObject.AddComponent<MeshRenderer>();
+
+                mf.sharedMesh = cachedMesh;
+                gen.generatedMesh = cachedMesh;
+                gen.m_GeneratedMeshAssetPath = cachePath;
+
+                AssetDatabase.SaveAssets();
+                EditorUtility.SetDirty(gen);
+                return;
+            }
+
+            // Generate new mesh and save with hash-based name
             gen.Generate();
             Mesh newMesh = gen.generatedMesh;
             if (newMesh == null) return;
 
-            // ── Save as new asset with a unique name ──
-            string newPath;
+            newMesh.name = Path.GetFileNameWithoutExtension(cachePath);
+            AssetDatabase.CreateAsset(newMesh, cachePath);
+            gen.m_GeneratedMeshAssetPath = cachePath;
 
-            string prefabPath = PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(gen);
-            if (!string.IsNullOrEmpty(prefabPath))
-            {
-                // Save as sub-asset of the prefab
-                var prefabAsset = AssetDatabase.LoadAssetAtPath<Object>(prefabPath);
-                if (prefabAsset == null) return;
+            AssetDatabase.SaveAssets();
+            EditorUtility.SetDirty(gen);
+        }
 
-                newMesh.name = $"{gen.gameObject.name}_GearMesh";
-                AssetDatabase.AddObjectToAsset(newMesh, prefabAsset);
-                newPath = prefabPath;
-            }
-            else
-            {
-                // Save as standalone asset with a unique GUID-based filename
-                string dir = "Assets/GeneratedMeshes";
-                if (!Directory.Exists(dir))
-                    Directory.CreateDirectory(dir);
+        private void GenerateNewSubAsset(GearMeshGenerator gen, string prefabPath)
+        {
+            gen.Generate();
+            Mesh newMesh = gen.generatedMesh;
+            if (newMesh == null) return;
 
-                string guid = System.Guid.NewGuid().ToString("N");
-                newPath = Path.Combine(dir, $"{gen.gameObject.name}_{guid}_GearMesh.asset");
-                newMesh.name = Path.GetFileNameWithoutExtension(newPath);
-                AssetDatabase.CreateAsset(newMesh, newPath);
-            }
+            var prefabAsset = AssetDatabase.LoadAssetAtPath<Object>(prefabPath);
+            if (prefabAsset == null) return;
 
-            // ── Record ownership ──
-            gen.m_GeneratedMeshAssetPath = newPath;
+            newMesh.name = $"{gen.gameObject.name}_GearMesh";
+            AssetDatabase.AddObjectToAsset(newMesh, prefabAsset);
+            gen.m_GeneratedMeshAssetPath = prefabPath;
 
             AssetDatabase.SaveAssets();
             EditorUtility.SetDirty(gen);

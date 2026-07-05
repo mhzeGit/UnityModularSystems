@@ -511,8 +511,8 @@ MonoBehaviour:
   rotationOffset: 8
   segmentsPerTooth: 8
   generateOnAwake: 0
-  generatedMesh: {fileID: 4300000, guid: e7347f1fe78ad4141bf9eff8380cbdb9, type: 2}
-  m_GeneratedMeshAssetPath: Assets/GeneratedMeshes\GearMeshExample05_228435d38ba54992ab12abcc72994544_GearMesh.asset
+  generatedMesh: {fileID: 4300000, guid: 23b9c56a713cf04418084f0edec6f4a5, type: 2}
+  m_GeneratedMeshAssetPath: Assets/GeneratedMeshes\GearMesh_7f8427e8b714b46f5fef0841b47792d6.asset
 --- !u!114 &323802183
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -638,7 +638,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 323802180}
-  m_Mesh: {fileID: 4300000, guid: e7347f1fe78ad4141bf9eff8380cbdb9, type: 2}
+  m_Mesh: {fileID: 4300000, guid: 23b9c56a713cf04418084f0edec6f4a5, type: 2}
 --- !u!4 &397388040 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3117138625191409940, guid: 6fc20ee77df3a034da93cc090e1f0be3, type: 3}
@@ -829,8 +829,8 @@ MonoBehaviour:
   rotationOffset: 4
   segmentsPerTooth: 8
   generateOnAwake: 0
-  generatedMesh: {fileID: 4300000, guid: 0511a9148fc2cfc40b56794f2f9375d2, type: 2}
-  m_GeneratedMeshAssetPath: Assets/GeneratedMeshes\GearMeshExample04_e33ab09d534e48e09586504d0d6422a0_GearMesh.asset
+  generatedMesh: {fileID: 4300000, guid: ec81cb21eccd83a46a129bb833d9ec15, type: 2}
+  m_GeneratedMeshAssetPath: Assets/GeneratedMeshes\GearMesh_a334d607edb7f277b3a4a6a296463c00.asset
 --- !u!114 &519941450
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -956,7 +956,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 519941447}
-  m_Mesh: {fileID: 4300000, guid: 0511a9148fc2cfc40b56794f2f9375d2, type: 2}
+  m_Mesh: {fileID: 4300000, guid: ec81cb21eccd83a46a129bb833d9ec15, type: 2}
 --- !u!1 &604712593
 GameObject:
   m_ObjectHideFlags: 0
@@ -1048,8 +1048,8 @@ MonoBehaviour:
   rotationOffset: 7
   segmentsPerTooth: 8
   generateOnAwake: 0
-  generatedMesh: {fileID: 4300000, guid: e97f66f364e846d40b600d3e074651d6, type: 2}
-  m_GeneratedMeshAssetPath: Assets/GeneratedMeshes\GearMeshExample06_c47c415116d74da2b5e4dbc0f9974bc7_GearMesh.asset
+  generatedMesh: {fileID: 4300000, guid: f71bf7eb70c38b846bd12c48fbea9480, type: 2}
+  m_GeneratedMeshAssetPath: Assets/GeneratedMeshes\GearMesh_0b3444f68a588ad798b4929a48d26abc.asset
 --- !u!114 &707480657
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1175,7 +1175,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 707480654}
-  m_Mesh: {fileID: 4300000, guid: e97f66f364e846d40b600d3e074651d6, type: 2}
+  m_Mesh: {fileID: 4300000, guid: f71bf7eb70c38b846bd12c48fbea9480, type: 2}
 --- !u!1001 &752195606
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2139,8 +2139,8 @@ MonoBehaviour:
   rotationOffset: 22
   segmentsPerTooth: 3
   generateOnAwake: 0
-  generatedMesh: {fileID: 4300000, guid: 564bf5124e1eb8f48a79b573f09f33a0, type: 2}
-  m_GeneratedMeshAssetPath: Assets/GeneratedMeshes\GearMeshExample01_576431b58e7b497a8ab221483926a6b5_GearMesh.asset
+  generatedMesh: {fileID: 4300000, guid: 7588cb1c2f73655488cf5bbb060ed5ad, type: 2}
+  m_GeneratedMeshAssetPath: Assets/GeneratedMeshes\GearMesh_54decb34bfab26ed48f549e6b4e8ab27.asset
 --- !u!33 &1790836576604147998
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -2148,7 +2148,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2611629670113412097}
-  m_Mesh: {fileID: 4300000, guid: 5552e8e155e327f40ba87217c4f797f0, type: 2}
+  m_Mesh: {fileID: 4300000, guid: f3433d5bf29aab94595bb9cbcd8d434d, type: 2}
 --- !u!114 &2287966087823274494
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2672,7 +2672,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5459054499941627556}
-  m_Mesh: {fileID: 4300000, guid: 564bf5124e1eb8f48a79b573f09f33a0, type: 2}
+  m_Mesh: {fileID: 4300000, guid: 7588cb1c2f73655488cf5bbb060ed5ad, type: 2}
 --- !u!114 &8796677464631762756
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2695,8 +2695,8 @@ MonoBehaviour:
   rotationOffset: 14
   segmentsPerTooth: 8
   generateOnAwake: 0
-  generatedMesh: {fileID: 4300000, guid: 5552e8e155e327f40ba87217c4f797f0, type: 2}
-  m_GeneratedMeshAssetPath: Assets/GeneratedMeshes\GearMeshExample02_d91a96132dee4358b2a46832767569df_GearMesh.asset
+  generatedMesh: {fileID: 4300000, guid: f3433d5bf29aab94595bb9cbcd8d434d, type: 2}
+  m_GeneratedMeshAssetPath: Assets/GeneratedMeshes\GearMesh_9255ebcd600cc0358d1acc30920bb596.asset
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

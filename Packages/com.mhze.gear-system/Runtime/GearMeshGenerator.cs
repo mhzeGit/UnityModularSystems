@@ -345,6 +345,12 @@ namespace MHZE.GearSystem
             }
         }
 
+        public string GetGeometryHash()
+        {
+            string canonical = $"{toothCount}|{pitchRadius:F6}|{toothHeight:F6}|{toothWidth:F6}|{thickness:F6}|{axis}|{centerHoleRadiusFraction:F6}|{rotationOffset:F6}|{segmentsPerTooth}";
+            return Hash128.Compute(canonical).ToString();
+        }
+
         private void OnDestroy()
         {
             if (generatedMesh != null && Application.isPlaying)
