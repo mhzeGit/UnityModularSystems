@@ -279,6 +279,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -5754084199372789682, guid: 2046035c280046c4ca6af9530adc83d6, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 2046035c280046c4ca6af9530adc83d6, type: 3}
       propertyPath: m_Name
       value: GearMeshExample01
@@ -300,6 +304,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 2046035c280046c4ca6af9530adc83d6, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7811942411832753556}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 2046035c280046c4ca6af9530adc83d6, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7116319548852212980}
   m_SourcePrefab: {fileID: 100100000, guid: 2046035c280046c4ca6af9530adc83d6, type: 3}
 --- !u!4 &3684015668735582324 stripped
 Transform:
@@ -380,6 +387,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: com.mhze.gear-system.Runtime::MHZE.GearSystem.GearMeshTrigger
   gearItem: {fileID: 432176594419320671}
+--- !u!114 &7116319548852212980
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4065501521306286798}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10c7401957610d74c9088c436b9c0e80, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.mhze.gear-system.Runtime::MHZE.GearSystem.GearMeshGenerator
+  toothCount: 12
+  pitchRadius: 0.5
+  toothHeight: 0.1
+  toothWidthAngle: 15
+  thickness: 0.2
+  axis: 1
+  centerHoleRadiusFraction: 0
+  segmentsPerTooth: 4
+  generateOnAwake: 0
+  assignMeshCollider: 0
+  generatedMesh: {fileID: 0}
 --- !u!1001 &6581680709758874938
 PrefabInstance:
   m_ObjectHideFlags: 0
