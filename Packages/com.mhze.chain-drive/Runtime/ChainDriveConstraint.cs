@@ -432,7 +432,8 @@ namespace MHZE.ChainDrive
                 rb.solverVelocityIterations = 4;
 
                 SphereCollider collider = link.AddComponent<SphereCollider>();
-                collider.radius = chainBallRadius;
+                collider.radius = overlapSphereRadius;
+                collider.isTrigger = false;
 
                 ChainLink cl = link.AddComponent<ChainLink>();
                 cl.index = i;
