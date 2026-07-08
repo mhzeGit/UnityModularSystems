@@ -31,13 +31,13 @@ namespace MHZE.GearSystem.Editor
                     constraint.ToothCountA, constraint.toothHeight, constraint.toothWidth,
                     constraint.debugColorA, constraint.overlapSphereRadius, true, sphereOffsetA,
                     overlaps, constraint.HasActiveOverlap, activeOv,
-                    constraint.meshOffset);
+                    constraint.meshOffsetA);
 
                 DrawGear(mB, constraint.radiusB, constraint.axisB,
                     constraint.ToothCountB, constraint.toothHeight, constraint.toothWidth,
                     constraint.debugColorB, constraint.overlapSphereRadius, false, sphereOffsetB,
                     overlaps, constraint.HasActiveOverlap, activeOv,
-                    constraint.meshOffset);
+                    constraint.meshOffsetB);
 
                 if (overlaps != null && overlaps.Length > 0)
                 {

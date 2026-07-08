@@ -13,19 +13,23 @@ namespace MHZE.GearSystem
         public float gearDensity;
         [Range(0f, 1f)]
         public float sphereRadiusOffset;
+        [Range(0f, 1f)]
+        public float meshOffset;
 
         public GearDefinition(
             Transform meshTransform = null,
             float radius = 0.5f,
             GearAxis axis = GearAxis.Y,
             float gearDensity = 24f,
-            float sphereRadiusOffset = 0.5f)
+            float sphereRadiusOffset = 0.5f,
+            float meshOffset = 0f)
         {
             this.meshTransform = meshTransform;
             this.radius = radius;
             this.axis = axis;
             this.gearDensity = gearDensity;
             this.sphereRadiusOffset = sphereRadiusOffset;
+            this.meshOffset = meshOffset;
         }
     }
 
@@ -75,9 +79,6 @@ namespace MHZE.GearSystem
         public float toothHeight = 0.1f;
         [Tooltip("Angular width of one tooth (degrees). Used for mesh offset alignment.")]
         public float toothWidth = 0.1f;
-        [Range(0f, 1f)]
-        [Tooltip("Fraction of one tooth pitch to offset sphere positions for mesh alignment.")]
-        public float meshOffset;
         public float overlapSphereRadius = 0.06f;
 
         [Header("Overlap Detection")]
@@ -189,10 +190,11 @@ namespace MHZE.GearSystem
             constraint.axisB = otherDef.axis;
             constraint.gearDensityB = otherDef.gearDensity;
             constraint.sphereRadiusOffsetB = otherDef.sphereRadiusOffset;
+            constraint.meshOffsetA = localDef.meshOffset;
+            constraint.meshOffsetB = otherDef.meshOffset;
 
             constraint.toothHeight = toothHeight;
             constraint.toothWidth = toothWidth;
-            constraint.meshOffset = meshOffset;
             constraint.overlapSphereRadius = overlapSphereRadius;
             constraint.overlapCheckInterval = overlapCheckInterval;
             constraint.jointSpring = jointSpring;

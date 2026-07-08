@@ -45,8 +45,11 @@ namespace MHZE.GearSystem
         [Tooltip("Angular width of one tooth (degrees). Used for mesh offset alignment.")]
         public float toothWidth = 0.1f;
         [Range(0f, 1f)]
-        [Tooltip("Fraction of one tooth pitch to offset sphere positions for mesh alignment.")]
-        public float meshOffset;
+        [Tooltip("Fraction of one tooth pitch to offset sphere positions for mesh alignment on gear A.")]
+        public float meshOffsetA;
+        [Range(0f, 1f)]
+        [Tooltip("Fraction of one tooth pitch to offset sphere positions for mesh alignment on gear B.")]
+        public float meshOffsetB;
         public float overlapSphereRadius = 0.06f;
         [Tooltip("Sphere radial offset for gear A. 0 = at radius, 1 = at tooth tip.")]
         [Range(0f, 1f)]
@@ -143,8 +146,8 @@ namespace MHZE.GearSystem
             Transform tB = EffectiveTransformB;
             if (tA == null || tB == null) return;
 
-            Vector3[] posA = GetSpherePositions(tA, radiusA, axisA, ToothCountA, true, sphereRadiusOffsetA);
-            Vector3[] posB = GetSpherePositions(tB, radiusB, axisB, ToothCountB, false, sphereRadiusOffsetB);
+            Vector3[] posA = GetSpherePositions(tA, radiusA, axisA, ToothCountA, true, sphereRadiusOffsetA, meshOffsetA);
+            Vector3[] posB = GetSpherePositions(tB, radiusB, axisB, ToothCountB, false, sphereRadiusOffsetB, meshOffsetB);
 
             float minDistSq = (overlapSphereRadius + overlapSphereRadius) * (overlapSphereRadius + overlapSphereRadius);
             OverlapInfo? closestOv = null;
@@ -256,7 +259,7 @@ namespace MHZE.GearSystem
             }
         }
 
-        public Vector3[] GetSpherePositions(Transform t, float radius, GearAxis axis, float toothCount, bool onTeeth, float normalizedOffset)
+        public Vector3[] GetSpherePositions(Transform t, float radius, GearAxis axis, float toothCount, bool onTeeth, float normalizedOffset, float angularOffset = 0f)
         {
             Vector3 center = t.position;
             Vector3 nml = AxisToVector(axis, t);
@@ -265,7 +268,7 @@ namespace MHZE.GearSystem
                 tan = Vector3.ProjectOnPlane(t.forward, nml).normalized;
 
             float angleStep = 360f / toothCount;
-            float offsetAngle = (toothWidth / radius) * Mathf.Rad2Deg + meshOffset * angleStep;
+            float offsetAngle = (toothWidth / radius) * Mathf.Rad2Deg + angularOffset * angleStep;
             float sphereOffset = onTeeth ? 0f : angleStep * 0.5f;
             int count = Mathf.Max(1, Mathf.RoundToInt(toothCount));
 
@@ -286,8 +289,8 @@ namespace MHZE.GearSystem
             Transform tB = EffectiveTransformB;
             if (tA == null || tB == null) return System.Array.Empty<OverlapInfo>();
 
-            Vector3[] posA = GetSpherePositions(tA, radiusA, axisA, ToothCountA, true, sphereRadiusOffsetA);
-            Vector3[] posB = GetSpherePositions(tB, radiusB, axisB, ToothCountB, false, sphereRadiusOffsetB);
+            Vector3[] posA = GetSpherePositions(tA, radiusA, axisA, ToothCountA, true, sphereRadiusOffsetA, meshOffsetA);
+            Vector3[] posB = GetSpherePositions(tB, radiusB, axisB, ToothCountB, false, sphereRadiusOffsetB, meshOffsetB);
 
             float minDist = overlapSphereRadius * 2f;
             var overlaps = new List<OverlapInfo>();

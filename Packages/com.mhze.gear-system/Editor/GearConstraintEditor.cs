@@ -19,7 +19,8 @@ namespace MHZE.GearSystem.Editor
         private SerializedProperty m_GearDensityB;
         private SerializedProperty m_ToothHeight;
         private SerializedProperty m_ToothWidth;
-        private SerializedProperty m_MeshOffset;
+        private SerializedProperty m_MeshOffsetA;
+        private SerializedProperty m_MeshOffsetB;
         private SerializedProperty m_OverlapSphereRadius;
         private SerializedProperty m_OverlapCheckInterval;
         private SerializedProperty m_SphereRadiusOffsetA;
@@ -55,7 +56,8 @@ namespace MHZE.GearSystem.Editor
             m_GearDensityB = serializedObject.FindProperty("gearDensityB");
             m_ToothHeight = serializedObject.FindProperty("toothHeight");
             m_ToothWidth = serializedObject.FindProperty("toothWidth");
-            m_MeshOffset = serializedObject.FindProperty("meshOffset");
+            m_MeshOffsetA = serializedObject.FindProperty("meshOffsetA");
+            m_MeshOffsetB = serializedObject.FindProperty("meshOffsetB");
             m_OverlapSphereRadius = serializedObject.FindProperty("overlapSphereRadius");
             m_OverlapCheckInterval = serializedObject.FindProperty("overlapCheckInterval");
             m_SphereRadiusOffsetA = serializedObject.FindProperty("sphereRadiusOffsetA");
@@ -78,8 +80,8 @@ namespace MHZE.GearSystem.Editor
 
             EditorGUILayout.Space(4);
 
-            DrawGearSection("Gear A", m_GearA, m_MeshA, m_RadiusA, m_AxisA, m_GearDensityA, m_SphereRadiusOffsetA, ref m_ShowGearA);
-            DrawGearSection("Gear B", m_GearB, m_MeshB, m_RadiusB, m_AxisB, m_GearDensityB, m_SphereRadiusOffsetB, ref m_ShowGearB);
+            DrawGearSection("Gear A", m_GearA, m_MeshA, m_RadiusA, m_AxisA, m_GearDensityA, m_SphereRadiusOffsetA, m_MeshOffsetA, ref m_ShowGearA);
+            DrawGearSection("Gear B", m_GearB, m_MeshB, m_RadiusB, m_AxisB, m_GearDensityB, m_SphereRadiusOffsetB, m_MeshOffsetB, ref m_ShowGearB);
 
             m_ShowVisual = EditorGUILayout.Foldout(m_ShowVisual, "Visual", true, EditorStyles.foldoutHeader);
             if (m_ShowVisual)
@@ -98,7 +100,6 @@ namespace MHZE.GearSystem.Editor
                     EditorGUILayout.PropertyField(m_JointMaxForce, new GUIContent("Max Force", "Maximum force the spring can apply."));
                     EditorGUI.indentLevel--;
                 }
-                EditorGUILayout.Slider(m_MeshOffset, 0f, 1f, new GUIContent("Mesh Offset", "Fraction of one tooth pitch for mesh alignment."));
                 EditorGUI.indentLevel--;
                 EditorGUILayout.Space(2);
             }
@@ -129,7 +130,7 @@ namespace MHZE.GearSystem.Editor
             serializedObject.ApplyModifiedProperties();
         }
 
-        private static void DrawGearSection(string label, SerializedProperty transformProp, SerializedProperty meshProp, SerializedProperty radiusProp, SerializedProperty axisProp, SerializedProperty gearDensityProp, SerializedProperty sphereOffsetProp, ref bool show)
+        private static void DrawGearSection(string label, SerializedProperty transformProp, SerializedProperty meshProp, SerializedProperty radiusProp, SerializedProperty axisProp, SerializedProperty gearDensityProp, SerializedProperty sphereOffsetProp, SerializedProperty meshOffsetProp, ref bool show)
         {
             show = EditorGUILayout.Foldout(show, label, true, EditorStyles.foldoutHeader);
             if (!show) return;
@@ -141,6 +142,7 @@ namespace MHZE.GearSystem.Editor
             EditorGUILayout.PropertyField(axisProp, new GUIContent("Axis"));
             EditorGUILayout.PropertyField(gearDensityProp, new GUIContent("Gear Density", "Teeth per unit of pitch radius. Same density = same tooth spacing regardless of radius."));
             EditorGUILayout.Slider(sphereOffsetProp, 0f, 1f, new GUIContent("Sphere Offset", "0 = at radius, 1 = at tooth tip."));
+            EditorGUILayout.Slider(meshOffsetProp, 0f, 1f, new GUIContent("Mesh Offset", "Fraction of one tooth pitch for mesh alignment."));
             EditorGUI.indentLevel--;
             EditorGUILayout.Space(2);
         }
