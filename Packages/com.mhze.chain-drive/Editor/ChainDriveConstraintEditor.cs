@@ -11,7 +11,7 @@ namespace MHZE.ChainDrive.Editor
         private SerializedProperty m_Axis;
         private SerializedProperty m_ChainBallRadius;
         private SerializedProperty m_ChainBallMass;
-        private SerializedProperty m_ChainLinkCount;
+        private SerializedProperty m_Density;
         private SerializedProperty m_JointSpring;
         private SerializedProperty m_JointDamper;
         private SerializedProperty m_JointMaxForce;
@@ -33,7 +33,7 @@ namespace MHZE.ChainDrive.Editor
             m_Axis = serializedObject.FindProperty("axis");
             m_ChainBallRadius = serializedObject.FindProperty("chainBallRadius");
             m_ChainBallMass = serializedObject.FindProperty("chainBallMass");
-            m_ChainLinkCount = serializedObject.FindProperty("chainLinkCount");
+            m_Density = serializedObject.FindProperty("density");
             m_JointSpring = serializedObject.FindProperty("jointSpring");
             m_JointDamper = serializedObject.FindProperty("jointDamper");
             m_JointMaxForce = serializedObject.FindProperty("jointMaxForce");
@@ -67,7 +67,7 @@ namespace MHZE.ChainDrive.Editor
                 EditorGUI.indentLevel++;
                 EditorGUILayout.PropertyField(m_ChainBallRadius, new GUIContent("Ball Radius", "Radius of each chain link sphere."));
                 EditorGUILayout.PropertyField(m_ChainBallMass, new GUIContent("Ball Mass", "Mass of each chain link."));
-                EditorGUILayout.PropertyField(m_ChainLinkCount, new GUIContent("Link Count", "Number of chain links in the loop."));
+                EditorGUILayout.PropertyField(m_Density, new GUIContent("Density", "Elements per unit length. Controls both chain link spacing and gear tooth count."));
                 EditorGUI.indentLevel--;
                 EditorGUILayout.Space(2);
             }

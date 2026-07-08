@@ -11,7 +11,6 @@ namespace MHZE.ChainDrive
         public Transform transform;
         public float radius;
         public ChainAxis axis;
-        public float gearDensity;
         public Transform meshTransform;
         [Range(0f, 1f)] public float sphereRadiusOffset;
         [Range(0f, 1f)] public float meshOffset;
@@ -20,7 +19,6 @@ namespace MHZE.ChainDrive
             Transform transform = null,
             float radius = 0.5f,
             ChainAxis axis = ChainAxis.Y,
-            float gearDensity = 24f,
             Transform meshTransform = null,
             float sphereRadiusOffset = 0.5f,
             float meshOffset = 0f)
@@ -28,7 +26,6 @@ namespace MHZE.ChainDrive
             this.transform = transform;
             this.radius = radius;
             this.axis = axis;
-            this.gearDensity = gearDensity;
             this.meshTransform = meshTransform;
             this.sphereRadiusOffset = sphereRadiusOffset;
             this.meshOffset = meshOffset;
@@ -69,7 +66,7 @@ namespace MHZE.ChainDrive
         [Header("Chain Links")]
         public float chainBallRadius = 0.05f;
         public float chainBallMass = 0.5f;
-        public int chainLinkCount = 48;
+        public float density = 6f;
 
         [Header("Joint Physics")]
         public float jointSpring = 1500f;
@@ -368,7 +365,7 @@ namespace MHZE.ChainDrive
         {
             if (m_Segments.Count == 0) return System.Array.Empty<Vector3>();
 
-            int count = Mathf.Max(4, chainLinkCount);
+            int count = Mathf.Max(4, Mathf.RoundToInt(density * m_TotalPathLength));
             float spacing = m_TotalPathLength / count;
             Vector3[] positions = new Vector3[count];
 
@@ -497,7 +494,7 @@ namespace MHZE.ChainDrive
             if (tan.sqrMagnitude < 0.001f)
                 tan = Vector3.ProjectOnPlane(t.forward, nml).normalized;
 
-            float count = Mathf.Max(1f, Mathf.Round(gear.gearDensity * gear.radius));
+            float count = Mathf.Max(1f, Mathf.Round(density * 2f * Mathf.PI * gear.radius));
             int toothCount = Mathf.RoundToInt(count);
             float angleStep = 360f / toothCount;
             float offsetAngle = (toothWidth / gear.radius) * Mathf.Rad2Deg + gear.meshOffset * angleStep;
