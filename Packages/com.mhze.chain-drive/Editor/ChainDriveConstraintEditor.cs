@@ -9,7 +9,6 @@ namespace MHZE.ChainDrive.Editor
     {
         private SerializedProperty m_Gears;
         private SerializedProperty m_Axis;
-        private SerializedProperty m_ChainMaterial;
         private SerializedProperty m_ChainBallRadius;
         private SerializedProperty m_ChainBallMass;
         private SerializedProperty m_ChainLinkCount;
@@ -32,7 +31,6 @@ namespace MHZE.ChainDrive.Editor
         {
             m_Gears = serializedObject.FindProperty("gears");
             m_Axis = serializedObject.FindProperty("axis");
-            m_ChainMaterial = serializedObject.FindProperty("chainMaterial");
             m_ChainBallRadius = serializedObject.FindProperty("chainBallRadius");
             m_ChainBallMass = serializedObject.FindProperty("chainBallMass");
             m_ChainLinkCount = serializedObject.FindProperty("chainLinkCount");
@@ -67,7 +65,6 @@ namespace MHZE.ChainDrive.Editor
             if (m_ShowChainLinks)
             {
                 EditorGUI.indentLevel++;
-                EditorGUILayout.PropertyField(m_ChainMaterial, new GUIContent("Material", "Material for chain link spheres. If unset, a default gray material is created."));
                 EditorGUILayout.PropertyField(m_ChainBallRadius, new GUIContent("Ball Radius", "Radius of each chain link sphere."));
                 EditorGUILayout.PropertyField(m_ChainBallMass, new GUIContent("Ball Mass", "Mass of each chain link."));
                 EditorGUILayout.PropertyField(m_ChainLinkCount, new GUIContent("Link Count", "Number of chain links in the loop."));
