@@ -826,9 +826,18 @@ namespace MHZE.ChainDrive
 
             if (m_ChainLinks != null)
             {
-                for (int i = 0; i < m_ChainLinks.Count; i++)
+                int count = m_ChainLinks.Count;
+                for (int i = 0; i < count; i++)
                 {
                     if (m_ChainLinks[i] == null) continue;
+
+                    int next = (i + 1) % count;
+                    if (m_ChainLinks[next] != null)
+                    {
+                        Gizmos.color = new Color(1f, 0.5f, 0f, 0.5f);
+                        Gizmos.DrawLine(m_ChainLinks[i].transform.position, m_ChainLinks[next].transform.position);
+                    }
+
                     Gizmos.color = m_PreviousEngaged.Contains(i)
                         ? new Color(0.15f, 0.85f, 0.15f, 0.7f)
                         : new Color(0.3f, 0.8f, 1f, 0.4f);
