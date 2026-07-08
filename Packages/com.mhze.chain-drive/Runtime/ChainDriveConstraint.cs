@@ -95,6 +95,7 @@ namespace MHZE.ChainDrive
 
         private GearEngagement[] m_GearEngagements;
         private Vector3[] m_PreviousGearPositions;
+        private HashSet<int> m_PreviousEngaged = new HashSet<int>();
 
         private void OnEnable()
         {
@@ -117,7 +118,8 @@ namespace MHZE.ChainDrive
             {
                 bool gearMoved = false;
                 int n = gears.Length;
-                if (m_PreviousGearPositions == null || m_PreviousGearPositions.Length != n) { gearMoved = true; }
+                if (m_PreviousGearPositions == null || m_PreviousGearPositions.Length != n)
+                    gearMoved = true;
                 else
                 {
                     for (int i = 0; i < n; i++)
@@ -134,9 +136,7 @@ namespace MHZE.ChainDrive
             }
 
             if (m_NeedsRebuild)
-            {
                 BuildChain();
-            }
 
             if (createGearJoints && Application.isPlaying && m_ChainLinks.Count > 0)
             {
@@ -145,6 +145,7 @@ namespace MHZE.ChainDrive
                 {
                     m_FrameCounter = 0;
                     CheckGearOverlaps();
+                    UpdateLinkColors();
                 }
             }
         }
@@ -218,6 +219,7 @@ namespace MHZE.ChainDrive
 
             m_Segments.Clear();
             m_TotalPathLength = 0f;
+            m_PreviousEngaged.Clear();
         }
 
         public List<GameObject> ChainLinks => m_ChainLinks;
@@ -579,7 +581,20 @@ namespace MHZE.ChainDrive
                     }
                 }
             }
+        }
 
+        private void UpdateLinkColors()
+        {
+            var cur = new HashSet<int>();
+            if (m_GearEngagements != null)
+            {
+                for (int g = 0; g < m_GearEngagements.Length; g++)
+                {
+                    if (m_GearEngagements[g].active)
+                        cur.Add(m_GearEngagements[g].linkIndex);
+                }
+            }
+            m_PreviousEngaged = cur;
         }
 
         private ConfigurableJoint CreateGearChainJoint(int gearIdx, int toothIdx, int linkIdx)
@@ -811,11 +826,13 @@ namespace MHZE.ChainDrive
 
             if (m_ChainLinks != null)
             {
-                Gizmos.color = new Color(0.3f, 0.8f, 1f, 0.4f);
                 for (int i = 0; i < m_ChainLinks.Count; i++)
                 {
-                    if (m_ChainLinks[i] != null)
-                        Gizmos.DrawWireSphere(m_ChainLinks[i].transform.position, chainBallRadius);
+                    if (m_ChainLinks[i] == null) continue;
+                    Gizmos.color = m_PreviousEngaged.Contains(i)
+                        ? new Color(0.15f, 0.85f, 0.15f, 0.7f)
+                        : new Color(0.3f, 0.8f, 1f, 0.4f);
+                    Gizmos.DrawWireSphere(m_ChainLinks[i].transform.position, chainBallRadius);
                 }
             }
         }
