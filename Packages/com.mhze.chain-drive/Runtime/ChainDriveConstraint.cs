@@ -147,7 +147,7 @@ namespace MHZE.ChainDrive
             }
         }
 
-        private void OnDrawGizmosSelected()
+        private void OnDrawGizmos()
         {
             if (!debugDraw) return;
             DrawBeltPath();
@@ -485,7 +485,7 @@ namespace MHZE.ChainDrive
         private Vector3[] GetGearToothPositions(int gearIndex)
         {
             ChainGearDef gear = gears[gearIndex];
-            Transform t = gear.transform;
+            Transform t = gear.meshTransform != null ? gear.meshTransform : gear.transform;
             if (t == null) return System.Array.Empty<Vector3>();
 
             Vector3 center = t.position;
@@ -606,13 +606,16 @@ namespace MHZE.ChainDrive
             Vector3 linkPos = linkGO.transform.position;
             Vector3 overlapPoint = (linkPos + toothPos) * 0.5f;
 
+            Transform gearT = gears[gearIdx].meshTransform != null ? gears[gearIdx].meshTransform : gears[gearIdx].transform;
+            Vector3 gearCenter = gearT.position;
+
             ConfigurableJoint joint = linkGO.AddComponent<ConfigurableJoint>();
             joint.connectedBody = gearRB;
             joint.autoConfigureConnectedAnchor = false;
             joint.anchor = linkRB.transform.InverseTransformPoint(overlapPoint);
             joint.connectedAnchor = gearRB.transform.InverseTransformPoint(overlapPoint);
 
-            Vector3 axis = (toothPos - gears[gearIdx].transform.position).normalized;
+            Vector3 axis = (toothPos - gearCenter).normalized;
             joint.axis = linkRB.transform.InverseTransformDirection(axis);
             joint.secondaryAxis = Vector3.zero;
 
@@ -650,7 +653,8 @@ namespace MHZE.ChainDrive
             joint.anchor = linkRB.transform.InverseTransformPoint(overlapPoint);
             joint.connectedAnchor = gearRB.transform.InverseTransformPoint(overlapPoint);
 
-            Vector3 axis = (toothPos - gears[gearIdx].transform.position).normalized;
+            Transform gearT = gears[gearIdx].meshTransform != null ? gears[gearIdx].meshTransform : gears[gearIdx].transform;
+            Vector3 axis = (toothPos - gearT.position).normalized;
             joint.axis = linkRB.transform.InverseTransformDirection(axis);
         }
 
@@ -808,9 +812,10 @@ namespace MHZE.ChainDrive
 
             foreach (var gear in gears)
             {
-                if (gear.transform == null) continue;
+                Transform gt = gear.meshTransform != null ? gear.meshTransform : gear.transform;
+                if (gt == null) continue;
                 Gizmos.color = Color.white;
-                Gizmos.DrawWireSphere(gear.transform.position, gear.radius);
+                Gizmos.DrawWireSphere(gt.position, gear.radius);
             }
 
             for (int g = 0; g < gears.Length; g++)
