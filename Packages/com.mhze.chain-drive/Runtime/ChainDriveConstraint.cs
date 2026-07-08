@@ -148,10 +148,17 @@ namespace MHZE.ChainDrive
             }
         }
 
+        private void FixedUpdate()
+        {
+            if (createGearJoints && Application.isPlaying && m_ChainLinks.Count > 0)
+                UpdateGearChainJoints();
+        }
+
         private void OnDrawGizmos()
         {
             if (!debugDraw) return;
             DrawBeltPath();
+            DrawJointAxes();
         }
 
         private void OnDestroy()
@@ -550,6 +557,50 @@ namespace MHZE.ChainDrive
             }
         }
 
+        private void UpdateGearChainJoints()
+        {
+            for (int i = 0; i < m_GearEngagements.Count; i++)
+            {
+                GearEngagement eng = m_GearEngagements[i];
+                if (!eng.active) continue;
+
+                ConfigurableJoint joint = eng.joint;
+                if (joint == null) continue;
+
+                GameObject linkGO = m_ChainLinks[eng.linkIndex];
+                if (linkGO == null) continue;
+
+                Rigidbody linkRB = linkGO.GetComponent<Rigidbody>();
+                if (linkRB == null) continue;
+
+                Vector3 normal = AxisToVector(gears[eng.gearIndex].axis,
+                    gears[eng.gearIndex].transform);
+                Vector3 gearCenter = gears[eng.gearIndex].transform.position;
+
+                // Recalculate radial direction from current link position
+                // toward gear center, projected onto the chain plane.
+                Vector3 radial = Vector3.ProjectOnPlane(
+                    gearCenter - linkGO.transform.position, normal);
+                if (radial.sqrMagnitude < 0.0001f) continue;
+                radial.Normalize();
+
+                // Refresh the joint axes so they always reflect the current
+                // world-space directions, even as the link rotates.
+                joint.axis = linkRB.transform.InverseTransformDirection(radial);
+                joint.secondaryAxis = linkRB.transform.InverseTransformDirection(normal);
+
+                // Update link-side anchor so the connection pivot follows
+                // the tooth as the gear rotates and the link moves.
+                Rigidbody gearRB = gears[eng.gearIndex].transform.GetComponent<Rigidbody>();
+                if (gearRB != null)
+                {
+                    Vector3 toothWorldPos = gearRB.transform.TransformPoint(
+                        joint.connectedAnchor);
+                    joint.anchor = linkRB.transform.InverseTransformPoint(toothWorldPos);
+                }
+            }
+        }
+
         private void UpdateLinkColors()
         {
             var cur = new HashSet<int>();
@@ -577,9 +628,32 @@ namespace MHZE.ChainDrive
             joint.anchor = linkRB.transform.InverseTransformPoint(toothPos);
             joint.connectedAnchor = gearRB.transform.InverseTransformPoint(toothPos);
 
-            joint.xMotion = ConfigurableJointMotion.Locked;
+            // Chain plane normal = gear rotation axis. All constraint axes must respect
+            // this plane so the link is locked in-plane (tangential) and out-of-plane (lateral),
+            // while free along the radial direction within the plane.
+            Vector3 normal = AxisToVector(gears[gearIdx].axis, gears[gearIdx].transform);
+
+            // Radial direction: from link toward gear center, projected onto the chain plane.
+            Vector3 gearCenter = gears[gearIdx].transform.position;
+            Vector3 linkPos = linkGO.transform.position;
+            Vector3 radial = Vector3.ProjectOnPlane(gearCenter - linkPos, normal);
+            if (radial.sqrMagnitude < 0.0001f)
+                radial = Vector3.ProjectOnPlane(gears[gearIdx].transform.right, normal);
+            radial.Normalize();
+
+            joint.axis = linkRB.transform.InverseTransformDirection(radial);
+            joint.secondaryAxis = linkRB.transform.InverseTransformDirection(normal);
+
+            // X = radial — Limited with a large linear limit so the link can
+            // freely distance toward/away from the gear center (no spring drive).
+            // Y = normal — Locked rigid, no lateral slip out of the chain plane.
+            // Z = tangential — Locked rigid, no tangential slip along the gear.
+            joint.xMotion = ConfigurableJointMotion.Limited;
             joint.yMotion = ConfigurableJointMotion.Locked;
             joint.zMotion = ConfigurableJointMotion.Locked;
+
+            joint.linearLimit = new SoftJointLimit { limit = 100f };
+
             joint.angularXMotion = ConfigurableJointMotion.Free;
             joint.angularYMotion = ConfigurableJointMotion.Free;
             joint.angularZMotion = ConfigurableJointMotion.Free;
@@ -774,6 +848,34 @@ namespace MHZE.ChainDrive
                         : new Color(0.3f, 0.8f, 1f, 0.4f);
                     Gizmos.DrawWireSphere(m_ChainLinks[i].transform.position, chainBallRadius);
                 }
+            }
+        }
+
+        private void DrawJointAxes()
+        {
+            if (m_ChainLinks == null || gears == null) return;
+
+            Gizmos.color = Color.red;
+            float lineLen = Mathf.Max(0.2f, chainBallRadius * 3f);
+
+            foreach (var eng in m_GearEngagements)
+            {
+                if (!eng.active || eng.joint == null) continue;
+                if (eng.linkIndex < 0 || eng.linkIndex >= m_ChainLinks.Count) continue;
+                if (eng.gearIndex < 0 || eng.gearIndex >= gears.Length) continue;
+
+                GameObject linkGO = m_ChainLinks[eng.linkIndex];
+                Transform gearT = gears[eng.gearIndex].transform;
+                if (linkGO == null || gearT == null) continue;
+
+                Vector3 normal = AxisToVector(gears[eng.gearIndex].axis, gearT);
+                Vector3 radial = Vector3.ProjectOnPlane(
+                    gearT.position - linkGO.transform.position, normal);
+                if (radial.sqrMagnitude < 0.0001f) continue;
+                radial.Normalize();
+
+                Gizmos.DrawLine(linkGO.transform.position,
+                    linkGO.transform.position + radial * lineLen);
             }
         }
     }
