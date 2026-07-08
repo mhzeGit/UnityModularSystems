@@ -1,0 +1,12 @@
+{
+  "name": "com.mhze.chain-drive.Runtime",
+  "rootNamespace": "MHZE.ChainDrive",
+  "references": [],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": []
+}

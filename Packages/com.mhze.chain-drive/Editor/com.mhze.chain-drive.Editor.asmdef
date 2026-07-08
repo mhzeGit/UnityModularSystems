@@ -1,0 +1,14 @@
+{
+  "name": "com.mhze.chain-drive.Editor",
+  "rootNamespace": "MHZE.ChainDrive.Editor",
+  "references": [
+    "com.mhze.chain-drive.Runtime"
+  ],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": []
+}

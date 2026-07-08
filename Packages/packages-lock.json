@@ -32,6 +32,12 @@
       "dependencies": {},
       "hash": "ee369b692f0d70296324f5db5c5a0fcb91e97512"
     },
+    "com.mhze.chain-drive": {
+      "version": "file:com.mhze.chain-drive",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
     "com.mhze.cylinder-collider": {
       "version": "file:com.mhze.cylinder-collider",
       "depth": 0,

@@ -1,0 +1,13 @@
+{
+  "name": "com.mhze.chain-drive",
+  "version": "1.0.0",
+  "displayName": "Chain Drive",
+  "description": "Modular chain drive system for mechanical linkages around multiple gears. Creates physics-based chain links connected by joints that wrap around gear sprockets.",
+  "unity": "2022.3",
+  "keywords": ["chain", "drive", "belt", "mechanical", "track", "pulley"],
+  "author": {
+    "name": "MHZE",
+    "email": "mhze.uk@gmail.com",
+    "url": "https://github.com/mhzeGit/"
+  }
+}
