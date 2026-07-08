@@ -66,10 +66,10 @@ namespace MHZE.GearSystem.Editor
                 tangent = Vector3.ProjectOnPlane(gearTransform.forward, normal).normalized;
 
             float outerRadius = radius + toothHeight;
-            float angleStep = 360f / toothCount;
+            int toothCountInt = Mathf.Max(1, Mathf.RoundToInt(toothCount));
+            float angleStep = 360f / toothCountInt;
             float halfWidth = toothWidth * 0.5f;
             float offsetAngle = (toothWidth / radius) * Mathf.Rad2Deg + meshOffset * angleStep;
-            int toothCountInt = Mathf.Max(1, Mathf.RoundToInt(toothCount));
 
             Color fillColor = color;
             fillColor.a = 0.15f;

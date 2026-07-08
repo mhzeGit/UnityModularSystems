@@ -2641,24 +2641,27 @@ MonoBehaviour:
     axis: 1
     gearDensity: 36
     sphereRadiusOffset: 0.5
+    meshOffset: 0.5
   - meshTransform: {fileID: 519941448}
     radius: 0.48
     axis: 1
     gearDensity: 36
     sphereRadiusOffset: 0.5
+    meshOffset: 0.5
   - meshTransform: {fileID: 323802181}
     radius: 0.62
     axis: 1
     gearDensity: 36
     sphereRadiusOffset: 0.5
+    meshOffset: 0.5
   - meshTransform: {fileID: 707480655}
     radius: 0.7
     axis: 1
     gearDensity: 36
-    sphereRadiusOffset: 0.5
+    sphereRadiusOffset: 0.438
+    meshOffset: 0.5
   toothHeight: 0.1
   toothWidth: 0.1
-  meshOffset: 0
   overlapSphereRadius: 0.06
   overlapCheckInterval: 1
   jointSpring: 50

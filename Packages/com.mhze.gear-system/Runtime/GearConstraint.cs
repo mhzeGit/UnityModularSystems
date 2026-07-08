@@ -267,10 +267,10 @@ namespace MHZE.GearSystem
             if (tan.sqrMagnitude < 0.001f)
                 tan = Vector3.ProjectOnPlane(t.forward, nml).normalized;
 
-            float angleStep = 360f / toothCount;
+            int count = Mathf.Max(1, Mathf.RoundToInt(toothCount));
+            float angleStep = 360f / count;
             float offsetAngle = (toothWidth / radius) * Mathf.Rad2Deg + angularOffset * angleStep;
             float sphereOffset = onTeeth ? 0f : angleStep * 0.5f;
-            int count = Mathf.Max(1, Mathf.RoundToInt(toothCount));
 
             float radialOffset = normalizedOffset * toothHeight;
 
