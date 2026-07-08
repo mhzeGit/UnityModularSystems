@@ -50,6 +50,7 @@ namespace MHZE.ChainDrive
     [System.Serializable]
     internal struct GearEngagement
     {
+        public int gearIndex;
         public int linkIndex;
         public int toothIndex;
         public ConfigurableJoint joint;
@@ -90,7 +91,7 @@ namespace MHZE.ChainDrive
         private bool m_NeedsRebuild = true;
         private int m_FrameCounter;
 
-        private GearEngagement[] m_GearEngagements;
+        private List<GearEngagement> m_GearEngagements = new List<GearEngagement>();
         private Vector3[] m_PreviousGearPositions;
         private HashSet<int> m_PreviousEngaged = new HashSet<int>();
 
@@ -174,8 +175,6 @@ namespace MHZE.ChainDrive
                 }
             }
 
-            m_GearEngagements = new GearEngagement[gears.Length];
-
             ComputeSegments();
             if (m_Segments.Count == 0) return;
 
@@ -223,19 +222,17 @@ namespace MHZE.ChainDrive
 
         public void DestroyAllGearChainJoints()
         {
-            if (m_GearEngagements != null)
+            foreach (var eng in m_GearEngagements)
             {
-                for (int i = 0; i < m_GearEngagements.Length; i++)
+                if (eng.joint != null)
                 {
-                    if (m_GearEngagements[i].joint != null)
-                    {
-                        if (Application.isPlaying)
-                            Destroy(m_GearEngagements[i].joint);
-                        else
-                            DestroyImmediate(m_GearEngagements[i].joint);
-                    }
+                    if (Application.isPlaying)
+                        Destroy(eng.joint);
+                    else
+                        DestroyImmediate(eng.joint);
                 }
             }
+            m_GearEngagements.Clear();
         }
 
         private bool ValidateInputs()
@@ -443,8 +440,6 @@ namespace MHZE.ChainDrive
             int count = m_ChainLinks.Count;
             if (count < 2) return;
 
-            float spacing = m_TotalPathLength / count;
-
             for (int i = 0; i < count; i++)
             {
                 int next = (i + 1) % count;
@@ -457,24 +452,14 @@ namespace MHZE.ChainDrive
                 joint.connectedBody = rbB;
                 joint.autoConfigureConnectedAnchor = false;
                 joint.anchor = Vector3.zero;
-                joint.connectedAnchor = Vector3.zero;
+                joint.connectedAnchor = rbB.transform.InverseTransformPoint(rbA.transform.position);
 
-                joint.xMotion = ConfigurableJointMotion.Limited;
-                joint.yMotion = ConfigurableJointMotion.Limited;
-                joint.zMotion = ConfigurableJointMotion.Limited;
+                joint.xMotion = ConfigurableJointMotion.Locked;
+                joint.yMotion = ConfigurableJointMotion.Locked;
+                joint.zMotion = ConfigurableJointMotion.Locked;
                 joint.angularXMotion = ConfigurableJointMotion.Free;
                 joint.angularYMotion = ConfigurableJointMotion.Free;
                 joint.angularZMotion = ConfigurableJointMotion.Free;
-
-                SoftJointLimit linearLimit = joint.linearLimit;
-                linearLimit.limit = spacing * 1.05f;
-                linearLimit.bounciness = 0f;
-                joint.linearLimit = linearLimit;
-
-                SoftJointLimitSpring limitSpring = joint.linearLimitSpring;
-                limitSpring.spring = jointSpring;
-                limitSpring.damper = jointDamper;
-                joint.linearLimitSpring = limitSpring;
 
                 m_InterLinkJoints.Add(joint);
             }
@@ -511,6 +496,20 @@ namespace MHZE.ChainDrive
 
         private void CheckGearOverlaps()
         {
+            // Build lookup sets for already-engaged links and tooth pairs
+            var engagedLinks = new HashSet<int>();
+            var engagedToothKeys = new HashSet<(int gearIdx, int toothIdx)>();
+            foreach (var eng in m_GearEngagements)
+            {
+                if (!eng.active) continue;
+                engagedLinks.Add(eng.linkIndex);
+                engagedToothKeys.Add((eng.gearIndex, eng.toothIndex));
+            }
+
+            float minDistSq = (chainBallRadius + overlapSphereRadius)
+                            * (chainBallRadius + overlapSphereRadius);
+
+            // Find all new overlapping link-tooth pairs
             for (int g = 0; g < gears.Length; g++)
             {
                 Rigidbody gearRB = gears[g].transform.GetComponent<Rigidbody>();
@@ -519,62 +518,33 @@ namespace MHZE.ChainDrive
                 Vector3[] toothPositions = GetGearToothPositions(g);
                 if (toothPositions.Length == 0) continue;
 
-                int bestLink = -1;
-                int bestTooth = -1;
-                float bestDistSq = float.MaxValue;
-
                 for (int t = 0; t < toothPositions.Length; t++)
                 {
+                    if (engagedToothKeys.Contains((g, t))) continue;
+
                     Vector3 toothPos = toothPositions[t];
+
                     for (int l = 0; l < m_ChainLinks.Count; l++)
                     {
                         if (m_ChainLinks[l] == null) continue;
+                        if (engagedLinks.Contains(l)) continue;
+
                         float dSq = (m_ChainLinks[l].transform.position - toothPos).sqrMagnitude;
-                        if (dSq < bestDistSq)
+                        if (dSq < minDistSq)
                         {
-                            bestDistSq = dSq;
-                            bestLink = l;
-                            bestTooth = t;
+                            ConfigurableJoint joint = CreateGearChainJoint(g, t, l);
+                            m_GearEngagements.Add(new GearEngagement
+                            {
+                                gearIndex = g,
+                                linkIndex = l,
+                                toothIndex = t,
+                                joint = joint,
+                                active = true
+                            });
+                            engagedLinks.Add(l);
+                            engagedToothKeys.Add((g, t));
+                            break;
                         }
-                    }
-                }
-
-                float minDistSq = (overlapSphereRadius + overlapSphereRadius)
-                                * (overlapSphereRadius + overlapSphereRadius);
-
-                bool shouldEngage = bestLink >= 0 && bestDistSq < minDistSq;
-
-                ref GearEngagement eng = ref m_GearEngagements[g];
-
-                if (shouldEngage)
-                {
-                    if (eng.active && eng.linkIndex == bestLink && eng.toothIndex == bestTooth)
-                    {
-                        UpdateGearChainJoint(eng.joint, g, bestLink, bestTooth);
-                    }
-                    else
-                    {
-                        if (eng.active)
-                        {
-                            if (Application.isPlaying) Destroy(eng.joint);
-                        }
-
-                        ConfigurableJoint joint = CreateGearChainJoint(g, bestTooth, bestLink);
-                        eng = new GearEngagement
-                        {
-                            linkIndex = bestLink,
-                            toothIndex = bestTooth,
-                            joint = joint,
-                            active = true
-                        };
-                    }
-                }
-                else
-                {
-                    if (eng.active)
-                    {
-                        if (Application.isPlaying) Destroy(eng.joint);
-                        eng = default;
                     }
                 }
             }
@@ -583,13 +553,10 @@ namespace MHZE.ChainDrive
         private void UpdateLinkColors()
         {
             var cur = new HashSet<int>();
-            if (m_GearEngagements != null)
+            foreach (var eng in m_GearEngagements)
             {
-                for (int g = 0; g < m_GearEngagements.Length; g++)
-                {
-                    if (m_GearEngagements[g].active)
-                        cur.Add(m_GearEngagements[g].linkIndex);
-                }
+                if (eng.active)
+                    cur.Add(eng.linkIndex);
             }
             m_PreviousEngaged = cur;
         }
@@ -603,59 +570,21 @@ namespace MHZE.ChainDrive
 
             Vector3[] teeth = GetGearToothPositions(gearIdx);
             Vector3 toothPos = teeth[toothIdx];
-            Vector3 linkPos = linkGO.transform.position;
-            Vector3 overlapPoint = (linkPos + toothPos) * 0.5f;
-
-            Transform gearT = gears[gearIdx].meshTransform != null ? gears[gearIdx].meshTransform : gears[gearIdx].transform;
-            Vector3 gearCenter = gearT.position;
 
             ConfigurableJoint joint = linkGO.AddComponent<ConfigurableJoint>();
             joint.connectedBody = gearRB;
             joint.autoConfigureConnectedAnchor = false;
-            joint.anchor = linkRB.transform.InverseTransformPoint(overlapPoint);
-            joint.connectedAnchor = gearRB.transform.InverseTransformPoint(overlapPoint);
+            joint.anchor = linkRB.transform.InverseTransformPoint(toothPos);
+            joint.connectedAnchor = gearRB.transform.InverseTransformPoint(toothPos);
 
-            Vector3 axis = (toothPos - gearCenter).normalized;
-            joint.axis = linkRB.transform.InverseTransformDirection(axis);
-            joint.secondaryAxis = Vector3.zero;
-
-            joint.xMotion = ConfigurableJointMotion.Limited;
-            joint.yMotion = ConfigurableJointMotion.Free;
-            joint.zMotion = ConfigurableJointMotion.Free;
+            joint.xMotion = ConfigurableJointMotion.Locked;
+            joint.yMotion = ConfigurableJointMotion.Locked;
+            joint.zMotion = ConfigurableJointMotion.Locked;
             joint.angularXMotion = ConfigurableJointMotion.Free;
             joint.angularYMotion = ConfigurableJointMotion.Free;
             joint.angularZMotion = ConfigurableJointMotion.Free;
 
-            joint.xDrive = new JointDrive
-            {
-                positionSpring = jointSpring,
-                positionDamper = jointDamper,
-                maximumForce = jointMaxForce
-            };
-            joint.targetPosition = Vector3.zero;
-
             return joint;
-        }
-
-        private void UpdateGearChainJoint(ConfigurableJoint joint, int gearIdx, int linkIdx, int toothIdx)
-        {
-            if (joint == null) return;
-
-            Rigidbody linkRB = joint.GetComponent<Rigidbody>();
-            Rigidbody gearRB = joint.connectedBody;
-            if (linkRB == null || gearRB == null) return;
-
-            Vector3[] teeth = GetGearToothPositions(gearIdx);
-            Vector3 toothPos = teeth[toothIdx];
-            Vector3 linkPos = m_ChainLinks[linkIdx].transform.position;
-            Vector3 overlapPoint = (linkPos + toothPos) * 0.5f;
-
-            joint.anchor = linkRB.transform.InverseTransformPoint(overlapPoint);
-            joint.connectedAnchor = gearRB.transform.InverseTransformPoint(overlapPoint);
-
-            Transform gearT = gears[gearIdx].meshTransform != null ? gears[gearIdx].meshTransform : gears[gearIdx].transform;
-            Vector3 axis = (toothPos - gearT.position).normalized;
-            joint.axis = linkRB.transform.InverseTransformDirection(axis);
         }
 
         // ── 2D belt math helpers ──────────────────────────────────────────
