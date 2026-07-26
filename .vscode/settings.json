@@ -67,6 +67,6 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "UnityModularSystems.slnx",
+    "dotnet.defaultSolution": "mhzeModularSystems.slnx",
     "dotnet.enableWorkspaceBasedDevelopment": false
 }
