@@ -1,6 +1,7 @@
 ﻿<Solution>
   <Project Path="com.mhze.air-particle-physics.Runtime.csproj" />
   <Project Path="com.mhze.firstperson-controller.Runtime.csproj" />
+  <Project Path="com.mhze.currency-system.Runtime.csproj" />
   <Project Path="com.mhze.interact-system.Runtime.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
   <Project Path="Assembly-CSharp.csproj" />

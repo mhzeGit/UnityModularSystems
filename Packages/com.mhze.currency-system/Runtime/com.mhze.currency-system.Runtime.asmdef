@@ -1,0 +1,12 @@
+{
+  "name": "com.mhze.currency-system.Runtime",
+  "rootNamespace": "MHZE.CurrencySystem",
+  "references": [],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": []
+}
