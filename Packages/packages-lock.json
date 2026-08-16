@@ -38,6 +38,12 @@
       "source": "embedded",
       "dependencies": {}
     },
+    "com.mhze.currency-system": {
+      "version": "file:com.mhze.currency-system",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
     "com.mhze.cylinder-collider": {
       "version": "file:com.mhze.cylinder-collider",
       "depth": 0,
@@ -144,47 +150,47 @@
         "com.mhze.argevent": "1.0.0"
       }
     },
-    "com.mhze.unity-editor-navigator": {
-      "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Packages/com.mhze.unity-editor-navigator",
+    "com.gigaduck.editor-navigator": {
+      "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Assets/com.gigaduck.editor-navigator",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "b8b8608d45797c21bd3963fdf19f8786cbb93ad1"
+      "hash": "bc56e33ee6321dd6eefb353a7a9ed9d2d380c8c3"
     },
-    "com.mhze.unity-editor-visual-tweaks": {
-      "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Packages/com.mhze.unity-editor-visual-tweaks",
+    "com.gigaduck.editor-visual-tweaks": {
+      "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Assets/com.gigaduck.editor-visual-tweaks",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "b8b8608d45797c21bd3963fdf19f8786cbb93ad1"
+      "hash": "bc56e33ee6321dd6eefb353a7a9ed9d2d380c8c3"
     },
-    "com.mhze.unity-fast-play-button": {
-      "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Packages/com.mhze.unity-fast-play-button",
+    "com.gigaduck.fast-play-button": {
+      "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Assets/com.gigaduck.fast-play-button",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "be166c9d4a6ed1116b751312aaa6fc54487ec2f5"
+      "hash": "bc56e33ee6321dd6eefb353a7a9ed9d2d380c8c3"
     },
-    "com.mhze.unity-folder-colorizer": {
-      "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Packages/com.mhze.unity-folder-colorizer",
+    "com.gigaduck.folder-colorizer": {
+      "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Assets/com.gigaduck.folder-colorizer",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "b8b8608d45797c21bd3963fdf19f8786cbb93ad1"
+      "hash": "bc56e33ee6321dd6eefb353a7a9ed9d2d380c8c3"
     },
-    "com.mhze.unity-git-integration": {
-      "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Packages/com.mhze.unity-git-integration",
+    "com.gigaduck.git-integration": {
+      "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Assets/com.gigaduck.git-integration",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "be166c9d4a6ed1116b751312aaa6fc54487ec2f5"
+      "hash": "bc56e33ee6321dd6eefb353a7a9ed9d2d380c8c3"
     },
-    "com.mhze.unity-hierarchy-context-menu": {
-      "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Packages/com.mhze.unity-hierarchy-context-menu",
+    "com.gigaduck.hierarchy-context-menu": {
+      "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Assets/com.gigaduck.hierarchy-context-menu",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "b8b8608d45797c21bd3963fdf19f8786cbb93ad1"
+      "hash": "bc56e33ee6321dd6eefb353a7a9ed9d2d380c8c3"
     },
     "com.mhze.use-system": {
       "version": "file:com.mhze.use-system",
@@ -295,12 +301,12 @@
       "dependencies": {},
       "url": "https://packages.unity.com"
     },
-    "com.unity.objectsnaptool": {
-      "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Packages/com.unity.objectsnaptool",
+    "com.gigaduck.objectsnaptool": {
+      "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Assets/com.gigaduck.objectsnaptool",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "be166c9d4a6ed1116b751312aaa6fc54487ec2f5"
+      "hash": "bc56e33ee6321dd6eefb353a7a9ed9d2d380c8c3"
     },
     "com.unity.quick-texture-tools": {
       "version": "https://github.com/mhzeGit/unity-quick-texture-tools.git",
