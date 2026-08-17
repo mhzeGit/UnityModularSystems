@@ -1,0 +1,15 @@
+{
+  "name": "com.mhze.global-variables.Editor",
+  "rootNamespace": "MHZE.GlobalVariables.Editor",
+  "references": [
+    "com.mhze.global-variables.Runtime",
+    "com.mhze.text-write.Runtime"
+  ],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": []
+}

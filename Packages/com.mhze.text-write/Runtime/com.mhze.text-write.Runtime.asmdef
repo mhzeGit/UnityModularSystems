@@ -1,0 +1,15 @@
+{
+  "name": "com.mhze.text-write.Runtime",
+  "rootNamespace": "MHZE.TextWrite",
+  "references": [
+    "UnityEngine.UI",
+    "Unity.TextMeshPro"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": []
+}

@@ -1,0 +1,15 @@
+{
+  "name": "com.mhze.global-variables",
+  "version": "1.0.0",
+  "displayName": "Global Variables",
+  "description": "Project-wide persistent variables. GlobalVariableWriter assigns a script and a BindableValue variable, stores it as a ScriptableObject asset saved in the project, and keeps it in sync. GlobalVariableReader detects all created global variables, shows their current default value, and can read or set them.",
+  "unity": "2021.3",
+  "author": {
+    "name": "MHZE",
+    "email": "mhze.uk@gmail.com",
+    "url": "https://github.com/mhzeGit/"
+  },
+  "dependencies": {
+    "com.mhze.text-write": "1.0.0"
+  }
+}

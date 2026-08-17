@@ -1,0 +1,14 @@
+{
+  "name": "com.mhze.global-variables.Runtime",
+  "rootNamespace": "MHZE.GlobalVariables",
+  "references": [
+    "com.mhze.text-write.Runtime"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": []
+}

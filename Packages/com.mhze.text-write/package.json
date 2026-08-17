@@ -1,0 +1,12 @@
+{
+  "name": "com.mhze.text-write",
+  "version": "1.0.0",
+  "displayName": "Text Write",
+  "description": "Event-driven UI text binding. Assign any script with BindableValue fields, pick a variable in the inspector, and the Text/TMP component updates automatically whenever the value changes — no Update polling.",
+  "unity": "2021.3",
+  "author": {
+    "name": "MHZE",
+    "email": "mhze.uk@gmail.com",
+    "url": "https://github.com/mhzeGit/"
+  }
+}
