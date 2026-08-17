@@ -28,6 +28,14 @@ https://github.com/mhzeGit/UnityModularSystems.git?path=/Packages/com.mhze.gear-
 
 Modular gear system for rotating mechanisms, mechanical linkages, and drive train simulations.
 
+### Global Variables
+
+```
+https://github.com/mhzeGit/UnityModularSystems.git?path=/Packages/com.mhze.global-variables
+```
+
+Project-wide persistent variables. GlobalVariableWriter assigns a script and a BindableValue variable, stores it as a ScriptableObject asset saved in the project, and keeps it in sync. GlobalVariableReader detects all created global variables, shows their current default value, and can read or set them.
+
 ### Input Prompt System
 
 ```
