@@ -5,6 +5,7 @@
   <Project Path="com.mhze.interact-system.Runtime.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
+  <Project Path="com.mhze.text-write.Runtime.csproj" />
   <Project Path="com.mhze.use-system.Runtime.csproj" />
   <Project Path="com.mhze.throw-system.Runtime.csproj" />
   <Project Path="com.mhze.input-prompt-system.Editor.csproj" />
@@ -15,12 +16,15 @@
   <Project Path="com.mhze.ultimate-trigger-system.Editor.csproj" />
   <Project Path="com.mhze.gear-system.Editor.csproj" />
   <Project Path="com.mhze.freeform-camera.Runtime.csproj" />
+  <Project Path="com.mhze.global-variables.Editor.csproj" />
   <Project Path="com.mhze.cylinder-collider.Editor.csproj" />
   <Project Path="com.mhze.freeform-camera.Editor.csproj" />
   <Project Path="com.mhze.ultimate-trigger-system.Runtime.csproj" />
+  <Project Path="com.mhze.global-variables.Runtime.csproj" />
   <Project Path="com.mhze.chain-drive.Editor.csproj" />
   <Project Path="com.mhze.cylinder-collider.Runtime.csproj" />
   <Project Path="com.mhze.llm-chat.Runtime.csproj" />
+  <Project Path="com.mhze.text-write.Editor.csproj" />
   <Project Path="com.mhze.firstperson-controller.Editor.csproj" />
   <Project Path="com.mhze.roughness-detection.Runtime.csproj" />
   <Project Path="com.mhze.ultimate-door-system.Editor.csproj" />

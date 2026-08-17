@@ -108,6 +108,14 @@ https://github.com/mhzeGit/UnityModularSystems.git?path=/Packages/com.mhze.cylin
 
 Procedural cylinder collider component with configurable radius, height, subdivision count (vertex quality), and axis direction. Uses a convex MeshCollider internally for optimal PhysX performance. Custom inspector with Scene view editing handles for height and radius.
 
+### Currency System
+
+```
+https://github.com/mhzeGit/UnityModularSystems.git?path=/Packages/com.mhze.currency-system
+```
+
+A modular currency system with wallets that support multiple currency types, default starting values, and an interface for getting, adding, removing, and setting currency.
+
 ## Mediator Scripts
 
 Mediator scripts in `Assets/Scripts/` connect standalone packages together. Attach these to a GameObject in your scene and assign the relevant system references in the Inspector.

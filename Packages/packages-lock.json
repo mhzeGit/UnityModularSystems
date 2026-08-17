@@ -17,6 +17,55 @@
       },
       "hash": "85c101f5329ec1b0c6f70cba44614166dd78f53c"
     },
+    "com.gigaduck.editor-navigator": {
+      "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Assets/com.gigaduck.editor-navigator",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "bc56e33ee6321dd6eefb353a7a9ed9d2d380c8c3"
+    },
+    "com.gigaduck.editor-visual-tweaks": {
+      "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Assets/com.gigaduck.editor-visual-tweaks",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "bc56e33ee6321dd6eefb353a7a9ed9d2d380c8c3"
+    },
+    "com.gigaduck.fast-play-button": {
+      "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Assets/com.gigaduck.fast-play-button",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "bc56e33ee6321dd6eefb353a7a9ed9d2d380c8c3"
+    },
+    "com.gigaduck.folder-colorizer": {
+      "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Assets/com.gigaduck.folder-colorizer",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "bc56e33ee6321dd6eefb353a7a9ed9d2d380c8c3"
+    },
+    "com.gigaduck.git-integration": {
+      "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Assets/com.gigaduck.git-integration",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "bc56e33ee6321dd6eefb353a7a9ed9d2d380c8c3"
+    },
+    "com.gigaduck.hierarchy-context-menu": {
+      "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Assets/com.gigaduck.hierarchy-context-menu",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "bc56e33ee6321dd6eefb353a7a9ed9d2d380c8c3"
+    },
+    "com.gigaduck.objectsnaptool": {
+      "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Assets/com.gigaduck.objectsnaptool",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "bc56e33ee6321dd6eefb353a7a9ed9d2d380c8c3"
+    },
     "com.mhze.air-particle-physics": {
       "version": "file:com.mhze.air-particle-physics",
       "depth": 0,
@@ -72,6 +121,14 @@
       "source": "embedded",
       "dependencies": {}
     },
+    "com.mhze.global-variables": {
+      "version": "file:com.mhze.global-variables",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.mhze.text-write": "1.0.0"
+      }
+    },
     "com.mhze.input-prompt-system": {
       "version": "file:com.mhze.input-prompt-system",
       "depth": 0,
@@ -126,6 +183,12 @@
         "com.unity.render-pipelines.universal": "17.4.0"
       }
     },
+    "com.mhze.text-write": {
+      "version": "file:com.mhze.text-write",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
     "com.mhze.throw-system": {
       "version": "file:com.mhze.throw-system",
       "depth": 0,
@@ -149,48 +212,6 @@
       "dependencies": {
         "com.mhze.argevent": "1.0.0"
       }
-    },
-    "com.gigaduck.editor-navigator": {
-      "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Assets/com.gigaduck.editor-navigator",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "bc56e33ee6321dd6eefb353a7a9ed9d2d380c8c3"
-    },
-    "com.gigaduck.editor-visual-tweaks": {
-      "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Assets/com.gigaduck.editor-visual-tweaks",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "bc56e33ee6321dd6eefb353a7a9ed9d2d380c8c3"
-    },
-    "com.gigaduck.fast-play-button": {
-      "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Assets/com.gigaduck.fast-play-button",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "bc56e33ee6321dd6eefb353a7a9ed9d2d380c8c3"
-    },
-    "com.gigaduck.folder-colorizer": {
-      "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Assets/com.gigaduck.folder-colorizer",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "bc56e33ee6321dd6eefb353a7a9ed9d2d380c8c3"
-    },
-    "com.gigaduck.git-integration": {
-      "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Assets/com.gigaduck.git-integration",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "bc56e33ee6321dd6eefb353a7a9ed9d2d380c8c3"
-    },
-    "com.gigaduck.hierarchy-context-menu": {
-      "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Assets/com.gigaduck.hierarchy-context-menu",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "bc56e33ee6321dd6eefb353a7a9ed9d2d380c8c3"
     },
     "com.mhze.use-system": {
       "version": "file:com.mhze.use-system",
@@ -300,13 +321,6 @@
       "source": "registry",
       "dependencies": {},
       "url": "https://packages.unity.com"
-    },
-    "com.gigaduck.objectsnaptool": {
-      "version": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Assets/com.gigaduck.objectsnaptool",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "bc56e33ee6321dd6eefb353a7a9ed9d2d380c8c3"
     },
     "com.unity.quick-texture-tools": {
       "version": "https://github.com/mhzeGit/unity-quick-texture-tools.git",
