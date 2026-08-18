@@ -469,7 +469,7 @@ namespace MHZE.FirstPersonController
             };
 
             movement = new FPCMovement(driver, settings);
-            look = new FPCLook(driver.Transform, cachedCameraPivot, settings);
+            look = new FPCLook(driver, cachedCameraPivot, settings);
             forceLook = new FPCForceLook(look, settings);
             forceMove = new FPCForceMove(movement, settings);
             headbob = new FPCHeadbob(playerCamera.transform, settings.headbobSettings);

@@ -73,6 +73,12 @@ namespace MHZE.FirstPersonController
             pendingVelocity = Vector3.zero;
         }
 
+        public void SetRotation(Quaternion rotation)
+        {
+            rb.rotation = rotation;
+            rb.transform.rotation = rotation;
+        }
+
         private void OnFixedUpdate()
         {
             if (pendingTeleport)

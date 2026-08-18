@@ -39,5 +39,14 @@ namespace MHZE.FirstPersonController
         /// Instantly move the player to a position/rotation and reset velocities.
         /// </summary>
         void Teleport(Vector3 position, Quaternion rotation);
+
+        /// <summary>
+        /// Apply a rotation to the player root.
+        /// For CharacterDriver: writes transform.rotation directly.
+        /// For PhysicsDriver: also rotates the Rigidbody so the physics body
+        /// stays in sync with the visual rotation (prevents the physics engine
+        /// from reverting the transform to a stale pose under interpolation).
+        /// </summary>
+        void SetRotation(Quaternion rotation);
     }
 }

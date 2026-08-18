@@ -6,7 +6,7 @@ namespace MHZE.FirstPersonController
 {
     public class FPCLook
     {
-        private readonly Transform playerTransform;  // root (yaw rotation only)
+        private readonly IFPCMovementDriver driver;     // root (yaw rotation only)
         private readonly Transform cameraTransform;  // camera / pivot (pitch rotation)
         private readonly FPCSettings settings;
 
@@ -34,16 +34,16 @@ namespace MHZE.FirstPersonController
         public float Yaw => currentYaw;
         public float Pitch => currentPitch;
 
-        public FPCLook(Transform playerRoot, Transform camera, FPCSettings settings)
+        public FPCLook(IFPCMovementDriver driver, Transform camera, FPCSettings settings)
         {
-            this.playerTransform = playerRoot;
+            this.driver = driver;
             this.cameraTransform = camera;
             this.settings = settings;
 
             // Initialize from current transform
             Vector3 camAngles = camera.localEulerAngles;
             currentPitch = camAngles.x > 180f ? camAngles.x - 360f : camAngles.x;
-            currentYaw = playerRoot.eulerAngles.y;
+            currentYaw = driver.Transform.eulerAngles.y;
             targetYaw = currentYaw;
             targetPitch = currentPitch;
         }
@@ -150,7 +150,7 @@ namespace MHZE.FirstPersonController
 
         public void ForceLookAt(Vector3 worldPoint, float? duration = null, float? speed = null)
         {
-            Vector3 dirToTarget = worldPoint - playerTransform.position;
+            Vector3 dirToTarget = worldPoint - driver.Transform.position;
             if (dirToTarget.sqrMagnitude < 0.001f) return;
 
             dirToTarget.Normalize();
@@ -216,7 +216,7 @@ namespace MHZE.FirstPersonController
         {
             Vector3 camAngles = cameraTransform.localEulerAngles;
             currentPitch = camAngles.x > 180f ? camAngles.x - 360f : camAngles.x;
-            currentYaw = playerTransform.eulerAngles.y;
+            currentYaw = driver.Transform.eulerAngles.y;
             targetYaw = currentYaw;
             targetPitch = currentPitch;
         }
@@ -233,7 +233,7 @@ namespace MHZE.FirstPersonController
 
         private void ApplyRotation()
         {
-            playerTransform.rotation = Quaternion.Euler(0f, currentYaw, 0f);
+            driver.SetRotation(Quaternion.Euler(0f, currentYaw, 0f));
             cameraTransform.localRotation = Quaternion.Euler(currentPitch, 0f, 0f);
         }
 

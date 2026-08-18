@@ -53,5 +53,10 @@ namespace MHZE.FirstPersonController
             characterController.transform.SetPositionAndRotation(position, rotation);
             characterController.enabled = true;
         }
+
+        public void SetRotation(Quaternion rotation)
+        {
+            characterController.transform.rotation = rotation;
+        }
     }
 }
