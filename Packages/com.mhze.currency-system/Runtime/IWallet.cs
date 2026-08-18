@@ -1,4 +1,7 @@
-// Interface for interacting with any wallet's currency system. Implement it to create custom wallet behaviours, or use the built-in Wallet component.
+// Interface for interacting with any wallet's currency system. Currency types are
+// string names defined in a CurrencyDatabase (ScriptableObject), not an enum, so
+// games can add currencies without recompiling. Implement this interface to create
+// custom wallet behaviours, or use the built-in Wallet component.
 
 using System;
 using System.Collections.Generic;
@@ -7,16 +10,16 @@ namespace MHZE.CurrencySystem
 {
     public interface IWallet
     {
-        event Action<CurrencyType, float> OnCurrencyChanged;
+        event Action<string, float> OnCurrencyChanged;
 
-        bool HasCurrency(CurrencyType type, float amount);
-        float GetCurrency(CurrencyType type);
-        bool TryGetCurrency(CurrencyType type, out float amount);
+        bool HasCurrency(string name, float amount);
+        float GetCurrency(string name);
+        bool TryGetCurrency(string name, out float amount);
 
-        bool TryAddCurrency(CurrencyType type, float amount);
-        bool TryRemoveCurrency(CurrencyType type, float amount);
-        bool TrySetCurrency(CurrencyType type, float amount);
+        bool TryAddCurrency(string name, float amount);
+        bool TryRemoveCurrency(string name, float amount);
+        bool TrySetCurrency(string name, float amount);
 
-        IReadOnlyList<CurrencyType> GetSupportedCurrencyTypes();
+        IReadOnlyList<string> GetSupportedCurrencyTypes();
     }
 }

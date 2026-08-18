@@ -1,0 +1,16 @@
+{
+    "name": "com.mhze.currency-system.Editor",
+    "rootNamespace": "MHZE.CurrencySystem.Editor",
+    "references": [
+        "com.mhze.currency-system.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": []
+}

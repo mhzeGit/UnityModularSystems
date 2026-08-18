@@ -1,8 +1,8 @@
 {
   "name": "com.mhze.currency-system",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "displayName": "Currency System",
-  "description": "A modular currency system with wallets that support multiple currency types, default starting values, and an interface for getting, adding, removing, and setting currency.",
+  "description": "A modular currency system with wallets that support multiple currency types. Currency types are plain strings defined in a CurrencyDatabase ScriptableObject (no enum edits) and every inspector dropdown is populated from it automatically.",
   "unity": "2021.3",
   "author": {
     "name": "MHZE",
