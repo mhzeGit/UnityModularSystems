@@ -31,7 +31,8 @@ namespace MHZE.CurrencySystem.Editor
             for (int i = 0; i < database.Count; i++)
                 options[i] = database.GetName(i);
 
-            int newIndex = EditorGUI.Popup(position, label, currentIndex, options);
+            Rect fieldRect = EditorGUI.PrefixLabel(position, GUIUtility.GetControlID(FocusType.Passive), label);
+            int newIndex = EditorGUI.Popup(fieldRect, currentIndex, options);
             if (newIndex >= 0 && newIndex != currentIndex)
                 property.stringValue = database.GetName(newIndex);
         }
