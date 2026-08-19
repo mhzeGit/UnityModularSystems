@@ -77,6 +77,7 @@ namespace MHZE.UltimateDoorSystem
     private Transform _transform;
     private Quaternion _restRotation;
     private Vector3 _restPosition;
+    private Vector3 _restForward;
     private Coroutine _moveRoutine;
     private bool _reverseDirection;
     private bool _isAnimating;
@@ -103,6 +104,7 @@ namespace MHZE.UltimateDoorSystem
         _transform = transform;
         _restRotation = _transform.localRotation;
         _restPosition = _transform.localPosition;
+        _restForward = _transform.forward;
 
         if (_lockState == LockState.Locked)
             _state = DoorState.Locked;
@@ -133,7 +135,7 @@ namespace MHZE.UltimateDoorSystem
     private bool DetermineOpenDirection(Vector3 targetPosition)
     {
         Vector3 toTarget = (targetPosition - _transform.position).normalized;
-        return Vector3.Dot(_transform.forward, toTarget) > 0f;
+        return Vector3.Dot(_restForward, toTarget) > 0f;
     }
 
     private IEnumerator AnimateMove(Quaternion startRot, Vector3 startPos, Quaternion targetRot, Vector3 targetPos, bool opening)
