@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace MHZE.InteractSystem
 {
-    public class NpcInteractSystem : InteractionSystem
+    public class NpcInteractor : InteractSystem
     {
         [SerializeField] private Transform interactorTransform;
         [SerializeField] private Transform interactionOrigin;

@@ -3,7 +3,7 @@ using UnityEngine.InputSystem;
 
 namespace MHZE.InteractSystem
 {
-    public class PlayerInteractSystem : InteractionSystem
+    public class PlayerInteractor : InteractSystem
     {
         [SerializeField] private InputActionReference interactInputAction;
         [SerializeField] private Camera playerCamera;

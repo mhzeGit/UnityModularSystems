@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace MHZE.InteractSystem
 {
-    public abstract class InteractionSystem : MonoBehaviour, IInteractor
+    public abstract class InteractSystem : MonoBehaviour, IInteractor
     {
         public IInteractable CurrentInteractable { get; private set; }
         public GameObject CurrentInteractableObject { get; private set; }
@@ -73,11 +73,7 @@ namespace MHZE.InteractSystem
             OnCurrentInteractableUpdated?.Invoke();
         }
 
-        protected void RaisePerformedInteraction(GameObject obj)
-        {
-            OnPerformedInteraction?.Invoke(obj, this);
-        }
-
+        protected void RaisePerformedInteraction(GameObject obj) => OnPerformedInteraction?.Invoke(obj, this);
         protected void RaiseHoldStarted(float holdTime) => OnHoldAttemptStarted?.Invoke(holdTime);
         protected void RaiseHoldEnded() => OnHoldAttemptEnded?.Invoke();
 
