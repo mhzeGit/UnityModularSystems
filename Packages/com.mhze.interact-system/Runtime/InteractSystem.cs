@@ -12,6 +12,7 @@ namespace MHZE.InteractSystem
         [SerializeField] private InputActionReference interactInputAction;
 
         [Header("Raycast Settings")]
+        [SerializeField] private bool useCameraRaycast = true;
         private Camera playerCamera;
         [SerializeField] private Transform interactorTransform;
         [SerializeField] private LayerMask interactableLayer = -1;
@@ -25,7 +26,7 @@ namespace MHZE.InteractSystem
         Camera IInteractor.PlayerCamera => playerCamera;
         Transform IInteractor.InteractorTransform => interactorTransform != null
             ? interactorTransform
-            : playerCamera != null ? playerCamera.transform.root : null;
+            : playerCamera != null ? playerCamera.transform.root : transform;
 
         public string InteractionBindingDisplayString
         {
@@ -53,11 +54,15 @@ namespace MHZE.InteractSystem
 
         void Awake()
         {
+            if (!useCameraRaycast && interactorTransform == null)
+                interactorTransform = transform;
+
             TryFindCamera();
         }
 
         private void TryFindCamera()
         {
+            if (!useCameraRaycast) return;
             if (playerCamera != null) return;
 
             playerCamera = Camera.main;
@@ -72,6 +77,17 @@ namespace MHZE.InteractSystem
                 Debug.Log("PlayerCamera was not assigned, auto-found " + playerCamera.name, this);
             else
                 Debug.LogWarning("Could not find a Camera in the scene. InteractSystem will not function until a camera is available.", this);
+        }
+
+        public bool TryInteract(IInteractable interactable)
+        {
+            if (interactable == null || !interactable.IsInteractable)
+                return false;
+            if (interactable.OneTimeInteract && interactable.InteractedOnce)
+                return false;
+
+            interactable.OnInteract(this);
+            return true;
         }
 
         void OnEnable()
