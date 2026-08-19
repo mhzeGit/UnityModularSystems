@@ -3,6 +3,11 @@ using UnityEngine;
 
 namespace MHZE.InteractSystem
 {
+    /// <summary>
+    /// Shared interaction core for every actor that can interact with an
+    /// IInteractable. Concrete actor adapters provide only their input or
+    /// detection strategy and identity data.
+    /// </summary>
     public abstract class InteractSystem : MonoBehaviour, IInteractor
     {
         public IInteractable CurrentInteractable { get; private set; }
