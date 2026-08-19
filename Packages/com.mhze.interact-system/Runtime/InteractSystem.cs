@@ -71,6 +71,13 @@ namespace MHZE.InteractSystem
                 playerCamera = FindAnyObjectByType<Camera>();
 
             if (interactorTransform == null && playerCamera != null)
+            {
+                Interactor parentInteractor = playerCamera.GetComponentInParent<Interactor>();
+                if (parentInteractor != null)
+                    interactorTransform = parentInteractor.InteractorTransform;
+            }
+
+            if (interactorTransform == null && playerCamera != null)
                 interactorTransform = playerCamera.transform.root;
 
             if (playerCamera != null)
