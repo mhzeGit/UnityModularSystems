@@ -13,6 +13,7 @@ namespace MHZE.InteractSystem
 
         [Header("Raycast Settings")]
         private Camera playerCamera;
+        [SerializeField] private Transform interactorTransform;
         [SerializeField] private LayerMask interactableLayer = -1;
         [SerializeField] private float maxDistance = 5f;
 
@@ -22,7 +23,9 @@ namespace MHZE.InteractSystem
         public IInteractable CurrentInteractable { get; private set; }
         public GameObject CurrentInteractableObject { get; private set; }
         Camera IInteractor.PlayerCamera => playerCamera;
-        Transform IInteractor.InteractorTransform => transform;
+        Transform IInteractor.InteractorTransform => interactorTransform != null
+            ? interactorTransform
+            : playerCamera != null ? playerCamera.transform.root : null;
 
         public string InteractionBindingDisplayString
         {
@@ -61,6 +64,9 @@ namespace MHZE.InteractSystem
 
             if (playerCamera == null)
                 playerCamera = FindAnyObjectByType<Camera>();
+
+            if (interactorTransform == null && playerCamera != null)
+                interactorTransform = playerCamera.transform.root;
 
             if (playerCamera != null)
                 Debug.Log("PlayerCamera was not assigned, auto-found " + playerCamera.name, this);
