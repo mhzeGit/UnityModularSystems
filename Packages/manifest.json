@@ -1,13 +1,13 @@
 {
   "dependencies": {
-    "com.coplaydev.unity-mcp": "https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#main",
-    "com.mhze.argevent": "https://github.com/mhzeGit/ArgEventSystem.git?path=Packages/com.mhze.argevent",
     "com.gigaduck.editor-navigator": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Assets/com.gigaduck.editor-navigator",
     "com.gigaduck.editor-visual-tweaks": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Assets/com.gigaduck.editor-visual-tweaks",
     "com.gigaduck.fast-play-button": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Assets/com.gigaduck.fast-play-button",
     "com.gigaduck.folder-colorizer": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Assets/com.gigaduck.folder-colorizer",
     "com.gigaduck.git-integration": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Assets/com.gigaduck.git-integration",
     "com.gigaduck.hierarchy-context-menu": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Assets/com.gigaduck.hierarchy-context-menu",
+    "com.gigaduck.objectsnaptool": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Assets/com.gigaduck.objectsnaptool",
+    "com.mhze.argevent": "https://github.com/mhzeGit/ArgEventSystem.git?path=Packages/com.mhze.argevent",
     "com.unity.ai.navigation": "2.0.14",
     "com.unity.burst": "1.8.30",
     "com.unity.collab-proxy": "2.13.5",
@@ -17,7 +17,6 @@
     "com.unity.inputsystem": "1.20.0",
     "com.unity.mathematics": "1.4.0",
     "com.unity.multiplayer.center": "1.0.1",
-    "com.gigaduck.objectsnaptool": "https://github.com/mhzeGit/mhzeUnityTools.git?path=Assets/com.gigaduck.objectsnaptool",
     "com.unity.quick-texture-tools": "https://github.com/mhzeGit/unity-quick-texture-tools.git",
     "com.unity.render-pipelines.universal": "17.5.0",
     "com.unity.test-framework": "1.7.0",
@@ -57,6 +56,7 @@
     "com.unity.modules.vehicles": "1.0.0",
     "com.unity.modules.video": "1.0.0",
     "com.unity.modules.wind": "1.0.0",
-    "com.unity.modules.xr": "1.0.0"
+    "com.unity.modules.xr": "1.0.0",
+    "com.unity.pipeline": "0.5.0-exp.1"
   }
 }
