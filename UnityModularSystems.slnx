@@ -3,6 +3,7 @@
   <Project Path="com.mhze.firstperson-controller.Runtime.csproj" />
   <Project Path="com.mhze.currency-system.Runtime.csproj" />
   <Project Path="com.mhze.interact-system.Runtime.csproj" />
+  <Project Path="ModularNPC.Runtime.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
   <Project Path="com.mhze.text-write.Runtime.csproj" />
@@ -20,6 +21,7 @@
   <Project Path="com.mhze.cylinder-collider.Editor.csproj" />
   <Project Path="com.mhze.freeform-camera.Editor.csproj" />
   <Project Path="com.mhze.ultimate-trigger-system.Runtime.csproj" />
+  <Project Path="ModularNPC.Editor.csproj" />
   <Project Path="com.mhze.global-variables.Runtime.csproj" />
   <Project Path="com.mhze.chain-drive.Editor.csproj" />
   <Project Path="com.mhze.cylinder-collider.Runtime.csproj" />

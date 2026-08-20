@@ -1,0 +1,18 @@
+{
+  "name": "ModularNPC.Editor",
+  "rootNamespace": "ModularNPC.Editor",
+  "references": [
+    "ModularNPC.Runtime"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
