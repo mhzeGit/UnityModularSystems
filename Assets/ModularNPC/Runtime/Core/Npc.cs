@@ -253,9 +253,7 @@ namespace ModularNPC
                             NpcValidationSeverity.Error,
                             $"{featureType.Name} requires a feature implementing {requirement.CapabilityType.Name}.",
                             this,
-                            typeof(NpcFeature).IsAssignableFrom(requirement.CapabilityType)
-                                ? requirement.CapabilityType
-                                : null));
+                            requirement.CapabilityType));
                     }
                 }
 
