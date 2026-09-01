@@ -124,6 +124,14 @@ https://github.com/mhzeGit/UnityModularSystems.git?path=/Packages/com.mhze.curre
 
 A modular currency system with wallets that support multiple currency types, default starting values, and an interface for getting, adding, removing, and setting currency.
 
+### NPC System
+
+```
+https://github.com/mhzeGit/UnityModularSystems.git?path=/Packages/com.mhze.npc-system
+```
+
+Modular NPC system with a feature-driven architecture. Core Npc component with feature collection, scheduler, and validation; NavMesh or Transform navigation; targeting and chase behaviour; perception with vision, hearing, and proximity sensors plus detection memory; transform look/presentation; and command handling. Includes a custom inspector editor.
+
 ## Mediator Scripts
 
 Mediator scripts in `Assets/Scripts/` connect standalone packages together. Attach these to a GameObject in your scene and assign the relevant system references in the Inspector.
