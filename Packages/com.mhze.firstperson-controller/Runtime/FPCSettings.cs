@@ -57,6 +57,8 @@ namespace MHZE.FirstPersonController
         [Header("Camera Smoothing")]
         [Tooltip("How quickly the camera follows the pivot when unparented. Higher = smoother but more laggy. Typical range: 0.05–0.15.")]
         public float cameraSmoothTime = 0.08f;
+        [Tooltip("Time window over which movement speed is averaged for the FOV/headbob effects. Larger = smoother, more stable. Typical range: 0.05–0.2.")]
+        public float speedMeasurementTime = 0.1f;
 
         [Header("Camera Effects")]
         [Tooltip("Widen FOV based on horizontal speed.")]

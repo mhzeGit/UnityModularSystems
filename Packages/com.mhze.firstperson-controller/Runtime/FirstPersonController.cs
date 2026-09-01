@@ -51,6 +51,8 @@ namespace MHZE.FirstPersonController
         private float currentFov;
         private Vector3 lastPosition;           // for actual velocity measurement
         private float actualHorizontalSpeed;    // post-collision |v.xz|
+        private float speedSampleDistance;
+        private float speedSampleTime;
         private UnityEngine.InputSystem.Keyboard keyboard;
         private UnityEngine.InputSystem.Mouse mouse;
 
@@ -205,6 +207,8 @@ namespace MHZE.FirstPersonController
             cameraEffects?.Snap();
             SnapCameraSmoother();
             lastPosition = transform.position; // avoid velocity spike after teleport
+            speedSampleDistance = 0f;
+            speedSampleTime = 0f;
         }
 
         public void SetRotation(Quaternion rotation)
@@ -224,6 +228,8 @@ namespace MHZE.FirstPersonController
             cameraEffects?.Snap();
             SnapCameraSmoother();
             lastPosition = transform.position;
+            speedSampleDistance = 0f;
+            speedSampleTime = 0f;
         }
 
         public void EnableControls()
@@ -352,13 +358,22 @@ namespace MHZE.FirstPersonController
             // --- Actual velocity from position delta -------------
             // This captures the TRUE movement after collision resolution.
             // Holding W against a wall ? actualHorizontalSpeed ˜ 0.
+            // Averaged over a time window: a physics-driven body only moves
+            // on FixedUpdate steps, so per-frame deltas oscillate between
+            // 0 and 2x and would make the FOV effect flicker.
             Vector3 displacement = transform.position - lastPosition;
             lastPosition = transform.position;
 
-            float dt = Time.deltaTime;
-            actualHorizontalSpeed = dt > 0.0001f
-                ? new Vector3(displacement.x, 0f, displacement.z).magnitude / dt
-                : 0f;
+            speedSampleDistance += new Vector3(displacement.x, 0f, displacement.z).magnitude;
+            speedSampleTime += Time.deltaTime;
+            if (speedSampleTime >= settings.speedMeasurementTime)
+            {
+                actualHorizontalSpeed = speedSampleTime > 0.0001f
+                    ? speedSampleDistance / speedSampleTime
+                    : 0f;
+                speedSampleDistance = 0f;
+                speedSampleTime = 0f;
+            }
 
             ApplyCameraCrouchOffset();
             ApplyFovSpeedEffect();

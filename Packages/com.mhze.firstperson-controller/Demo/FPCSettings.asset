@@ -25,7 +25,7 @@ MonoBehaviour:
   crouchTransitionSpeed: 8
   toggleCrouch: 0
   groundCheckRadiusScale: 0.378
-  groundCheckDepth: 0
+  groundCheckDepth: 0.1
   jumpForce: 1.5
   gravity: -15
   coyoteTime: 0.15
