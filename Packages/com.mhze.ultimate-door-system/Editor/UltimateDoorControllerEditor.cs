@@ -36,6 +36,7 @@ namespace MHZE.UltimateDoorSystem.Editor
             _proceduralSection = new VisualElement();
             var modeField = new PropertyField(so.FindProperty("_mode"));
             _proceduralSection.Add(modeField);
+            _proceduralSection.Add(new PropertyField(so.FindProperty("_openDirectionAxis")));
             _rotationSection = new VisualElement();
             _rotationSection.Add(new PropertyField(so.FindProperty("_rotationAxis")));
             _rotationSection.Add(new PropertyField(so.FindProperty("_openAngle")));

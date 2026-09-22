@@ -32,6 +32,8 @@ namespace MHZE.UltimateDoorSystem
     [SerializeField] private Vector3 _rotationAxis = Vector3.up;
     [Tooltip("Angle in degrees to rotate from closed to open.")]
     [SerializeField] private float _openAngle = 90f;
+    [Tooltip("Local axis pointing through the doorway (the door panel's normal). Used to detect which side the interactor is on so the door swings away from them. Forward preserves the original behaviour.")]
+    [SerializeField] private Vector3 _openDirectionAxis = Vector3.forward;
 
     [Tooltip("Local axis to translate along when mode is Sliding.")]
     [SerializeField] private Vector3 _slideAxis = Vector3.right;
@@ -77,7 +79,7 @@ namespace MHZE.UltimateDoorSystem
     private Transform _transform;
     private Quaternion _restRotation;
     private Vector3 _restPosition;
-    private Vector3 _restForward;
+    private Vector3 _restOpenDirection;
     private Coroutine _moveRoutine;
     private bool _reverseDirection;
     private bool _isAnimating;
@@ -104,7 +106,11 @@ namespace MHZE.UltimateDoorSystem
         _transform = transform;
         _restRotation = _transform.localRotation;
         _restPosition = _transform.localPosition;
-        _restForward = _transform.forward;
+
+        Vector3 openDirection = _openDirectionAxis.sqrMagnitude > 0.0001f
+            ? _openDirectionAxis.normalized
+            : Vector3.forward;
+        _restOpenDirection = _transform.TransformDirection(openDirection);
 
         if (_lockState == LockState.Locked)
             _state = DoorState.Locked;
@@ -135,7 +141,7 @@ namespace MHZE.UltimateDoorSystem
     private bool DetermineOpenDirection(Vector3 targetPosition)
     {
         Vector3 toTarget = (targetPosition - _transform.position).normalized;
-        return Vector3.Dot(_restForward, toTarget) > 0f;
+        return Vector3.Dot(_restOpenDirection, toTarget) > 0f;
     }
 
     private IEnumerator AnimateMove(Quaternion startRot, Vector3 startPos, Quaternion targetRot, Vector3 targetPos, bool opening)
