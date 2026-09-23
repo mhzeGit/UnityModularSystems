@@ -69,6 +69,14 @@ namespace MHZE.UltimateDoorSystem
     [SerializeField] private string _lockTrigger = "Lock";
     [SerializeField] private string _attemptOpenLockedTrigger = "AttemptOpenLocked";
 
+    [Header("Audio")]
+    [Tooltip("AudioSource used for door sounds. If left empty, one is found or created on this GameObject at runtime.")]
+    [SerializeField] private AudioSource _audioSource;
+    [Tooltip("Played when the door starts opening.")]
+    [SerializeField] private AudioClip _openSound;
+    [Tooltip("Played when the door starts closing.")]
+    [SerializeField] private AudioClip _closeSound;
+
     public ArgEventBinding OnOpened = new ArgEventBinding();
     public ArgEventBinding OnClosed = new ArgEventBinding();
     public ArgEventBinding OnLocked = new ArgEventBinding();
@@ -111,6 +119,9 @@ namespace MHZE.UltimateDoorSystem
             ? _openDirectionAxis.normalized
             : Vector3.forward;
         _restOpenDirection = _transform.TransformDirection(openDirection);
+
+        if (_audioSource == null)
+            _audioSource = GetComponent<AudioSource>();
 
         if (_lockState == LockState.Locked)
             _state = DoorState.Locked;
@@ -218,6 +229,20 @@ namespace MHZE.UltimateDoorSystem
             _animatorComponent.SetBool(_openBool, value);
     }
 
+    private void PlaySound(AudioClip clip)
+    {
+        if (clip == null) return;
+
+        if (_audioSource == null)
+        {
+            _audioSource = GetComponent<AudioSource>();
+            if (_audioSource == null)
+                _audioSource = gameObject.AddComponent<AudioSource>();
+        }
+
+        _audioSource.PlayOneShot(clip);
+    }
+
     private void FireStateEvent(bool opening)
     {
         _moveRoutine = null;
@@ -263,6 +288,8 @@ namespace MHZE.UltimateDoorSystem
         if (!_allowIntruption && _isAnimating) return;
 
         StopExistingRoutine();
+
+        PlaySound(_openSound);
 
         switch (_animationType)
         {
@@ -320,6 +347,8 @@ namespace MHZE.UltimateDoorSystem
         if (!_allowIntruption && _isAnimating) return;
 
         StopExistingRoutine();
+
+        PlaySound(_closeSound);
 
         switch (_animationType)
         {

@@ -86,6 +86,11 @@ namespace MHZE.UltimateDoorSystem.Editor
             BuildPasswordFields(_passwordDetails, so);
             root.Add(_passwordDetails);
 
+            AddSectionHeader(root, "Audio");
+            root.Add(new PropertyField(so.FindProperty("_audioSource")));
+            root.Add(new PropertyField(so.FindProperty("_openSound")));
+            root.Add(new PropertyField(so.FindProperty("_closeSound")));
+
             AddSectionHeader(root, "Events");
             root.Add(new PropertyField(so.FindProperty("OnOpened")));
             root.Add(new PropertyField(so.FindProperty("OnClosed")));
