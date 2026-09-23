@@ -1,0 +1,17 @@
+{
+  "name": "com.mhze.dialog-system.Runtime",
+  "rootNamespace": "MHZE.DialogSystem",
+  "references": [
+    "Unity.InputSystem",
+    "UnityEngine.UI"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

@@ -17,6 +17,7 @@ public class InputPromptManager : MonoBehaviour
     private abstract class ActivePrompt
     {
         public string PromptId;
+        public InputPromptLocation Location;
         public InputPromptView View;
         public abstract void Refresh(DeviceType currentDevice, InputBindingIconLibrary iconLibrary, InputPromptUI promptUI);
     }
@@ -173,6 +174,7 @@ public class InputPromptManager : MonoBehaviour
         }
 
         HidePrompt(promptId);
+        HidePromptsAtLocation(definition.Location, promptId);
 
         var view = promptUI != null ? promptUI.GetView(definition.Location) : null;
         if (view == null)
@@ -183,6 +185,7 @@ public class InputPromptManager : MonoBehaviour
         var prompt = new DefinitionPrompt
         {
             PromptId = promptId,
+            Location = definition.Location,
             Definition = definition,
             View = view,
             HasTextOverride = hasTextOverride,
@@ -213,6 +216,7 @@ public class InputPromptManager : MonoBehaviour
         }
 
         HidePrompt(promptId);
+        HidePromptsAtLocation(location, promptId);
 
         var view = promptUI != null ? promptUI.GetView(location) : null;
         if (view == null)
@@ -223,6 +227,7 @@ public class InputPromptManager : MonoBehaviour
         var prompt = new CustomPrompt
         {
             PromptId = promptId,
+            Location = location,
             View = view,
             CustomPrefix = prefix,
             CustomSuffix = suffix,
@@ -251,6 +256,39 @@ public class InputPromptManager : MonoBehaviour
         }
 
         activePrompts.Remove(promptId);
+    }
+
+    // A screen anchor can only display one prompt at a time. Without this, an interact prompt and a
+    // use prompt (or any two prompts sharing a location) can both be shown by unrelated systems at the
+    // same time and their views pile up on top of each other in the same anchor instead of the newer
+    // one replacing the older one.
+    private void HidePromptsAtLocation(InputPromptLocation location, string exceptPromptId)
+    {
+        if (activePrompts.Count == 0)
+        {
+            return;
+        }
+
+        List<string> conflicting = null;
+        foreach (var kvp in activePrompts)
+        {
+            if (kvp.Key == exceptPromptId || kvp.Value.Location != location)
+            {
+                continue;
+            }
+
+            (conflicting ??= new List<string>()).Add(kvp.Key);
+        }
+
+        if (conflicting == null)
+        {
+            return;
+        }
+
+        for (var i = 0; i < conflicting.Count; i++)
+        {
+            HidePrompt(conflicting[i]);
+        }
     }
 
     public void HidePromptByKey(string promptKey)

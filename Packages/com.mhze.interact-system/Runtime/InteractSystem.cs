@@ -45,9 +45,11 @@ namespace MHZE.InteractSystem
             if (interactable == CurrentInteractable && obj == CurrentInteractableObject)
                 return;
 
+            var previous = CurrentInteractable;
+
             UnsubscribeCurrent();
-            if (CurrentInteractable != null)
-                CurrentInteractable.OnHoverExit(this);
+            if (previous != null)
+                previous.OnHoverExit(this);
 
             CurrentInteractable = interactable;
             CurrentInteractableObject = obj;
@@ -57,6 +59,11 @@ namespace MHZE.InteractSystem
                 CurrentInteractable.OnInteractableUpdated += HandleInteractableUpdated;
                 CurrentInteractable.OnHoverEnter(this);
             }
+
+            // Swapping directly between two interactables still needs a paired Lost/Found so listeners
+            // (like prompt UI) that key state off those events don't end up with stale state from `previous`.
+            if (previous != null)
+                OnInteractableLost?.Invoke(previous, this);
 
             OnInteractableFound?.Invoke(CurrentInteractable, this);
             OnCurrentInteractableUpdated?.Invoke();

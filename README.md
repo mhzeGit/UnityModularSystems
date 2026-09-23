@@ -132,6 +132,14 @@ https://github.com/mhzeGit/UnityModularSystems.git?path=/Packages/com.mhze.npc-s
 
 Modular NPC system with a feature-driven architecture. Core Npc component with feature collection, scheduler, and validation; NavMesh or Transform navigation; targeting and chase behaviour; perception with vision, hearing, and proximity sensors plus detection memory; transform look/presentation; and command handling. Includes a custom inspector editor.
 
+### Dialog System
+
+```
+https://github.com/mhzeGit/mhzeModularSystems.git?path=/Packages/com.mhze.dialog-system
+```
+
+Simple, adjustable Canvas dialog system. ScriptableObject dialog sequences with per-line speaker, text, duration and voice-over; a Canvas view with optional typewriter reveal; a central DialogManager with advance/auto-advance, events and a runtime `PlayLines` shortcut; and a proximity trigger that starts a conversation when the player comes within range, optionally gated on a character standing at a specific spot. Voice-over plays through an assignable AudioSource, so it can be positioned on an NPC's head. Includes an editor setup wizard that builds the Canvas UI.
+
 ## Mediator Scripts
 
 Mediator scripts in `Assets/Scripts/` connect standalone packages together. Attach these to a GameObject in your scene and assign the relevant system references in the Inspector.

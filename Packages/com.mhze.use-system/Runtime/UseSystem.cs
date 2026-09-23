@@ -172,6 +172,14 @@ namespace MHZE.UseSystem
                 return;
             }
 
+            // Switching directly to a different usable target still needs a paired Lost/Found so listeners
+            // (like prompt UI) that key state off those events don't end up with stale state from the old target.
+            if (currentUsableTargets.Count > 0)
+            {
+                CancelDelayedUse();
+                OnUsableTargetLost?.Invoke();
+            }
+
             currentUsableTargets.Clear();
             currentUsableTargets.AddRange(validTargets);
             currentTargetObject = objectFound;
