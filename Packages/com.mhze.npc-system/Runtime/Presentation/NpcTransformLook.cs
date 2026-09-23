@@ -43,7 +43,9 @@ namespace ModularNPC
 
         public float RemainingAngle => _remainingAngle;
 
-        public NpcTickSettings TickSettings => NpcTickSettings.EveryLateUpdate;
+        // Look bones are usually driven by the Animator, whose pose is applied after LateUpdate.
+        // Ticking before render (after animation) keeps the look from being overwritten each frame.
+        public NpcTickSettings TickSettings => NpcTickSettings.EveryBeforeRender;
 
         public NpcCommandStartResult LookAtPosition(
             Vector3 worldPosition,

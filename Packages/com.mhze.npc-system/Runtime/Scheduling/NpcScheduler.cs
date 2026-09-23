@@ -28,6 +28,7 @@ namespace ModularNPC
         private readonly List<Entry> _updateEntries = new List<Entry>(64);
         private readonly List<Entry> _fixedEntries = new List<Entry>(32);
         private readonly List<Entry> _lateEntries = new List<Entry>(32);
+        private readonly List<Entry> _beforeRenderEntries = new List<Entry>(16);
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
@@ -97,6 +98,25 @@ namespace ModularNPC
         private void LateUpdate()
         {
             Process(_lateEntries, NpcTickPhase.LateUpdate, Time.deltaTime, Time.unscaledDeltaTime);
+        }
+
+        private void OnEnable()
+        {
+            Application.onBeforeRender += OnBeforeRender;
+        }
+
+        private void OnDisable()
+        {
+            Application.onBeforeRender -= OnBeforeRender;
+        }
+
+        /// <summary>
+        /// Runs after Unity has applied animation, so a feature can drive an animated bone without the
+        /// Animator overwriting it later in the frame.
+        /// </summary>
+        private void OnBeforeRender()
+        {
+            Process(_beforeRenderEntries, NpcTickPhase.BeforeRender, Time.deltaTime, Time.unscaledDeltaTime);
         }
 
         private void OnDestroy()
@@ -247,6 +267,8 @@ namespace ModularNPC
                     return _fixedEntries;
                 case NpcTickPhase.LateUpdate:
                     return _lateEntries;
+                case NpcTickPhase.BeforeRender:
+                    return _beforeRenderEntries;
                 default:
                     return _updateEntries;
             }

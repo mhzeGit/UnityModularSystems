@@ -4,7 +4,14 @@ namespace ModularNPC
     {
         Update,
         FixedUpdate,
-        LateUpdate
+        LateUpdate,
+
+        /// <summary>
+        /// Runs immediately before rendering, after Unity has applied the Animator pose to the
+        /// transforms. Use it to drive transforms that an animated skeleton would otherwise
+        /// overwrite at the end of the frame, such as a head, eye or aim bone.
+        /// </summary>
+        BeforeRender
     }
 
     /// <summary>Scheduling policy for an active feature.</summary>
@@ -32,6 +39,8 @@ namespace ModularNPC
         public static NpcTickSettings EveryFixedUpdate => new NpcTickSettings(NpcTickPhase.FixedUpdate);
 
         public static NpcTickSettings EveryLateUpdate => new NpcTickSettings(NpcTickPhase.LateUpdate);
+
+        public static NpcTickSettings EveryBeforeRender => new NpcTickSettings(NpcTickPhase.BeforeRender);
     }
 
     /// <summary>Implemented by features that need centralized ticking while explicitly active.</summary>
