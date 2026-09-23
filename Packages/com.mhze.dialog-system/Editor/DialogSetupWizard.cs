@@ -58,6 +58,7 @@ public static class DialogSetupWizard
 
         DialogView view = Undo.AddComponent<DialogView>(canvasObject);
         EnsureViewHierarchy(view, font);
+        canvasObject.SetActive(false);
         return view;
     }
 
@@ -122,6 +123,9 @@ public static class DialogSetupWizard
         serialized.FindProperty("textColor").colorValue = Color.white;
         serialized.FindProperty("backgroundColor").colorValue = new Color(0f, 0f, 0f, 0.78f);
         serialized.ApplyModifiedProperties();
+
+        panel.gameObject.SetActive(false);
+        indicator.gameObject.SetActive(false);
     }
 
     private static DialogManager FindOrCreateManager(DialogView view)

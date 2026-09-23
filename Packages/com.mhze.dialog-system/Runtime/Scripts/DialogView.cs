@@ -66,8 +66,19 @@ public class DialogView : MonoBehaviour
 
     public GameObject ContinueIndicator => continueIndicator;
 
+    private void Awake()
+    {
+        Hide();
+        SetContinueVisible(false);
+    }
+
     public void Show()
     {
+        if (!gameObject.activeSelf)
+        {
+            gameObject.SetActive(true);
+        }
+
         if (panelRoot != null)
         {
             panelRoot.SetActive(true);
@@ -81,6 +92,16 @@ public class DialogView : MonoBehaviour
         if (panelRoot != null)
         {
             panelRoot.SetActive(false);
+        }
+
+        if (continueIndicator != null)
+        {
+            continueIndicator.SetActive(false);
+        }
+
+        if (gameObject.activeSelf)
+        {
+            gameObject.SetActive(false);
         }
     }
 

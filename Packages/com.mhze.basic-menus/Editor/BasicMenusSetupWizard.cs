@@ -147,6 +147,8 @@ namespace MHZE.BasicMenus.Editor
 
             serialized.ApplyModifiedProperties();
 
+            panel.gameObject.SetActive(false);
+
             Undo.CollapseUndoOperations(group);
 
             Selection.activeGameObject = pauseScreen.gameObject;
