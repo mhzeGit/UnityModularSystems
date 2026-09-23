@@ -1,8 +1,11 @@
+using System;
+using System.Collections.Generic;
 using MHZE.BasicMenus;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
 
@@ -204,21 +207,99 @@ namespace MHZE.BasicMenus.Editor
             return true;
         }
 
-        private static void EnsureEventSystem()
+        /// <summary>
+        /// Create an EventSystem (if the scene has none) and hook the project-wide
+        /// UI actions to its input module. Returns the scene's EventSystem.
+        /// </summary>
+        public static EventSystem EnsureEventSystem()
         {
-            if (UnityEngine.Object.FindAnyObjectByType<EventSystem>() != null) return;
+            var existing = UnityEngine.Object.FindAnyObjectByType<EventSystem>();
+            if (existing != null) return existing;
 
             var gameObject = new GameObject("EventSystem", typeof(EventSystem));
             Undo.RegisterCreatedObjectUndo(gameObject, "Create EventSystem");
 
             var inputModule = Undo.AddComponent<InputSystemUIInputModule>(gameObject);
+            AssignProjectWideActions(inputModule);
 
-            var projectWideActions = UnityEngine.InputSystem.InputSystem.actions;
-            if (projectWideActions != null)
-                inputModule.actionsAsset = projectWideActions;
+            return gameObject.GetComponent<EventSystem>();
         }
 
-        private static UIInputModeDetector EnsureSystemObject()
+        /// <summary>
+        /// Assign every UI action of an <see cref="InputSystemUIInputModule"/> from
+        /// the project-wide actions asset (falling back to the built-in default
+        /// actions when no project-wide asset exists).
+        ///
+        /// Setting only <c>actionsAsset</c> leaves the individual action references
+        /// empty, so the module processes no input at all; this method assigns the
+        /// matching action references by name.
+        /// </summary>
+        public static void AssignProjectWideActions(InputSystemUIInputModule inputModule)
+        {
+            if (inputModule == null) return;
+
+            var projectWideActions = UnityEngine.InputSystem.InputSystem.actions;
+            var references = LoadActionReferences(projectWideActions);
+
+            if (projectWideActions == null || references.Count == 0)
+            {
+                // No project-wide asset (or it has no persisted action
+                // references): fall back to the built-in default actions.
+                inputModule.UnassignActions();
+                inputModule.AssignDefaultActions();
+                return;
+            }
+
+            inputModule.actionsAsset = projectWideActions;
+            inputModule.point = FindActionReference(references, "Point", "MousePosition", "Mouse Position");
+            inputModule.leftClick = FindActionReference(references, "Click", "LeftClick", "Left Click");
+            inputModule.rightClick = FindActionReference(references, "RightClick", "Right Click", "ContextClick", "Context Click", "ContextMenu", "Context Menu");
+            inputModule.middleClick = FindActionReference(references, "MiddleClick", "Middle Click");
+            inputModule.scrollWheel = FindActionReference(references, "ScrollWheel", "Scroll Wheel", "Scroll", "Wheel");
+            inputModule.move = FindActionReference(references, "Navigate", "Move");
+            inputModule.submit = FindActionReference(references, "Submit");
+            inputModule.cancel = FindActionReference(references, "Cancel", "Esc", "Escape");
+            inputModule.trackedDevicePosition = FindActionReference(references, "TrackedDevicePosition", "Position");
+            inputModule.trackedDeviceOrientation = FindActionReference(references, "TrackedDeviceOrientation", "Orientation");
+        }
+
+        private static List<InputActionReference> LoadActionReferences(InputActionAsset asset)
+        {
+            var references = new List<InputActionReference>();
+            if (asset == null) return references;
+
+            string path = AssetDatabase.GetAssetPath(asset);
+            if (string.IsNullOrEmpty(path)) return references;
+
+            foreach (var obj in AssetDatabase.LoadAllAssetsAtPath(path))
+            {
+                if (obj is InputActionReference reference && reference.action != null)
+                    references.Add(reference);
+            }
+
+            return references;
+        }
+
+        private static InputActionReference FindActionReference(List<InputActionReference> references, params string[] actionNames)
+        {
+            foreach (string actionName in actionNames)
+            {
+                foreach (var reference in references)
+                {
+                    if (reference.action != null &&
+                        string.Equals(reference.action.name, actionName, StringComparison.OrdinalIgnoreCase))
+                        return reference;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Create the always-alive system object (input mode detector + back
+        /// router) if the scene has none. Returns the detector.
+        /// </summary>
+        public static UIInputModeDetector EnsureSystemObject()
         {
             var existing = UnityEngine.Object.FindAnyObjectByType<UIInputModeDetector>();
             if (existing != null) return existing;

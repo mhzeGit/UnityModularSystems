@@ -29,6 +29,10 @@ namespace MHZE.FirstPersonController
         private bool returningFromForce;
         private float returnTimer;
 
+        // Runtime look overrides (options menu). Default to the settings asset values.
+        private float sensitivityMultiplier = 1f;
+        private bool? invertYOverride;
+
         public bool IsForced => isForced;
         public bool IsReturning => returningFromForce;
         public float Yaw => currentYaw;
@@ -65,10 +69,10 @@ namespace MHZE.FirstPersonController
             // --- Normal look: accumulate target ------------------
             Vector2 raw = input.LookInput;
 
-            float mouseX = raw.x * settings.sensitivity.x * settings.inputMultiplier;
-            float mouseY = raw.y * settings.sensitivity.y * settings.inputMultiplier;
+            float mouseX = raw.x * settings.sensitivity.x * sensitivityMultiplier * settings.inputMultiplier;
+            float mouseY = raw.y * settings.sensitivity.y * sensitivityMultiplier * settings.inputMultiplier;
 
-            if (settings.invertY) mouseY = -mouseY;
+            if (invertYOverride ?? settings.invertY) mouseY = -mouseY;
 
             targetYaw += mouseX;
             targetPitch -= mouseY;
@@ -147,6 +151,27 @@ namespace MHZE.FirstPersonController
         }
 
         // --- Public API ------------------------------------------
+
+        /// <summary>
+        /// Multiply the settings asset's look sensitivity at runtime (options menu).
+        /// The settings asset itself is never modified. 1 = unchanged.
+        /// </summary>
+        public void SetSensitivityMultiplier(float multiplier)
+        {
+            sensitivityMultiplier = Mathf.Max(0.0001f, multiplier);
+        }
+
+        /// <summary>Override the settings asset's invert-Y flag at runtime (options menu).</summary>
+        public void SetInvertY(bool invert)
+        {
+            invertYOverride = invert;
+        }
+
+        /// <summary>Drop the runtime invert-Y override and use the settings asset value.</summary>
+        public void ClearInvertYOverride()
+        {
+            invertYOverride = null;
+        }
 
         public void ForceLookAt(Vector3 worldPoint, float? duration = null, float? speed = null)
         {

@@ -256,6 +256,17 @@ namespace MHZE.FirstPersonController
         public void EnableCrouch(bool state)     => input.crouchEnabled = state;
         public void EnableLook(bool state)       => input.lookEnabled = state;
 
+        // --- Runtime look settings (options menu) -----------------
+
+        /// <summary>
+        /// Multiply the look sensitivity configured on the settings asset
+        /// (1 = unchanged). The settings asset itself is never modified.
+        /// </summary>
+        public void SetLookSensitivity(float multiplier) => look?.SetSensitivityMultiplier(multiplier);
+
+        /// <summary>Override the settings asset's invert-Y flag at runtime.</summary>
+        public void SetInvertY(bool invert) => look?.SetInvertY(invert);
+
         // --- Cursor management ----------------------------------
 
         private static void LockCursor()

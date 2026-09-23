@@ -30,7 +30,7 @@ The package ships **no art assets**: every generated control is a solid-color uG
    - `Tools > Basic Menus > Create Main Menu`
    - `Tools > Basic Menus > Create Pause Menu`
    - `Tools > Basic Menus > Create Options Panel`
-3. The wizard creates the canvas, controls, and an always-alive `[Basic Menus System]` object (input mode detector + back router), then wires every reference.
+3. The wizard creates the canvas, controls, and an always-alive `[Basic Menus System]` object (input mode detector + back router), then wires every reference. The EventSystem it creates uses the **project-wide** UI actions automatically (Point, Click, Navigate, Submit, Cancel, ...); if the project has no project-wide asset, the built-in default actions are assigned instead.
 4. Restyle the generated controls (they are plain Images, Buttons, Sliders, Toggles, TMP dropdowns) or replace them with your own.
 5. Wire the main menu's `On Play Clicked` event to your scene loading, and the pause menu's scene names in the inspector.
 
@@ -54,9 +54,11 @@ Every menu panel derives from `UIScreen`. A screen either toggles its own GameOb
 
 `UIBackRouter` listens for **UI/Cancel** (Escape / gamepad B). Screens register themselves automatically and are asked in descending `BackPriority`; the first one that returns `true` from `OnBack()` consumes the input. A screen is never wired manually. If no action reference is assigned, the router falls back to the project-wide `UI/Cancel` action.
 
-You can also call `backRouter.HandleBack()` from a "Back" button, and `UIBackRouter.SuppressBackThisFrame()` right after opening a screen with the same key that is also Cancel.
+You can also call `backRouter.HandleBack()` from a "Back" button, and `UIBackRouter.SuppressBackThisFrame()` right after opening a screen with the same key that is also Cancel. `UIBackRouter.BackHandledThisFrame` reports whether the router already consumed the back input this frame, which lets screens that also listen for the same key (like the pause toggle) avoid acting twice on one press.
 
-`PauseScreen` resolves its pause input in this order: assigned Pause action → project-wide `Pause` action → project-wide `UI/Cancel`. So Escape / gamepad B opens and closes the pause menu out of the box; assign a dedicated Pause action to keep Cancel exclusively for back routing.
+`PauseScreen` resolves its pause input in this order: assigned Pause action → project-wide `Pause` action → project-wide `UI/Cancel`. So Escape / gamepad B opens and closes the pause menu out of the box; assign a dedicated Pause action (e.g. Escape + gamepad Start) to keep Cancel exclusively for back routing.
+
+Screens expose C# events next to the inspector UnityEvents: `UIScreen.Opened` / `Closed`, and `PauseScreen.Paused` / `PauseScreen.Resumed`, so gameplay code can react without any inspector wiring.
 
 ### Input mode & cursor
 

@@ -26,9 +26,17 @@ namespace MHZE.BasicMenus
         private static readonly List<Func<bool>> _modalBackHandlers = new List<Func<bool>>();
         private static bool _dirty;
         private static int _suppressedFrame = -1;
+        private static int _handledFrame = -1;
         private static UIBackRouter _instance;
 
         private InputAction _resolvedCancelAction;
+
+        /// <summary>
+        /// True when a back input was consumed during the current frame. Screens
+        /// that also listen for the same key (e.g. the pause toggle using
+        /// UI/Cancel as a fallback) can use this to avoid acting twice on one press.
+        /// </summary>
+        public static bool BackHandledThisFrame => _handledFrame == Time.frameCount;
 
         /// <summary>
         /// Ignores back input for the rest of the current frame. Useful right
@@ -129,7 +137,10 @@ namespace MHZE.BasicMenus
             {
                 var handler = _modalBackHandlers[i];
                 if (handler != null && handler())
+                {
+                    _handledFrame = Time.frameCount;
                     return;
+                }
             }
 
             if (_dirty)
@@ -142,7 +153,10 @@ namespace MHZE.BasicMenus
             {
                 var screen = _screens[i];
                 if (screen != null && screen.isActiveAndEnabled && screen.OnBack())
+                {
+                    _handledFrame = Time.frameCount;
                     return;
+                }
             }
         }
     }

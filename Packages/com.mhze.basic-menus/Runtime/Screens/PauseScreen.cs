@@ -57,6 +57,12 @@ namespace MHZE.BasicMenus
         [SerializeField] private UnityEvent onMainMenuClicked = new UnityEvent();
         [SerializeField] private UnityEvent onQuitClicked = new UnityEvent();
 
+        /// <summary>Fired after the game pauses (time scale already set to 0).</summary>
+        public event Action Paused;
+
+        /// <summary>Fired after the game resumes.</summary>
+        public event Action Resumed;
+
         private bool _isPaused;
         private InputAction _resolvedPauseAction;
 
@@ -124,6 +130,10 @@ namespace MHZE.BasicMenus
 
         private void OnPausePerformed(InputAction.CallbackContext context)
         {
+            // The back router runs first for the same key and may have already
+            // resumed the game (or closed a sub-screen); never toggle twice.
+            if (UIBackRouter.BackHandledThisFrame) return;
+
             bool hadOpenScreen = UIScreen.AnyOpen;
 
             // Escape is shared between Pause and Back on keyboard: if a menu is
@@ -154,6 +164,7 @@ namespace MHZE.BasicMenus
 
             PushFocus();
             onPaused?.Invoke();
+            Paused?.Invoke();
         }
 
         /// <summary>Hide the pause panel and resume the game.</summary>
@@ -174,6 +185,7 @@ namespace MHZE.BasicMenus
             if (contentPanel != null) contentPanel.SetActive(false);
 
             onResumed?.Invoke();
+            Resumed?.Invoke();
         }
 
         // ── Options ──────────────────────────────────────────────────────────
