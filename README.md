@@ -4,6 +4,14 @@ Modular Unity packages for first-person controller, interaction systems, and mor
 
 ## Packages
 
+### Basic Menus
+
+```
+https://github.com/mhzeGit/UnityModularSystems.git?path=/Packages/com.mhze.basic-menus
+```
+
+Generic, art-free menu framework: UIScreen base class with automatic back-button routing, mouse/gamepad input-mode detection with cursor handling, main menu with animated sub-panels, pause menu with time-scale and scene handling, tabbed options menu (gameplay, video, audio, input rebinding), info and confirmation screens, modular button effects and optional UI sounds. Includes editor wizards that build and wire the whole UI in the open scene with no art assets.
+
 ### First Person Controller
 
 ```

@@ -82,6 +82,15 @@
       "source": "embedded",
       "dependencies": {}
     },
+    "com.mhze.dialog-system": {
+      "version": "file:com.mhze.dialog-system",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.unity.ugui": "1.0.0",
+        "com.unity.inputsystem": "1.7.0"
+      }
+    },
     "com.mhze.firstperson-controller": {
       "version": "file:com.mhze.firstperson-controller",
       "depth": 0,

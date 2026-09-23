@@ -1,0 +1,21 @@
+{
+  "name": "com.mhze.basic-menus.Editor",
+  "rootNamespace": "MHZE.BasicMenus.Editor",
+  "references": [
+    "com.mhze.basic-menus.Runtime",
+    "Unity.InputSystem",
+    "UnityEngine.UI",
+    "Unity.TextMeshPro"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
