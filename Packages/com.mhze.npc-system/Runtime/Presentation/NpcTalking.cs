@@ -28,6 +28,9 @@ namespace ModularNPC
         /// <summary>Canonical animator bool parameter. Controller generators should write the same name.</summary>
         public const string TalkingParameterName = "Talking";
 
+        /// <summary>Seconds between idle rescans for voice sources added after initialization.</summary>
+        private const float SourceRefreshInterval = 1f;
+
         [SerializeField, Tooltip("Animator bool parameter raised while the voice audio plays.")]
         private string _talkingParameter = TalkingParameterName;
 
@@ -35,6 +38,7 @@ namespace ModularNPC
         private AudioSource _voiceSource;
 
         [NonSerialized] private AudioSource[] _sources;
+        [NonSerialized] private float _nextSourceRefreshTime;
 
         /// <summary>True while the talking animation is playing.</summary>
         public bool IsTalking => IsFlagRaised;
@@ -64,12 +68,17 @@ namespace ModularNPC
             _sources = null;
         }
 
-        /// <summary>Re-scans the AudioSources under the NPC after voice sources change at runtime.</summary>
+        /// <summary>
+        /// Re-scans the AudioSources under the NPC. Called on initialization and periodically while
+        /// silent, so a voice source that is added at runtime (for example one instantiated by a
+        /// dialog system) is picked up; call it directly to react to a change immediately.
+        /// </summary>
         public void RefreshVoiceSources()
         {
             _sources = Npc != null
                 ? Npc.GetComponentsInChildren<AudioSource>(true)
                 : Array.Empty<AudioSource>();
+            _nextSourceRefreshTime = Time.unscaledTime + SourceRefreshInterval;
         }
 
         protected override bool EvaluateFlag()
@@ -89,6 +98,24 @@ namespace ModularNPC
                 RefreshVoiceSources();
             }
 
+            if (AnySourcePlaying())
+            {
+                return true;
+            }
+
+            // Nothing is playing, so an occasional rescan is cheap: it finds sources added after
+            // initialization without paying for a hierarchy walk while a voice clip is running.
+            if (Time.unscaledTime < _nextSourceRefreshTime)
+            {
+                return false;
+            }
+
+            RefreshVoiceSources();
+            return AnySourcePlaying();
+        }
+
+        private bool AnySourcePlaying()
+        {
             for (int i = 0; i < _sources.Length; i++)
             {
                 AudioSource source = _sources[i];
