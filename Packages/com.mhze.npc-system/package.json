@@ -1,6 +1,6 @@
 {
   "name": "com.mhze.npc-system",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "displayName": "NPC System",
   "description": "Modular NPC system with a feature-driven architecture. Core Npc component with feature collection, scheduler and validation; navigation via NavMesh or Transform; targeting and chase behaviour; perception with vision, hearing and proximity sensors plus detection memory; transform look/presentation; Animator state binding with auto-detected, type-filtered parameters; and command handling. Includes a custom inspector editor.",
   "unity": "2021.3",

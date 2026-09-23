@@ -32,6 +32,8 @@ namespace ModularNPC
         private Transform _targetTransform;
         private Vector3 _targetVector;
         private Quaternion _restLocalRotation;
+        private Quaternion _currentRotation;
+        private bool _hasCurrentRotation;
         private float _degreesPerSecond;
         private float _angularTolerance;
         private float _remainingAngle;
@@ -154,11 +156,22 @@ namespace ModularNPC
                 return;
             }
 
-            _remainingAngle = Quaternion.Angle(_lookTransform.rotation, targetRotation);
+            // A look bone is usually animated, so its transform is reset to the clip's pose every
+            // frame. Tracking the accumulated rotation separately keeps the look advancing instead
+            // of restarting from the animated pose each tick, which is what lets it actually reach
+            // the target when the feature ticks after animation.
+            if (!_hasCurrentRotation)
+            {
+                _currentRotation = _lookTransform.rotation;
+                _hasCurrentRotation = true;
+            }
+
+            _remainingAngle = Quaternion.Angle(_currentRotation, targetRotation);
             if (_remainingAngle <= _angularTolerance)
             {
-                _lookTransform.rotation = targetRotation;
+                _currentRotation = targetRotation;
                 _remainingAngle = 0f;
+                _lookTransform.rotation = _currentRotation;
                 if (!_keepTracking)
                 {
                     SucceedActiveCommand();
@@ -167,11 +180,12 @@ namespace ModularNPC
                 return;
             }
 
-            _lookTransform.rotation = Quaternion.RotateTowards(
-                _lookTransform.rotation,
+            _currentRotation = Quaternion.RotateTowards(
+                _currentRotation,
                 targetRotation,
                 _degreesPerSecond * deltaTime);
-            _remainingAngle = Quaternion.Angle(_lookTransform.rotation, targetRotation);
+            _lookTransform.rotation = _currentRotation;
+            _remainingAngle = Quaternion.Angle(_currentRotation, targetRotation);
         }
 
         public override void CollectValidationIssues(List<NpcValidationIssue> issues)
@@ -217,6 +231,7 @@ namespace ModularNPC
             SetTicking(false);
             _targetTransform = null;
             _remainingAngle = 0f;
+            _hasCurrentRotation = false;
         }
 
         private bool HasValidLookTransform => _lookTransform != null;
@@ -238,6 +253,9 @@ namespace ModularNPC
                 ? options.AngularTolerance
                 : _defaultAngularTolerance;
             _keepTracking = options.KeepTracking;
+
+            _currentRotation = _lookTransform != null ? _lookTransform.rotation : Quaternion.identity;
+            _hasCurrentRotation = _lookTransform != null;
             return result;
         }
 
