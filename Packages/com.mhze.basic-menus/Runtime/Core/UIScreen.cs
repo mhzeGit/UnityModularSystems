@@ -96,6 +96,8 @@ namespace MHZE.BasicMenus
         protected virtual void OnDisable()
         {
             UIBackRouter.Unregister(this);
+            if (_isOpen)
+                IsOpen = false;
         }
 
         protected virtual void OnDestroy()

@@ -73,17 +73,39 @@ namespace MHZE.BasicMenus
             // screen keeps receiving input while the game is running. Only the
             // content panel hides.
             startHidden = false;
+            _isPaused = false;
+            IsOpen = false;
             if (contentPanel != null) contentPanel.SetActive(false);
             if (optionsScreen != null) optionsScreen.Close();
         }
 
         private void Start()
         {
-            if (resumeButton != null) resumeButton.onClick.AddListener(Resume);
-            if (restartButton != null) restartButton.onClick.AddListener(Restart);
-            if (optionsButton != null) optionsButton.onClick.AddListener(OpenOptions);
-            if (mainMenuButton != null) mainMenuButton.onClick.AddListener(GoToMainMenu);
-            if (quitButton != null) quitButton.onClick.AddListener(QuitGame);
+            if (resumeButton != null)
+            {
+                resumeButton.onClick.RemoveListener(Resume);
+                resumeButton.onClick.AddListener(Resume);
+            }
+            if (restartButton != null)
+            {
+                restartButton.onClick.RemoveListener(Restart);
+                restartButton.onClick.AddListener(Restart);
+            }
+            if (optionsButton != null)
+            {
+                optionsButton.onClick.RemoveListener(OpenOptions);
+                optionsButton.onClick.AddListener(OpenOptions);
+            }
+            if (mainMenuButton != null)
+            {
+                mainMenuButton.onClick.RemoveListener(GoToMainMenu);
+                mainMenuButton.onClick.AddListener(GoToMainMenu);
+            }
+            if (quitButton != null)
+            {
+                quitButton.onClick.RemoveListener(QuitGame);
+                quitButton.onClick.AddListener(QuitGame);
+            }
         }
 
         protected override void OnEnable()
@@ -112,6 +134,7 @@ namespace MHZE.BasicMenus
                 Time.timeScale = 1f;
                 _isPaused = false;
             }
+            IsOpen = false;
         }
 
         private InputAction ResolvePauseAction()

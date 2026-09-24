@@ -1,6 +1,6 @@
 {
   "name": "com.mhze.basic-menus",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "displayName": "Basic Menus",
   "description": "Generic, art-free menu framework. Screen base class with back-button routing, mouse/gamepad input-mode detection with automatic cursor handling, a main menu with animated sub-panels, a pause menu with time-scale handling, a tabbed options menu (gameplay, video, audio, controls rebinding), confirmation and info screens, modular button effects and optional UI sound support. Includes editor setup wizards that build and wire the whole UI in the open scene.",
   "unity": "2022.3",
