@@ -55,8 +55,9 @@ public class DialogView : MonoBehaviour
     private string currentText = string.Empty;
     private Vector2 resizeTarget;
     private bool snapNextResize = true;
+    private bool isShowing;
 
-    public bool IsVisible => panelRoot != null && panelRoot.activeSelf;
+    public bool IsVisible => isShowing && panelRoot != null && panelRoot.activeInHierarchy;
 
     public GameObject PanelRoot => panelRoot;
 
@@ -68,15 +69,34 @@ public class DialogView : MonoBehaviour
 
     private void Awake()
     {
-        Hide();
-        SetContinueVisible(false);
+        if (!isShowing)
+        {
+            Hide();
+            SetContinueVisible(false);
+        }
+    }
+
+    private void OnDisable()
+    {
+        isShowing = false;
+        if (TryGetComponent<Canvas>(out Canvas canvas))
+        {
+            canvas.enabled = false;
+        }
     }
 
     public void Show()
     {
+        isShowing = true;
+
         if (!gameObject.activeSelf)
         {
             gameObject.SetActive(true);
+        }
+
+        if (TryGetComponent<Canvas>(out Canvas canvas))
+        {
+            canvas.enabled = true;
         }
 
         if (panelRoot != null)
@@ -89,6 +109,8 @@ public class DialogView : MonoBehaviour
 
     public void Hide()
     {
+        isShowing = false;
+
         if (panelRoot != null)
         {
             panelRoot.SetActive(false);
@@ -97,6 +119,11 @@ public class DialogView : MonoBehaviour
         if (continueIndicator != null)
         {
             continueIndicator.SetActive(false);
+        }
+
+        if (TryGetComponent<Canvas>(out Canvas canvas))
+        {
+            canvas.enabled = false;
         }
 
         if (gameObject.activeSelf)

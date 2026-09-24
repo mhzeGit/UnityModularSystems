@@ -37,10 +37,15 @@ public static class DialogSetupWizard
 
     private static DialogView FindOrCreateView(Font font)
     {
-        DialogView existing = Object.FindAnyObjectByType<DialogView>();
+        DialogView existing = Object.FindAnyObjectByType<DialogView>(FindObjectsInactive.Include);
         if (existing != null)
         {
             EnsureViewHierarchy(existing, font);
+            if (existing.TryGetComponent<Canvas>(out Canvas existingCanvas))
+            {
+                existingCanvas.enabled = false;
+            }
+            existing.gameObject.SetActive(false);
             return existing;
         }
 
@@ -50,6 +55,7 @@ public static class DialogSetupWizard
         Canvas canvas = canvasObject.GetComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 100;
+        canvas.enabled = false;
 
         CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>();
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;

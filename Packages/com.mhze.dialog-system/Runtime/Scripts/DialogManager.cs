@@ -70,6 +70,10 @@ public class DialogManager : MonoBehaviour
         }
 
         Instance = this;
+        IsPlaying = false;
+        currentIndex = -1;
+        currentSequence = null;
+
         if (keepAcrossScenes)
         {
             DontDestroyOnLoad(gameObject);
@@ -80,6 +84,20 @@ public class DialogManager : MonoBehaviour
             view.Hide();
             view.SetContinueVisible(false);
         }
+    }
+
+    private void OnDisable()
+    {
+        IsPlaying = false;
+        currentIndex = -1;
+        currentSequence = null;
+
+        if (voiceSource != null)
+        {
+            voiceSource.Stop();
+        }
+
+        DestroyRuntimeSequence();
     }
 
     private void OnDestroy()
