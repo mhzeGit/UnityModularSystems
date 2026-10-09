@@ -23,6 +23,7 @@ namespace ModularNPC
         private Vector3 _destination;
         private float _activeStoppingDistance;
         private bool _acceptPartialPath;
+        private bool _externallyControlled;
         private NpcNavigationState _state;
 
         public Vector3 Destination => _destination;
@@ -41,6 +42,51 @@ namespace ModularNPC
 
         public NpcTickSettings TickSettings =>
             new NpcTickSettings(NpcTickPhase.Update, _statusPollInterval);
+
+        /// <summary>
+        /// Temporarily hands the agent to another NPC feature without completing or replacing the
+        /// active MoveTo command. The original destination and command handle remain active.
+        /// </summary>
+        public bool BeginExternalNavigationControl()
+        {
+            if (!HasActiveCommand || !CanUseAgent)
+            {
+                return false;
+            }
+
+            _externallyControlled = true;
+            _agent.isStopped = true;
+            _agent.ResetPath();
+            return true;
+        }
+
+        /// <summary>Sets a temporary agent destination while external control is active.</summary>
+        public bool SetExternalDestination(Vector3 destination, float stoppingDistance)
+        {
+            if (!_externallyControlled || !CanUseAgent || !NpcMath.IsFinite(destination))
+            {
+                return false;
+            }
+
+            _agent.stoppingDistance = Mathf.Max(0f, stoppingDistance);
+            _agent.isStopped = false;
+            return _agent.SetDestination(destination);
+        }
+
+        /// <summary>Returns the agent to the original active MoveTo destination.</summary>
+        public bool EndExternalNavigationControl()
+        {
+            if (!_externallyControlled || !CanUseAgent || !HasActiveCommand)
+            {
+                _externallyControlled = false;
+                return false;
+            }
+
+            _externallyControlled = false;
+            _agent.stoppingDistance = _activeStoppingDistance;
+            _agent.isStopped = false;
+            return _agent.SetDestination(_destination);
+        }
 
         private bool CanUseAgent => _agent != null &&
                                     _agent.enabled &&
@@ -114,6 +160,11 @@ namespace ModularNPC
 
         public void Tick(float deltaTime)
         {
+            if (_externallyControlled)
+            {
+                return;
+            }
+
             if (!HasActiveCommand)
             {
                 SetTicking(false);
@@ -187,6 +238,7 @@ namespace ModularNPC
 
         protected override void OnCommandFinished(NpcCommandHandle handle, NpcCommandStatus status)
         {
+            _externallyControlled = false;
             SetTicking(false);
             if (CanUseAgent)
             {
