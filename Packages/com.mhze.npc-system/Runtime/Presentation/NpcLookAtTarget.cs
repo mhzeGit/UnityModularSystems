@@ -251,9 +251,12 @@ namespace ModularNPC
 
         protected override void OnFeatureValidate()
         {
+            // Speed and tolerance clamp only negatives: 0 means "unset" on a serialized instance that
+            // predates the field, and TurnSpeed/SettleTolerance fall back to their defaults for it.
+            // Clamping 0 up to the inspector minimum would turn that fallback into 1 degree/second.
             _eyeHeightOffset = Mathf.Max(0f, _eyeHeightOffset);
-            _degreesPerSecond = Mathf.Max(1f, _degreesPerSecond);
-            _settleToleranceDegrees = Mathf.Max(0.01f, _settleToleranceDegrees);
+            _degreesPerSecond = Mathf.Max(0f, _degreesPerSecond);
+            _settleToleranceDegrees = Mathf.Max(0f, _settleToleranceDegrees);
             _minimumYaw = Mathf.Clamp(_minimumYaw, -180f, 0f);
             _maximumYaw = Mathf.Clamp(_maximumYaw, 0f, 180f);
             _minimumPitch = Mathf.Clamp(_minimumPitch, -90f, 0f);
