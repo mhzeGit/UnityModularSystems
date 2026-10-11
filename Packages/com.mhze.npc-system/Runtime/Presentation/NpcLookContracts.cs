@@ -2,83 +2,31 @@ using UnityEngine;
 
 namespace ModularNPC
 {
-    /// <summary>Per-command overrides. Default values use the feature's configured settings.</summary>
-    public readonly struct NpcLookOptions
-    {
-        public NpcLookOptions(
-            float degreesPerSecond,
-            float angularTolerance = 0.5f,
-            bool keepTracking = false)
-        {
-            DegreesPerSecond = Mathf.Max(0f, degreesPerSecond);
-            AngularTolerance = Mathf.Max(0f, angularTolerance);
-            KeepTracking = keepTracking;
-            OverrideSpeed = true;
-            OverrideTolerance = true;
-        }
-
-        public float DegreesPerSecond { get; }
-
-        public float AngularTolerance { get; }
-
-        public bool KeepTracking { get; }
-
-        public bool OverrideSpeed { get; }
-
-        public bool OverrideTolerance { get; }
-
-        public static NpcLookOptions Default => default;
-
-        public NpcLookOptions WithTracking(bool keepTracking)
-        {
-            return new NpcLookOptions(
-                DegreesPerSecond,
-                AngularTolerance,
-                keepTracking,
-                OverrideSpeed,
-                OverrideTolerance);
-        }
-
-        private NpcLookOptions(
-            float degreesPerSecond,
-            float angularTolerance,
-            bool keepTracking,
-            bool overrideSpeed,
-            bool overrideTolerance)
-        {
-            DegreesPerSecond = degreesPerSecond;
-            AngularTolerance = angularTolerance;
-            KeepTracking = keepTracking;
-            OverrideSpeed = overrideSpeed;
-            OverrideTolerance = overrideTolerance;
-        }
-    }
-
+    /// <summary>
+    /// Turns one bone (head, eye, turret, aim transform) toward a target transform. The target is
+    /// whatever the caller passes - the contract has no notion of a player.
+    /// </summary>
     public interface INpcLook
     {
+        /// <summary>The bone being turned, or null when none could be found.</summary>
         Transform LookTransform { get; }
 
+        /// <summary>The transform currently being looked at, or null when not looking.</summary>
+        Transform Target { get; }
+
+        /// <summary>True from <see cref="LookAt"/> until <see cref="StopLooking"/>.</summary>
         bool IsLooking { get; }
 
+        /// <summary>Degrees left between the bone and its goal (the target, or rest while easing back).</summary>
         float RemainingAngle { get; }
 
-        NpcCommandStartResult LookAtPosition(
-            Vector3 worldPosition,
-            NpcLookOptions options,
-            NpcCommandRequest commandRequest);
+        /// <summary>
+        /// Starts, or retargets, a continuous look at <paramref name="target"/>. Returns false when the
+        /// target is invalid or the look bone is missing.
+        /// </summary>
+        bool LookAt(Transform target);
 
-        NpcCommandStartResult LookInDirection(
-            Vector3 worldDirection,
-            NpcLookOptions options,
-            NpcCommandRequest commandRequest);
-
-        NpcCommandStartResult LookAtTarget(
-            Transform target,
-            NpcLookOptions options,
-            NpcCommandRequest commandRequest);
-
-        NpcCommandStartResult ReturnToRest(
-            NpcLookOptions options,
-            NpcCommandRequest commandRequest);
+        /// <summary>Ends the look and eases the bone back to its rest pose.</summary>
+        void StopLooking();
     }
 }

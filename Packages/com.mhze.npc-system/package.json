@@ -1,6 +1,6 @@
 {
   "name": "com.mhze.npc-system",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "displayName": "NPC System",
   "description": "Modular NPC system with feature-driven navigation, targeting, perception and presentation. NavMesh navigation supports temporary external control so NPC features can safely handle route interactions while preserving the active MoveTo command.",
   "unity": "2021.3",

@@ -138,7 +138,7 @@ A modular currency system with wallets that support multiple currency types, def
 https://github.com/mhzeGit/UnityModularSystems.git?path=/Packages/com.mhze.npc-system
 ```
 
-Modular NPC system with a feature-driven architecture. Core Npc component with feature collection, scheduler, and validation; NavMesh or Transform navigation; targeting and chase behaviour; perception with vision, hearing, and proximity sensors plus detection memory; transform look/presentation; and command handling. Includes a custom inspector editor.
+Modular NPC system with a feature-driven architecture. Core Npc component with feature collection, scheduler, and validation; NavMesh or Transform navigation; targeting and chase behaviour; perception with vision, hearing, and proximity sensors plus detection memory; look-at-target head/eye/aim tracking with eye-height offset and presentation; and command handling. Includes a custom inspector editor.
 
 ### Dialog System
 
