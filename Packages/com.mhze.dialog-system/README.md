@@ -98,3 +98,5 @@ Rounded corners are a standalone, reusable component rather than a dialog settin
   and `LineChanged` are available for scripting.
 - `DialogProximityTrigger` supports one-shot or repeat-with-cooldown playback, an optional facing
   cone, an optional required-actor gate (see above), and `Stop` when the target walks away.
+  `ResetState()` makes a trigger that has already played fire again, and `HasPlayed` reports whether
+  it has, which debug tools use to jump backwards through a story.

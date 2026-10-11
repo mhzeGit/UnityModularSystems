@@ -68,6 +68,9 @@ public class DialogProximityTrigger : MonoBehaviour
         set => sequence = value;
     }
 
+    /// <summary>True once the sequence has been started by this trigger since the last reset.</summary>
+    public bool HasPlayed => hasPlayed;
+
     public Transform Target
     {
         get => target;
@@ -145,6 +148,20 @@ public class DialogProximityTrigger : MonoBehaviour
                 StartDialog();
             }
         }
+    }
+
+    /// <summary>
+    /// Returns the trigger to its just-loaded state: forgets that the sequence has played, clears
+    /// the repeat cooldown, any queued start and the actor arming, so it can fire again the next
+    /// time the target comes into range. Used by debug tools that jump backwards through a story.
+    /// </summary>
+    public void ResetState()
+    {
+        hasPlayed = false;
+        nextAllowedTime = 0f;
+        pendingPlay = false;
+        actorArmed = false;
+        targetInside = false;
     }
 
     /// <summary>Starts the dialog now, ignoring range and repeat rules.</summary>
