@@ -1,0 +1,25 @@
+{
+  "name": "ModularNPC.StateMachine",
+  "rootNamespace": "ModularNPC",
+  "references": [
+    "ModularNPC.Runtime",
+    "CleanStateMachine.Runtime"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [
+    "MODULAR_NPC_STATEMACHINE"
+  ],
+  "versionDefines": [
+    {
+      "name": "com.cleanstatemachine",
+      "expression": "",
+      "define": "MODULAR_NPC_STATEMACHINE"
+    }
+  ],
+  "noEngineReferences": false
+}

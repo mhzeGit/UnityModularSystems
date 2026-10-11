@@ -1,0 +1,32 @@
+{
+  "name": "ModularNPC.StateMachine.Doors",
+  "rootNamespace": "ModularNPC",
+  "references": [
+    "ModularNPC.Runtime",
+    "ModularNPC.Doors",
+    "CleanStateMachine.Runtime"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [
+    "MODULAR_NPC_DOORS",
+    "MODULAR_NPC_STATEMACHINE"
+  ],
+  "versionDefines": [
+    {
+      "name": "com.mhze.ultimate-door-system",
+      "expression": "",
+      "define": "MODULAR_NPC_DOORS"
+    },
+    {
+      "name": "com.cleanstatemachine",
+      "expression": "",
+      "define": "MODULAR_NPC_STATEMACHINE"
+    }
+  ],
+  "noEngineReferences": false
+}
