@@ -1,0 +1,25 @@
+{
+  "name": "ModularNPC.Dialog",
+  "rootNamespace": "ModularNPC",
+  "references": [
+    "ModularNPC.Runtime",
+    "com.mhze.dialog-system.Runtime"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [
+    "MODULAR_NPC_DIALOG"
+  ],
+  "versionDefines": [
+    {
+      "name": "com.mhze.dialog-system",
+      "expression": "",
+      "define": "MODULAR_NPC_DIALOG"
+    }
+  ],
+  "noEngineReferences": false
+}
