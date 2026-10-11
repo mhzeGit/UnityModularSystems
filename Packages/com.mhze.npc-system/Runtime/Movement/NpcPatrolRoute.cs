@@ -38,6 +38,31 @@ namespace ModularNPC
             }
         }
 
+        /// <summary>
+        /// Index of the waypoint last returned by <see cref="NextPoint"/>, or -1 before the first
+        /// one (and again after <see cref="SetCurrentIndex"/> is given -1).
+        /// </summary>
+        public int CurrentIndex
+        {
+            get
+            {
+                Refresh();
+                return _index;
+            }
+        }
+
+        /// <summary>
+        /// Makes <paramref name="index"/> the waypoint the NPC last targeted, so the next call to
+        /// <see cref="NextPoint"/> returns the one after it. Pass -1 to restart the loop from the
+        /// first waypoint. Intended for save/restore and for debug tools that jump an NPC through
+        /// its route; the value is clamped to the waypoints that currently exist.
+        /// </summary>
+        public void SetCurrentIndex(int index)
+        {
+            Refresh();
+            _index = Mathf.Clamp(index, -1, _points.Count - 1);
+        }
+
         /// <summary>Returns the next waypoint in the loop, wrapping back to the first one.</summary>
         public Transform NextPoint()
         {
