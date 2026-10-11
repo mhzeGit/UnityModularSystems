@@ -64,6 +64,15 @@
       "dependencies": {},
       "hash": "e1642c16928ccf0b58d5d2a847d3c628d58b8221"
     },
+    "com.mhze.basic-menus": {
+      "version": "file:com.mhze.basic-menus",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.unity.ugui": "1.0.0",
+        "com.unity.inputsystem": "1.8.0"
+      }
+    },
     "com.mhze.chain-drive": {
       "version": "file:com.mhze.chain-drive",
       "depth": 0,
