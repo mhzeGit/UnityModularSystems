@@ -33,5 +33,14 @@ namespace ModularNPC
         public NpcPerceptionCategory Categories => _categories;
 
         public bool IsPerceivable => isActiveAndEnabled && _isPerceivable;
+
+        /// <summary>
+        /// Bind a visible aim point without moving the target root or its query colliders.
+        /// Passing null returns to the authored root-local aim offset.
+        /// </summary>
+        public void SetAimTransform(Transform aimTransform)
+        {
+            _aimTransform = aimTransform;
+        }
     }
 }
