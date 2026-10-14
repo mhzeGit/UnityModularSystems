@@ -1,0 +1,7 @@
+{
+  "name": "com.mhze.pickup-system.Use",
+  "references": ["com.mhze.pickup-system.Runtime", "com.mhze.use-system.Runtime"],
+  "autoReferenced": true,
+  "defineConstraints": ["MHZE_PICKUP_USE"],
+  "versionDefines": [{"name":"com.mhze.use-system", "expression":"", "define":"MHZE_PICKUP_USE"}]
+}

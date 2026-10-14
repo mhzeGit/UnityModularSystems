@@ -6,6 +6,7 @@ namespace MHZE.PickupSystem
     public class PickableItemBase : MonoBehaviour, IPickable
     {
         public PickableItemData pickableItemData;
+        public ItemHoldProfile HoldProfile => pickableItemData != null ? pickableItemData.HoldProfile : null;
         public ArgEventBinding OnPickedItem = new ArgEventBinding();
         public ArgEventBinding OnDroppedItem = new ArgEventBinding();
 
@@ -96,7 +97,7 @@ namespace MHZE.PickupSystem
         {
             if (pickableItemData != null)
             {
-                return pickableItemData.HandLocationOffset;
+                return pickableItemData.HandLocationOffset + (HoldProfile != null ? HoldProfile.ArmOffset : Vector3.zero);
             }
             else { return Vector3.zero; }
         }
@@ -123,7 +124,7 @@ namespace MHZE.PickupSystem
         {
             if (pickableItemData != null)
             {
-                return pickableItemData.HandHoldPressure;
+                return HoldProfile != null ? HoldProfile.FingerClosure : pickableItemData.HandHoldPressure;
             }
             else { return 0; }
         }
@@ -132,7 +133,7 @@ namespace MHZE.PickupSystem
         {
             if (pickableItemData != null)
             {
-                return pickableItemData.HandHoldTypeIndex;
+                return HoldProfile != null ? (float)HoldProfile.Grip : pickableItemData.HandHoldTypeIndex;
             }
             else { return 0; }
         }

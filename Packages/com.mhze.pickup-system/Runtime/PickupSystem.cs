@@ -31,6 +31,22 @@ namespace MHZE.PickupSystem
         static readonly WaitForSeconds s_pickDelay = new WaitForSeconds(0.2f);
 
         Vector3 neutralArmBaseLocalPosition;
+        Transform capturedArmBase;
+
+        /// <summary>Bind an animated hand socket while preserving the rig's authored neutral pose.</summary>
+        public void ConfigureHoldingRig(Transform armBase, Transform holder)
+        {
+            PlayerArmBase = armBase;
+            PickableObjectHolder = holder;
+            CaptureNeutralArmPosition();
+        }
+
+        void CaptureNeutralArmPosition()
+        {
+            if (PlayerArmBase == null || capturedArmBase == PlayerArmBase) return;
+            capturedArmBase = PlayerArmBase;
+            neutralArmBaseLocalPosition = PlayerArmBase.localPosition;
+        }
 
         void Awake()
         {
@@ -42,13 +58,14 @@ namespace MHZE.PickupSystem
             }
 
             Instance = this;
+            CaptureNeutralArmPosition();
         }
 
         void Start()
         {
             if (PlayerArmBase != null)
             {
-                neutralArmBaseLocalPosition = PlayerArmBase.localPosition;
+                CaptureNeutralArmPosition();
             }
             else
             {
@@ -69,6 +86,7 @@ namespace MHZE.PickupSystem
                 Debug.LogWarning($"PickupSystem on '{gameObject.name}' destroyed while holding '{currentPickedObject.name}'. Forcing release without callbacks.", this);
                 ForceReleaseWithoutCallbacks();
             }
+            if (Instance == this) Instance = null;
         }
 
         #region Input Setup
@@ -155,7 +173,8 @@ namespace MHZE.PickupSystem
 
             delayedPickCoroutine = null;
 
-            if (attemptedPickableObject != null && attemptedPickableItem != null)
+            // An occupied pickup request must never leave a second item attached to the hand.
+            if (currentPickedObject == null && attemptedPickableObject != null && attemptedPickableItem != null)
             {
                 PickupObject(attemptedPickableObject, attemptedPickableItem);
             }
@@ -181,6 +200,10 @@ namespace MHZE.PickupSystem
                 return;
             }
 
+            if (currentPickedObject == obj) return;
+            if (currentPickedObject != null) DropObject(currentPickedObject, currentPickableItem);
+            CaptureNeutralArmPosition();
+
             currentPickableItem = pickable;
             currentPickedObject = obj;
 
@@ -189,7 +212,7 @@ namespace MHZE.PickupSystem
             obj.transform.localRotation = pickable.GetItemOffsetRotation();
 
             if (PlayerArmBase != null)
-                PlayerArmBase.localPosition = pickable.GetHandOffsetLocation();
+                PlayerArmBase.localPosition = neutralArmBaseLocalPosition + pickable.GetHandOffsetLocation();
 
             pickable.SetPickState(false);
             pickable.Picked();

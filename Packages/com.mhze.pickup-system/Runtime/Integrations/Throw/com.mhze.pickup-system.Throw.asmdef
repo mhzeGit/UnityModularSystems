@@ -1,0 +1,7 @@
+{
+  "name": "com.mhze.pickup-system.Throw",
+  "references": ["com.mhze.pickup-system.Runtime", "com.mhze.throw-system.Runtime"],
+  "autoReferenced": true,
+  "defineConstraints": ["MHZE_PICKUP_THROW"],
+  "versionDefines": [{"name":"com.mhze.throw-system", "expression":"", "define":"MHZE_PICKUP_THROW"}]
+}
