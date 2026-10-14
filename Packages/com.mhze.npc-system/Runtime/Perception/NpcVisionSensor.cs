@@ -48,6 +48,37 @@ namespace ModularNPC
 
         protected override float DefaultScanInterval => _defaultScanInterval;
 
+        /// <summary>
+        /// Check a known target using this sensor's filters, cone and line of sight.
+        /// Unlike discovering candidates with Scan, this does not depend on the overlap buffer.
+        /// It does not publish continuous sensing events or change an active command.
+        /// </summary>
+        public bool TryObserve(INpcPerceptionTarget target, out NpcObservation observation)
+        {
+            observation = default;
+            if (!IsOperational || !NpcPerceptionUtility.IsTargetObservable(target) || target.RootTransform == Transform)
+                return false;
+            INpcPerceptionTarget observer = null;
+            Npc.Features.TryGet(out observer);
+            if (!_filter.Allows(observer, target)) return false;
+            Transform originTransform = _originTransform != null ? _originTransform : Transform;
+            if (originTransform == null) return false;
+            Vector3 origin = originTransform.TransformPoint(_localOriginOffset);
+            Vector3 toTarget = target.AimPosition - origin;
+            float squaredDistance = toTarget.sqrMagnitude;
+            if (squaredDistance <= .000001f || squaredDistance > _range * _range) return false;
+            float distance = Mathf.Sqrt(squaredDistance);
+            Vector3 direction = toTarget / distance;
+            float cosineThreshold = Mathf.Cos(_fieldOfView * .5f * Mathf.Deg2Rad);
+            float forwardDot = Vector3.Dot(originTransform.forward, direction);
+            if (forwardDot < cosineThreshold) return false;
+            EnsureVisionBuffers();
+            if (_requireLineOfSight && !HasLineOfSight(origin, direction, distance, target)) return false;
+            observation = new NpcObservation(target, SenseKind, origin, target.AimPosition, distance,
+                (1f - distance / _range) * Mathf.InverseLerp(cosineThreshold, 1f, forwardDot), Time.time);
+            return true;
+        }
+
         protected override void CollectObservations(List<NpcObservation> observations)
         {
             EnsureVisionBuffers();
@@ -60,11 +91,6 @@ namespace ModularNPC
             }
 
             Vector3 origin = originTransform.TransformPoint(_localOriginOffset);
-            Vector3 forward = originTransform.forward;
-            float cosineThreshold = Mathf.Cos(_fieldOfView * 0.5f * Mathf.Deg2Rad);
-            INpcPerceptionTarget observer = null;
-            Npc.Features.TryGet(out observer);
-
             int count = QuerySphere(
                 origin,
                 _range,
@@ -74,41 +100,8 @@ namespace ModularNPC
             for (int i = 0; i < count; i++)
             {
                 Collider candidate = GetCollider(i);
-                if (!TryResolveTarget(candidate, out INpcPerceptionTarget target) ||
-                    target.RootTransform == Transform ||
-                    !_seenTargets.Add(target) ||
-                    !_filter.Allows(observer, target))
-                {
-                    continue;
-                }
-
-                Vector3 targetPosition = target.AimPosition;
-                Vector3 toTarget = targetPosition - origin;
-                float squaredDistance = toTarget.sqrMagnitude;
-                if (squaredDistance <= 0.000001f || squaredDistance > _range * _range)
-                {
-                    continue;
-                }
-
-                float distance = Mathf.Sqrt(squaredDistance);
-                Vector3 direction = toTarget / distance;
-                float forwardDot = Vector3.Dot(forward, direction);
-                if (forwardDot < cosineThreshold ||
-                    (_requireLineOfSight && !HasLineOfSight(origin, direction, distance, target)))
-                {
-                    continue;
-                }
-
-                float distanceConfidence = 1f - distance / _range;
-                float angleConfidence = Mathf.InverseLerp(cosineThreshold, 1f, forwardDot);
-                observations.Add(new NpcObservation(
-                    target,
-                    SenseKind,
-                    origin,
-                    targetPosition,
-                    distance,
-                    distanceConfidence * angleConfidence,
-                    Time.time));
+                if (TryResolveTarget(candidate, out INpcPerceptionTarget target) && _seenTargets.Add(target) &&
+                    TryObserve(target, out NpcObservation observation)) observations.Add(observation);
             }
         }
 

@@ -1,6 +1,6 @@
 {
   "name": "com.mhze.npc-system",
-  "version": "1.6.1",
+  "version": "1.6.2",
   "displayName": "NPC System",
   "description": "Modular NPC system with feature-driven navigation, targeting, perception and presentation. Includes a generic Look At Target feature with eye-height offset, a Point At Target feature that raises the best arm (left or right) toward any target with weighted multi-bone aiming, NavMesh navigation with temporary external control, velocity-driven walk animation and a patrol route. Optional integrations compile only when their package is installed: Ultimate Door System (door navigation), Clean State Machine (patrol/arrival conditions) and Dialog System (point at a location while a dialog line plays).",
   "unity": "2021.3",

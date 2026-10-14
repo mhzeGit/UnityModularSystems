@@ -14,3 +14,13 @@ position, category, team, filtering and query colliders remain unchanged. Passin
 the authored root-local offset. The caller owns the referenced transform's lifetime.
 
 Version 1.6.1 adds this backward-compatible binding API; existing serialized targets are unchanged.
+
+## Checking a known visible target
+
+`vision.TryObserve(target, out observation)` checks an operational vision feature's range, field of
+view, target filters and line of sight directly. It avoids candidate overlap saturation in dense
+scenes, so a known target does not disappear merely because scenery filled the discovery buffer.
+It leaves continuous sensing commands and their observation events unchanged. Use `Scan` to
+discover unknown targets; use `TryObserve` when the caller already owns the intended target.
+
+Version 1.6.2 adds this backward-compatible query API.
