@@ -16,6 +16,7 @@ namespace MHZE.InteractSystem
         private RaycastHit? lastRaycastHit;
         private bool isHolding;
         private float holdTimer;
+        private IInteractable holdTarget;
 
         public override Camera PlayerCamera => playerCamera;
         public override Transform InteractorTransform => playerTransform != null
@@ -47,6 +48,7 @@ namespace MHZE.InteractSystem
 
         private void OnDisable()
         {
+            CancelHold();
             if (interactInputAction == null) return;
             interactInputAction.action.started -= HandleInteractStarted;
             interactInputAction.action.canceled -= HandleInteractCanceled;
@@ -58,7 +60,13 @@ namespace MHZE.InteractSystem
             PerformRaycast();
             DrawDebugRay();
 
-            if (!isHolding || CurrentInteractable == null) return;
+            if (!isHolding) return;
+            if (holdTarget != CurrentInteractable || holdTarget == null ||
+                (holdTarget is Object targetObject && !targetObject) || !holdTarget.IsInteractable)
+            {
+                CancelHold();
+                return;
+            }
             holdTimer += Time.deltaTime;
             if (holdTimer < CurrentInteractable.HoldTime) return;
 
@@ -67,6 +75,7 @@ namespace MHZE.InteractSystem
             RaiseHoldEnded();
             isHolding = false;
             holdTimer = 0f;
+            holdTarget = null;
         }
 
         private void HandleInteractStarted(InputAction.CallbackContext context)
@@ -78,6 +87,7 @@ namespace MHZE.InteractSystem
             {
                 isHolding = true;
                 holdTimer = 0f;
+                holdTarget = CurrentInteractable;
                 RaiseHoldStarted(CurrentInteractable.HoldTime);
                 return;
             }
@@ -88,10 +98,20 @@ namespace MHZE.InteractSystem
 
         private void HandleInteractCanceled(InputAction.CallbackContext context)
         {
-            ReleaseInteract(CurrentInteractable);
+            ReleaseInteract(isHolding ? holdTarget : CurrentInteractable);
             if (isHolding) RaiseHoldEnded();
             isHolding = false;
             holdTimer = 0f;
+            holdTarget = null;
+        }
+
+        private void CancelHold()
+        {
+            if (!isHolding) return;
+            var target = holdTarget;
+            isHolding = false; holdTimer = 0f; holdTarget = null;
+            if (target != null && !(target is Object targetObject && !targetObject)) ReleaseInteract(target);
+            RaiseHoldEnded();
         }
 
         private void PerformRaycast()

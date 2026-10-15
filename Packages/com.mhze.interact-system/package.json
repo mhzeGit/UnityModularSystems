@@ -1,6 +1,6 @@
 {
   "name": "com.mhze.interact-system",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "displayName": "Interact System",
   "description": "A modular interaction system with raycast detection, hold-to-interact support, and prompt management.",
   "unity": "2021.3",

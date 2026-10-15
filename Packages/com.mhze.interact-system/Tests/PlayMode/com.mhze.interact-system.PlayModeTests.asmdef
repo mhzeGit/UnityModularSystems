@@ -1,0 +1,8 @@
+{
+  "name": "com.mhze.interact-system.PlayModeTests",
+  "rootNamespace": "MHZE.InteractSystem.Tests",
+  "references": ["com.mhze.interact-system.Runtime", "Unity.InputSystem"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "defineConstraints": ["UNITY_INCLUDE_TESTS"],
+  "autoReferenced": false
+}
