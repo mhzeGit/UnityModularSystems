@@ -1,0 +1,12 @@
+{
+  "name": "ModularNPC.ExpressionTests",
+  "references": [
+    "ModularNPC.Runtime"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}

@@ -29,6 +29,7 @@ namespace ModularNPC
         private readonly List<Entry> _fixedEntries = new List<Entry>(32);
         private readonly List<Entry> _lateEntries = new List<Entry>(32);
         private readonly List<Entry> _beforeRenderEntries = new List<Entry>(16);
+        private readonly List<Entry> _preAnimationEntries = new List<Entry>(16);
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
@@ -87,11 +88,13 @@ namespace ModularNPC
 
         private void Update()
         {
+            PrepareAnimation();
             Process(_updateEntries, NpcTickPhase.Update, Time.deltaTime, Time.unscaledDeltaTime);
         }
 
         private void FixedUpdate()
         {
+            PrepareAnimation();
             Process(_fixedEntries, NpcTickPhase.FixedUpdate, Time.fixedDeltaTime, Time.fixedUnscaledDeltaTime);
         }
 
@@ -234,15 +237,33 @@ namespace ModularNPC
             }
         }
 
+        private void PrepareAnimation()
+        {
+            int index = 0;
+            while (index < _preAnimationEntries.Count)
+            {
+                Entry entry = _preAnimationEntries[index];
+                if (!entry.Active || IsDestroyedUnityObject(entry.Target))
+                {
+                    ReleaseEntry(entry.Target);
+                    continue;
+                }
+                ((INpcPreAnimationTickable)entry.Target).BeforeAnimation();
+                if (index < _preAnimationEntries.Count && ReferenceEquals(_preAnimationEntries[index], entry)) index++;
+            }
+        }
+
         private void AddToPhase(Entry entry)
         {
             List<Entry> list = GetPhaseList(entry.Settings.Phase);
             entry.Index = list.Count;
             list.Add(entry);
+            if (entry.Target is INpcPreAnimationTickable) _preAnimationEntries.Add(entry);
         }
 
         private void RemoveFromPhase(Entry entry)
         {
+            _preAnimationEntries.Remove(entry);
             List<Entry> list = GetPhaseList(entry.Settings.Phase);
             int index = entry.Index;
             int lastIndex = list.Count - 1;

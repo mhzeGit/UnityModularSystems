@@ -43,6 +43,12 @@ namespace ModularNPC
         public static NpcTickSettings EveryBeforeRender => new NpcTickSettings(NpcTickPhase.BeforeRender);
     }
 
+    /// <summary>Optional early pass for removing last frame presentation offsets before an Animator evaluates.</summary>
+    public interface INpcPreAnimationTickable
+    {
+        void BeforeAnimation();
+    }
+
     /// <summary>Implemented by features that need centralized ticking while explicitly active.</summary>
     public interface INpcTickable
     {

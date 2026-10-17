@@ -6,7 +6,7 @@ namespace ModularNPC
     /// <summary>Blends authored facial offsets over the Animator pose while preserving body clips and head look.</summary>
     [Serializable]
     [NpcFeature("Expressions", "Presentation", Description = "Blends a small facial pose library, with timed reactions and neutral recovery.")]
-    public sealed class NpcExpressions : NpcFeature, INpcTickable
+    public sealed class NpcExpressions : NpcFeature, INpcTickable, INpcPreAnimationTickable
     {
         [SerializeField] private NpcExpressionLibrary _library;
         [NonSerialized] private Transform[] _bones;
@@ -14,6 +14,7 @@ namespace ModularNPC
         [NonSerialized] private float _elapsed, _blendSeconds, _remaining;
         [NonSerialized] private string _expression;
         [NonSerialized] private object _owner;
+        [NonSerialized] private bool _hasApplied;
         public NpcTickSettings TickSettings => NpcTickSettings.EveryLateUpdate;
         public string CurrentExpression => _expression;
         public NpcExpressionLibrary Library { get => _library; set { ResetImmediate(); _library = value; _bones = null; } }
@@ -73,29 +74,40 @@ namespace ModularNPC
             return true;
         }
         private void BeginBlend(float seconds) { Array.Copy(_current, _from, _current.Length); _elapsed = 0; _blendSeconds = Mathf.Max(0, seconds); }
-        private void Apply(NpcExpressionLibrary.BonePose[] pose)
+        public void BeforeAnimation() => RemoveAppliedOffset();
+
+        private void RemoveAppliedOffset()
         {
+            if (!_hasApplied || _bones == null) return;
             for (int i = 0; i < _bones.Length; i++)
             {
                 Transform bone = _bones[i];
                 if (bone == null) continue;
-
-                // The Animator has evaluated this frame's animation before the NPC late update.
-                // Remove last frame's expression offset first, otherwise this offset accumulates.
-                NpcExpressionLibrary.BonePose neutral = _library.neutral[i];
-                NpcExpressionLibrary.BonePose previous = _applied[i];
+                var neutral = _library.neutral[i];
+                var previous = _applied[i];
                 bone.localPosition -= previous.position - neutral.position;
                 bone.localRotation *= Quaternion.Inverse(Quaternion.Inverse(neutral.rotation) * previous.rotation);
                 bone.localScale = Divide(bone.localScale, Divide(previous.scale, neutral.scale));
+            }
+            _hasApplied = false;
+        }
 
-                // Expression data is authored relative to Expression_Idle. Apply only its delta
-                // to the live Animator pose so talking can continue to animate the jaw and lips.
-                NpcExpressionLibrary.BonePose expression = pose[i];
+        private void Apply(NpcExpressionLibrary.BonePose[] pose)
+        {
+            // Also support a second application or an immediate reset within the same frame.
+            RemoveAppliedOffset();
+            for (int i = 0; i < _bones.Length; i++)
+            {
+                Transform bone = _bones[i];
+                if (bone == null) continue;
+                var neutral = _library.neutral[i];
+                var expression = pose[i];
                 bone.localPosition += expression.position - neutral.position;
                 bone.localRotation *= Quaternion.Inverse(neutral.rotation) * expression.rotation;
                 bone.localScale = Multiply(bone.localScale, Divide(expression.scale, neutral.scale));
                 _applied[i] = expression;
             }
+            _hasApplied = true;
         }
         private static Vector3 Divide(Vector3 value, Vector3 divisor) => new Vector3(
             Mathf.Abs(divisor.x) > 0.000001f ? value.x / divisor.x : 1f,

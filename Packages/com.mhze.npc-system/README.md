@@ -48,3 +48,8 @@ line cues, intensity and a bounded duration. Blank lines do not shift authored i
 has a 0.3-second blend; unmapped lines and stop/replacement/completion ease back to neutral. The
 component never guesses emotion from text. Disabling detaches listeners. Gameplay callers should
 use a distinct owner so a dialog ending cannot clear a more recent gameplay reaction.
+
+Expression offsets are removed in the scheduler early Update/FixedUpdate pass, before an Animator
+can write a new face pose, and applied again in LateUpdate. This keeps a held expression visible
+when a body clip changes or animated jaw/lid channels evaluate, without accumulating offsets on
+unanimated facial bones. Features needing this preparation can implement `INpcPreAnimationTickable`.
