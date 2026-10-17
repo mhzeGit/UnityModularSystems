@@ -10,7 +10,7 @@ namespace ModularNPC
     {
         [SerializeField] private NpcExpressionLibrary _library;
         [NonSerialized] private Transform[] _bones;
-        [NonSerialized] private NpcExpressionLibrary.BonePose[] _current, _from, _goal;
+        [NonSerialized] private NpcExpressionLibrary.BonePose[] _current, _from, _goal, _applied;
         [NonSerialized] private float _elapsed, _blendSeconds, _remaining;
         [NonSerialized] private string _expression;
         [NonSerialized] private object _owner;
@@ -68,6 +68,7 @@ namespace ModularNPC
             _current = (NpcExpressionLibrary.BonePose[])_library.neutral.Clone();
             _from = (NpcExpressionLibrary.BonePose[])_current.Clone();
             _goal = (NpcExpressionLibrary.BonePose[])_current.Clone();
+            _applied = (NpcExpressionLibrary.BonePose[])_library.neutral.Clone();
             SetTicking(true);
             return true;
         }
@@ -79,14 +80,21 @@ namespace ModularNPC
                 Transform bone = _bones[i];
                 if (bone == null) continue;
 
-                // Expression data is authored as a pose relative to Expression_Idle. Convert it
-                // to an offset so facial animation (notably the jaw and lips while talking) remains
-                // visible underneath the expression layer.
+                // The Animator has evaluated this frame's animation before the NPC late update.
+                // Remove last frame's expression offset first, otherwise this offset accumulates.
                 NpcExpressionLibrary.BonePose neutral = _library.neutral[i];
+                NpcExpressionLibrary.BonePose previous = _applied[i];
+                bone.localPosition -= previous.position - neutral.position;
+                bone.localRotation *= Quaternion.Inverse(Quaternion.Inverse(neutral.rotation) * previous.rotation);
+                bone.localScale = Divide(bone.localScale, Divide(previous.scale, neutral.scale));
+
+                // Expression data is authored relative to Expression_Idle. Apply only its delta
+                // to the live Animator pose so talking can continue to animate the jaw and lips.
                 NpcExpressionLibrary.BonePose expression = pose[i];
                 bone.localPosition += expression.position - neutral.position;
                 bone.localRotation *= Quaternion.Inverse(neutral.rotation) * expression.rotation;
                 bone.localScale = Multiply(bone.localScale, Divide(expression.scale, neutral.scale));
+                _applied[i] = expression;
             }
         }
         private static Vector3 Divide(Vector3 value, Vector3 divisor) => new Vector3(
