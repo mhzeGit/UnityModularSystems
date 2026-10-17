@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace ModularNPC
 {
-    /// <summary>Applies authored local facial poses after animation, independently of body clips and head look.</summary>
+    /// <summary>Blends authored facial offsets over the Animator pose while preserving body clips and head look.</summary>
     [Serializable]
     [NpcFeature("Expressions", "Presentation", Description = "Blends a small facial pose library, with timed reactions and neutral recovery.")]
     public sealed class NpcExpressions : NpcFeature, INpcTickable
@@ -74,8 +74,26 @@ namespace ModularNPC
         private void BeginBlend(float seconds) { Array.Copy(_current, _from, _current.Length); _elapsed = 0; _blendSeconds = Mathf.Max(0, seconds); }
         private void Apply(NpcExpressionLibrary.BonePose[] pose)
         {
-            for (int i = 0; i < _bones.Length; i++) if (_bones[i] != null) { _bones[i].localPosition = pose[i].position; _bones[i].localRotation = pose[i].rotation; _bones[i].localScale = pose[i].scale; }
+            for (int i = 0; i < _bones.Length; i++)
+            {
+                Transform bone = _bones[i];
+                if (bone == null) continue;
+
+                // Expression data is authored as a pose relative to Expression_Idle. Convert it
+                // to an offset so facial animation (notably the jaw and lips while talking) remains
+                // visible underneath the expression layer.
+                NpcExpressionLibrary.BonePose neutral = _library.neutral[i];
+                NpcExpressionLibrary.BonePose expression = pose[i];
+                bone.localPosition += expression.position - neutral.position;
+                bone.localRotation *= Quaternion.Inverse(neutral.rotation) * expression.rotation;
+                bone.localScale = Multiply(bone.localScale, Divide(expression.scale, neutral.scale));
+            }
         }
+        private static Vector3 Divide(Vector3 value, Vector3 divisor) => new Vector3(
+            Mathf.Abs(divisor.x) > 0.000001f ? value.x / divisor.x : 1f,
+            Mathf.Abs(divisor.y) > 0.000001f ? value.y / divisor.y : 1f,
+            Mathf.Abs(divisor.z) > 0.000001f ? value.z / divisor.z : 1f);
+        private static Vector3 Multiply(Vector3 a, Vector3 b) => new Vector3(a.x * b.x, a.y * b.y, a.z * b.z);
         private static NpcExpressionLibrary.BonePose Blend(NpcExpressionLibrary.BonePose a, NpcExpressionLibrary.BonePose b, float t) => new NpcExpressionLibrary.BonePose {
             position = Vector3.Lerp(a.position,b.position,t), rotation = Quaternion.Slerp(a.rotation,b.rotation,t), scale = Vector3.Lerp(a.scale,b.scale,t) };
     }

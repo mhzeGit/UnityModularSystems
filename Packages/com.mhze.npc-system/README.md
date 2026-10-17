@@ -31,8 +31,8 @@ Version 1.6.2 adds this backward-compatible query API.
 relative to the character Animator, neutral local transforms and matching pose arrays. Author
 only face bones; exclude head/neck, hair and body. Bake poses from source clips in the consuming
 project's explicit editor tools. Runtime never samples full-body clips or adds another Animator.
-The feature owns these facial local transforms in LateUpdate, including neutral; it does not
-provide lip sync. Do not assign another facial animation system to the same bones.
+The feature applies offsets relative to the authored neutral pose in LateUpdate. Animator-driven jaw
+and lip movement remains visible under expressions; keep lip-sync and blink animation on the Animator.
 
 Use `npc.Features.TryGetOperational(out NpcExpressions face)`, then
 `face.Show("Happy", intensity: 0.5f, duration: 2f, blendSeconds: 0.3f, owner: this)`.
