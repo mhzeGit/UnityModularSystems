@@ -11,6 +11,7 @@ is the entry point; `FPCSettings` holds the tuning values.
 - `SetPosition`, `SetRotation`, `SetPositionAndRotation`: place the player.
 - `EnableControls` / `DisableControls` switch every input off or on (looking too).
 - `EnableMove`, `EnableRun`, `EnableJump`, `EnableCrouch`, `EnableLook` switch one input.
+- `CameraHeightOffset` raises or lowers the eyes (metres, negative lowers).
 
 ## Seated posture
 
@@ -31,6 +32,6 @@ seat.Cancel(exitPoint);                                    // the same, instantl
   the way the player faces when they sit.
 - `Seated` and `StoodUp` fire when the movement has finished; `IsSeated` is true from the moment
   `SitDown` is called until `StandUp` is called.
-- The camera drop is taken off at the start of every frame and put back in `LateUpdate`, so the
-  controller's own head bob and landing effects are unaffected. `Eye Height Above Seat` and
-  `Standing Eye Height` set how far the eye drops.
+- The eyes drop through `FirstPersonController.CameraHeightOffset` (added to the crouch camera height
+  every frame), so interaction rays and look tests start from the seated eye. `Eye Height Above Seat`
+  and `Standing Eye Height` set how far they drop.

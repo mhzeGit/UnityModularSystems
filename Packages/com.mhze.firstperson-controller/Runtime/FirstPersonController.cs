@@ -160,6 +160,13 @@ namespace MHZE.FirstPersonController
         public bool ControlsEnabled => controlsEnabled;
         public Vector3 Velocity => movement?.Velocity ?? Vector3.zero;
 
+        /// <summary>
+        /// Extra height added to the camera pivot, in metres; negative lowers the eyes. It is added to
+        /// the crouch height every frame, so everything that reads the camera (interaction rays, look
+        /// tests) sees the new eye position. Used by seated postures; leave at 0 otherwise.
+        /// </summary>
+        public float CameraHeightOffset { get; set; }
+
         public event Action<FPCState> OnStateChanged;
         public event Action OnCrouchStarted;
         public event Action OnCrouchEnded;
@@ -517,7 +524,7 @@ namespace MHZE.FirstPersonController
             float norm = movement.GetCrouchNormalized();
             float crouchCamHeight = standingCameraHeight
                 * (settings.crouchHeight / settings.standHeight);
-            float targetY = Mathf.Lerp(standingCameraHeight, crouchCamHeight, norm);
+            float targetY = Mathf.Lerp(standingCameraHeight, crouchCamHeight, norm) + CameraHeightOffset;
 
             Vector3 pos = cachedCameraPivot.localPosition;
             pos.y = targetY;

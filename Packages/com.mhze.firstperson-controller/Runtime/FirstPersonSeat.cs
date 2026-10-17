@@ -7,8 +7,10 @@ namespace MHZE.FirstPersonController
     /// <summary>
     /// A seated posture for the first-person controller: the player is moved onto a seat, cannot
     /// walk, run, jump or crouch, can still look around (and use whatever the interaction systems
-    /// offer), and stands up again on request. The eye drops to a seated height by offsetting the
-    /// camera, so the controller itself, its collider and its settings are not touched.
+    /// offer), and stands up again on request. The eye drops to a seated height through the
+    /// controller's <see cref="FirstPersonController.CameraHeightOffset"/>, so the collider and the
+    /// settings are not touched and everything that reads the camera (interaction rays, look tests)
+    /// sees where the eyes really are.
     ///
     /// Put it on the player object, or call <see cref="For"/> and let it add itself. A seat is any
     /// transform: its position is the top of the seat (where the player's feet would rest if they
@@ -16,7 +18,6 @@ namespace MHZE.FirstPersonController
     /// is the way the player faces when they sit down.
     /// </summary>
     [DisallowMultipleComponent]
-    [DefaultExecutionOrder(-1000)]
     [AddComponentMenu("MHZE/First Person/First Person Seat")]
     public sealed class FirstPersonSeat : MonoBehaviour
     {
@@ -29,7 +30,7 @@ namespace MHZE.FirstPersonController
         [Min(0.3f)]
         [SerializeField] private float eyeHeightAboveSeat = 0.72f;
 
-        [Tooltip("Height of the eyes above the player's feet when standing, in metres. Used to work out how far the camera drops.")]
+        [Tooltip("Height of the eyes above the player's feet when standing, in metres. Used to work out how far the eyes drop.")]
         [Min(0.5f)]
         [SerializeField] private float standingEyeHeight = 1.65f;
 
@@ -42,9 +43,6 @@ namespace MHZE.FirstPersonController
 
         private Coroutine _routine;
         private Transform _seat;
-        private Vector3 _appliedLocalOffset;
-        private float _drop;
-        private float _targetDrop;
 
         /// <summary>The player has finished sitting down.</summary>
         public event Action Seated;
@@ -123,9 +121,9 @@ namespace MHZE.FirstPersonController
             bool wasSeated = IsSeated;
             IsSeated = false;
             _seat = null;
-            _drop = _targetDrop = 0f;
             if (Resolve())
             {
+                controller.CameraHeightOffset = 0f;
                 SetWalking(true);
                 if (exit != null)
                 {
@@ -144,10 +142,10 @@ namespace MHZE.FirstPersonController
         private IEnumerator SitRoutine(Transform seat)
         {
             Vector3 from = controller.transform.position;
-            float yaw = seat.eulerAngles.y;
             Quaternion fromRotation = controller.transform.rotation;
-            Quaternion toRotation = Quaternion.Euler(0f, yaw, 0f);
-            _targetDrop = Mathf.Max(0f, standingEyeHeight - eyeHeightAboveSeat);
+            Quaternion toRotation = Quaternion.Euler(0f, seat.eulerAngles.y, 0f);
+            float drop = Mathf.Max(0f, standingEyeHeight - eyeHeightAboveSeat);
+            float startOffset = controller.CameraHeightOffset;
 
             for (float t = 0f; t < sitSeconds; t += Time.deltaTime)
             {
@@ -156,19 +154,19 @@ namespace MHZE.FirstPersonController
                 // A small hop so the body rises over the edge of the seat instead of through it.
                 position.y += Mathf.Sin(k * Mathf.PI) * 0.12f;
                 controller.SetPositionAndRotation(position, Quaternion.Slerp(fromRotation, toRotation, k));
-                _drop = _targetDrop * k;
+                controller.CameraHeightOffset = Mathf.Lerp(startOffset, -drop, k);
                 yield return null;
             }
 
-            _drop = _targetDrop;
             controller.SetPositionAndRotation(seat.position, toRotation);
+            controller.CameraHeightOffset = -drop;
             _routine = null;
             Seated?.Invoke();
         }
 
         private IEnumerator StandRoutine(Transform exit)
         {
-            float startDrop = _drop;
+            float startOffset = controller.CameraHeightOffset;
             Vector3 from = controller.transform.position;
             Vector3 to = exit != null ? exit.position : from;
             for (float t = 0f; t < standSeconds; t += Time.deltaTime)
@@ -177,12 +175,11 @@ namespace MHZE.FirstPersonController
                 Vector3 position = Vector3.Lerp(from, to, k);
                 position.y += Mathf.Sin(k * Mathf.PI) * 0.08f;
                 controller.SetPositionAndRotation(position, controller.transform.rotation);
-                _drop = Mathf.Lerp(startDrop, 0f, k);
+                controller.CameraHeightOffset = Mathf.Lerp(startOffset, 0f, k);
                 yield return null;
             }
 
-            _drop = 0f;
-            _targetDrop = 0f;
+            controller.CameraHeightOffset = 0f;
             if (exit != null)
             {
                 controller.SetPositionAndRotation(exit.position, controller.transform.rotation);
@@ -194,54 +191,12 @@ namespace MHZE.FirstPersonController
             StoodUp?.Invoke();
         }
 
-        // ---------------------------------------------------------------- camera
-
-        // The controller rewrites the camera's position every frame (head bob, landing dip), so the
-        // drop is taken off first thing in the frame and put back last thing: whatever the
-        // controller does in between sees an untouched camera.
-        private void Update()
-        {
-            RemoveOffset();
-        }
-
-        private void LateUpdate()
-        {
-            ApplyOffset();
-        }
-
         private void OnDisable()
         {
-            RemoveOffset();
-        }
-
-        private void ApplyOffset()
-        {
-            Camera camera = controller != null ? controller.PlayerCamera : null;
-            if (camera == null || _drop < 0.0001f)
+            if (controller != null && IsSeated)
             {
-                return;
+                controller.CameraHeightOffset = 0f;
             }
-
-            Transform parent = camera.transform.parent;
-            Vector3 world = Vector3.down * _drop;
-            _appliedLocalOffset = parent != null ? parent.InverseTransformVector(world) : world;
-            camera.transform.localPosition += _appliedLocalOffset;
-        }
-
-        private void RemoveOffset()
-        {
-            if (_appliedLocalOffset == Vector3.zero)
-            {
-                return;
-            }
-
-            Camera camera = controller != null ? controller.PlayerCamera : null;
-            if (camera != null)
-            {
-                camera.transform.localPosition -= _appliedLocalOffset;
-            }
-
-            _appliedLocalOffset = Vector3.zero;
         }
 
         // ---------------------------------------------------------------- helpers
