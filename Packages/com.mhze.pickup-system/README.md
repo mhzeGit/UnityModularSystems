@@ -31,6 +31,27 @@ IPickable remains unchanged for custom implementations. Without HoldProfile the 
 fields still work. The migrated PlayerArmAnimator preserves its script GUID and uses MovedFrom
 for its former BlahBlahFamily / Assembly-CSharp identity.
 
+## Reaching with the held item (PlayerArmReach)
+
+Put `PlayerArmReach` on the same object as the arm's Animator. While it is on, the arm reaches out
+and puts the **tip of the held item** on a world point, over the animated hold pose, then eases back:
+
+```csharp
+reach.Begin(heldItemTip);              // a Transform at the end of the item (bristles, probe, nozzle)
+reach.SetTarget(tipWorld, towardHand); // every frame: where the tip goes, and the way the item
+                                       // points from the tip back toward the hand
+reach.End();                           // ease back to the animation (EndNow() snaps)
+```
+
+It solves the shoulder-elbow-wrist chain with two bones, turns the hand so the item points the
+right way (keeping the animated roll of the grip), lengthens the arm up to `maxStretch` (the hand
+and item keep their size) and slides the whole arm only when that is not enough, so the open end of
+the arm mesh stays below the screen edge. The other arm is scaled away while it reaches. The arm
+root's neutral position is whatever `PickupSystem` last set; the reach adds to it and gives it back.
+`TipReached` says whether the tip is on its target. Rig bones are found by the same names as
+`PlayerArmAnimator`, or assign them. Tune `reachShift`, `elbowPole`, `restStretch` and `maxStretch`
+per rig, with the real first-person view.
+
 ## Authoring and validation
 
 Test pickup, carrying while looking up/down, drop, throw, consumption, handoff, object destruction,
