@@ -17,6 +17,7 @@ https://github.com/mhzeGit/mhzeModularSystems.git?path=/Packages/com.mhze.dialog
 | `DialogSequence` | ScriptableObject asset holding an ordered list of lines. |
 | `DialogView` | Canvas UI: a speech bubble that sizes itself to its text and shows `{Name}:"Text"`, plus a continue hint at the bottom-right of the screen. |
 | `DialogManager` | Plays sequences, typewriter reveal, advance input, auto-advance, events. |
+| `DialogWorkbenchWindow` | Editor-only live and completed dialog history, with persistent sequence editing during Play Mode. |
 | `DialogProximityTrigger` | Starts a sequence when the target (player) comes within range, optionally only while another actor is near the trigger. |
 
 ## Quick start
@@ -89,6 +90,18 @@ Rounded corners are a standalone, reusable component rather than a dialog settin
   hides it, and it is independent of the bubble's size.
 
 ## Optional extras
+
+### Live Dialog Workbench
+
+Open **Tools ▸ BlahBlah Family ▸ Dialog ▸ Live Dialog Workbench** while the game is running. It
+records the line currently on screen and completed lines in separate lists. Select an authored
+sequence line, edit its speaker or text, then choose **Save & Update Live Dialog** for the current
+line or **Save to Dialog Asset** for a line that has already played. Changes are written to the
+sequence asset and saved immediately; editing the current line also refreshes the visible dialog.
+Runtime-only lines created with `DialogManager.Play(speaker, ...)` are still captured, but cannot be
+saved because they have no authored asset.
+
+The history is editor-session memory (up to 500 lines); it does not write a transcript asset.
 
 - `DialogLine.voiceOver` plays through the `DialogManager`'s **Voice Source** (an `AudioSource`).
   For a positional NPC voice, put that `AudioSource` on the character's head bone (spatial blend

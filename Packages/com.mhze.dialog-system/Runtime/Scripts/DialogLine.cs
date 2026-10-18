@@ -38,5 +38,12 @@ public class DialogLine
     public float Duration => duration;
 
     public AudioClip VoiceOver => voiceOver;
+
+    /// <summary>Updates the editable text fields while retaining duration and voice-over data.</summary>
+    public void SetContent(string newSpeaker, string newText)
+    {
+        speaker = newSpeaker ?? string.Empty;
+        text = newText ?? string.Empty;
+    }
 }
 }

@@ -1,8 +1,8 @@
 {
   "name": "com.mhze.dialog-system",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "displayName": "Dialog System",
-  "description": "Simple, adjustable Canvas dialog system. ScriptableObject dialog sequences with per-line speaker, text, duration and voice-over; a Canvas UI view with optional typewriter reveal; a central DialogManager with advance/auto-advance, events and a runtime PlayLines shortcut; and a DialogProximityTrigger that starts a conversation when the player comes within range. Includes an editor setup wizard that builds the Canvas UI.",
+  "description": "Simple, adjustable Canvas dialog system with editable ScriptableObject sequences, live dialog workbench, a Canvas UI view, central DialogManager, and proximity triggers.",
   "unity": "2022.3",
   "author": {
     "name": "MHZE",

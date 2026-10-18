@@ -58,7 +58,42 @@ public class DialogManager : MonoBehaviour
 
     public DialogSequence CurrentSequence => currentSequence;
 
+    /// <summary>The zero-based line currently shown, or -1 when no line is active.</summary>
+    public int CurrentLineIndex => IsPlaying ? currentIndex : -1;
+
     public DialogView View => view;
+
+    /// <summary>Refreshes the visible line after its sequence asset has been edited.</summary>
+    public void RefreshCurrentLineFromSequence()
+    {
+        if (!IsPlaying || currentSequence == null || currentIndex < 0)
+        {
+            return;
+        }
+
+        DialogLine line = currentSequence.GetLine(currentIndex);
+        if (line == null)
+        {
+            return;
+        }
+
+        currentSpeaker = !string.IsNullOrWhiteSpace(speakerOverride)
+            ? speakerOverride
+            : (!string.IsNullOrWhiteSpace(line.Speaker) ? line.Speaker : currentSequence.DefaultSpeaker);
+        fullText = line.Text ?? string.Empty;
+        revealedCharacters = fullText.Length;
+        lineRevealed = true;
+        lineTimer = line.Duration;
+
+        if (view != null)
+        {
+            view.SetSpeaker(currentSpeaker);
+            view.SetText(fullText);
+            view.SetContinueVisible(true);
+        }
+
+        LineChanged?.Invoke(currentSpeaker, fullText);
+    }
 
     private void Awake()
     {
