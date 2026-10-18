@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -11,6 +12,8 @@ namespace MHZE.InteractSystem
         [SerializeField] private LayerMask interactableLayer = -1;
         [SerializeField] private float maxDistance = 5f;
         [SerializeField] private bool showDebugRay = true;
+
+        private static readonly IComparer<RaycastHit> NearestFirst = Comparer<RaycastHit>.Create((a, b) => a.distance.CompareTo(b.distance));
 
         private readonly RaycastHit[] raycastHitBuffer = new RaycastHit[8];
         private RaycastHit? lastRaycastHit;
@@ -124,6 +127,9 @@ namespace MHZE.InteractSystem
 
             Ray ray = playerCamera.ViewportPointToRay(Vector3.one * 0.5f);
             int hitCount = Physics.RaycastNonAlloc(ray, raycastHitBuffer, maxDistance, interactableLayer);
+
+            // The physics query does not return its hits in any order: the nearest interactable under the crosshair is the one to use.
+            System.Array.Sort(raycastHitBuffer, 0, hitCount, NearestFirst);
             for (int i = 0; i < hitCount; i++)
             {
                 IInteractable interactable = raycastHitBuffer[i].collider.GetComponent<IInteractable>();
