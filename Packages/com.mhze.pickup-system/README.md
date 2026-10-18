@@ -64,3 +64,7 @@ scene/prefab generators or asset-saving hooks.
 EditMode tests cover additive neutral offsets before Start, direct replacement and legacy/profile
 data resolution. Add `com.mhze.pickup-system` to the test project's manifest `testables` to expose
 package tests when testing a Git dependency.
+
+## Camera-follow smoothing
+
+Add PlayerArmMotionLag to the arm rig root (the camera-child object with PlayerArmAnimator) and assign its camera. If left blank, it uses the rig's parent. `rotationResponse` controls how quickly it catches up in seconds; larger values create more visible follow-through. The camera remains immediate, while the arm and held item lag behind its rotation.
