@@ -71,9 +71,9 @@ Add PlayerArmMotionLag to the arm rig root (the camera-child object with PlayerA
 `rotationResponse` controls how quickly it catches up in seconds; larger values create more visible follow-through. The camera remains immediate, while the arm and held item lag behind its rotation.
 `settleResponse` controls the softer return after a turn; larger values let the arm drift back instead of snapping to rest.
 
-The lag is soft-limited so a fast turn cannot leave the arm outside the view. `maxLagAngle` is the
-largest angle the arm may trail (default 24 degrees) and `limitStiffness` controls how quickly it
-stiffens as it gets there (default 2). The stiffening starts gradually and the saturating curve
-eases the arm into the limit without crossing it, while `settleResponse` gives the return its own
-softer timing. Lower `maxLagAngle` if a long held item clips the edge of the view during a fast
-turn, and raise `settleResponse` if the release still feels abrupt.
+The drag is progressive, never hard-clamped. `maxLagAngle` is the knee where the drag starts to
+stiffen hard (default 24 degrees) and `limitStiffness` controls how strong that stiffening is
+(default 5). The arm can pass the knee slightly, and at extreme turn speeds it even catches up a
+little, so it keeps moving instead of stopping dead at a fixed angle. Lower `maxLagAngle` or raise
+`limitStiffness` if a long held item clips the edge of the view during a fast turn; raise
+`settleResponse` if the return still feels abrupt.

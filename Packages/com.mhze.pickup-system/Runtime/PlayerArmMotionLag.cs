@@ -4,8 +4,8 @@ namespace MHZE.PickupSystem
 {
     /// <summary>
     /// Smooths a first-person arm rig's rotation behind its camera so held items follow through softly.
-    /// The drag stiffens as it approaches a maximum lag angle: a fast camera turn eases into the limit
-    /// instead of leaving the arm outside the view or snapping against a hard stop.
+    /// The drag gets progressively stiffer as the lag grows but never clamps to a fixed angle, so a fast
+    /// camera turn still leaves the arm a little give instead of stopping it dead at the limit.
     /// </summary>
     [DefaultExecutionOrder(100)]
     public sealed class PlayerArmMotionLag : MonoBehaviour
@@ -16,27 +16,28 @@ namespace MHZE.PickupSystem
         [SerializeField, Min(0.01f)] private float rotationResponse = 0.12f;
 
         [Tooltip("How gently the arm settles back after a turn, in seconds. Larger values make the release softer.")]
-        [SerializeField, Min(0.01f)] private float settleResponse = 0.24f;
+        [SerializeField, Min(0.01f)] private float settleResponse = 0.3f;
 
-        [Tooltip("How far the arm may trail the camera at most, in degrees. The drag stiffens as it approaches this angle.")]
+        [Tooltip("The lag angle at which the drag starts to stiffen hard, in degrees. The arm can pass it slightly; it is a soft knee, not a cap.")]
         [SerializeField, Min(1f)] private float maxLagAngle = 24f;
 
-        [Tooltip("How strongly the drag stiffens near the limit. Higher values catch up sooner and keep the arm in view during fast turns.")]
-        [SerializeField, Min(0f)] private float limitStiffness = 2f;
+        [Tooltip("How strongly the drag stiffens at the knee. Higher values keep the arm closer to the knee during fast turns.")]
+        [SerializeField, Min(0f)] private float limitStiffness = 5f;
 
         private Quaternion cameraToArmRotation;
         private Quaternion smoothedCameraRotation;
+        private Quaternion previousCameraRotation;
         private float previousLagAngle;
         private bool initialized;
 
-        /// <summary>Largest angle, in degrees, that the arm may trail the camera.</summary>
+        /// <summary>The lag angle, in degrees, where the drag starts to stiffen hard.</summary>
         public float MaxLagAngle
         {
             get => maxLagAngle;
             set => maxLagAngle = Mathf.Max(1f, value);
         }
 
-        /// <summary>How sharply the arm stiffens as it reaches <see cref="MaxLagAngle"/>.</summary>
+        /// <summary>How strongly the drag stiffens at <see cref="MaxLagAngle"/>.</summary>
         public float LimitStiffness
         {
             get => limitStiffness;
@@ -68,50 +69,37 @@ namespace MHZE.PickupSystem
 
             Quaternion cameraRotation = cameraTransform.rotation;
             float limit = Mathf.Max(1f, maxLagAngle);
-            float lagAngle = LagAngle(cameraRotation);
+            float lagAngle = Quaternion.Angle(previousCameraRotation, smoothedCameraRotation);
+            float cameraDelta = Quaternion.Angle(previousCameraRotation, cameraRotation);
 
-            // Coming back from a turn is eased more gently than the follow that caused it, so the
-            // limit releases softly instead of snapping the arm back to rest. The return is not
-            // stiffened by the limit, otherwise it would speed up exactly when it should relax.
-            bool releasing = lagAngle < previousLagAngle - 0.001f;
-            float tension = Mathf.Clamp01(lagAngle / limit);
+            // The return gets its own softer timing; the stiffening is only for the follow that
+            // caused the lag, otherwise the arm would hurry back exactly when it should drift.
+            bool releasing = cameraDelta < 0.02f || lagAngle < previousLagAngle - 0.001f;
             float response = releasing
-                ? settleResponse
-                : rotationResponse / (1f + limitStiffness * tension * tension);
-            float blend = 1f - Mathf.Exp(-Time.deltaTime / Mathf.Max(0.01f, response));
-            smoothedCameraRotation = Quaternion.Slerp(smoothedCameraRotation, cameraRotation, blend);
+                ? Mathf.Max(settleResponse, rotationResponse)
+                : rotationResponse;
 
-            // Bend the lag through a soft saturating curve. It barely changes small lags and
-            // approaches the limit without crossing it, so the arm keeps a little give instead of
-            // slamming into a wall.
-            lagAngle = LagAngle(cameraRotation);
-            if (lagAngle > 0.0001f)
+            // Split the frame so the arm follows the camera in small steps. That keeps the response
+            // independent of frame rate, which matters because the stiffness is progressive.
+            float dt = Mathf.Max(0f, Time.deltaTime);
+            if (dt > 0f)
             {
-                Quaternion lag = Quaternion.Inverse(cameraRotation) * smoothedCameraRotation;
-                float cappedAngle = SoftLimit(lagAngle, limit);
-                if (cappedAngle < lagAngle)
-                    smoothedCameraRotation = cameraRotation * Quaternion.SlerpUnclamped(Quaternion.identity, lag, cappedAngle / lagAngle);
+                int steps = Mathf.Clamp(Mathf.CeilToInt(dt / 0.0025f), 1, 16);
+                float h = dt / steps;
+                for (int i = 1; i <= steps; i++)
+                {
+                    Quaternion target = Quaternion.Slerp(previousCameraRotation, cameraRotation, (float)i / steps);
+                    float stepLag = Quaternion.Angle(target, smoothedCameraRotation);
+                    float tension = Mathf.Clamp01(stepLag / limit);
+                    float stiffened = response / (1f + limitStiffness * Mathf.Pow(tension, 4f));
+                    float blend = 1f - Mathf.Exp(-h / Mathf.Max(0.005f, stiffened));
+                    smoothedCameraRotation = Quaternion.Slerp(smoothedCameraRotation, target, blend);
+                }
             }
 
             transform.rotation = smoothedCameraRotation * cameraToArmRotation;
-            previousLagAngle = LagAngle(cameraRotation);
-        }
-
-        private float LagAngle(Quaternion cameraRotation)
-        {
-            return Quaternion.Angle(Quaternion.identity, Quaternion.Inverse(cameraRotation) * smoothedCameraRotation);
-        }
-
-        /// <summary>
-        /// <paramref name="angle"/> compressed smoothly toward <paramref name="limit"/>. The curve is
-        /// close to the identity for small angles and never reaches the limit, so the arm keeps a
-        /// little give at full drag instead of stopping at a wall.
-        /// </summary>
-        private static float SoftLimit(float angle, float limit)
-        {
-            float ratio = angle / limit;
-            float ratio2 = ratio * ratio;
-            return angle / Mathf.Sqrt(Mathf.Sqrt(1f + ratio2 * ratio2));
+            previousCameraRotation = cameraRotation;
+            previousLagAngle = Quaternion.Angle(cameraRotation, smoothedCameraRotation);
         }
 
         private void Initialize()
@@ -119,8 +107,11 @@ namespace MHZE.PickupSystem
             if (cameraTransform == null)
                 return;
 
-            cameraToArmRotation = Quaternion.Inverse(cameraTransform.rotation) * transform.rotation;
-            smoothedCameraRotation = cameraTransform.rotation;
+            Quaternion cameraRotation = cameraTransform.rotation;
+            cameraToArmRotation = Quaternion.Inverse(cameraRotation) * transform.rotation;
+            smoothedCameraRotation = cameraRotation;
+            previousCameraRotation = cameraRotation;
+            previousLagAngle = 0f;
             initialized = true;
         }
     }
