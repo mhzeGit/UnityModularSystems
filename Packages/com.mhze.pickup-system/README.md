@@ -73,7 +73,7 @@ Add PlayerArmMotionLag to the arm rig root (the camera-child object with PlayerA
 
 The lag is soft-limited so a fast turn cannot leave the arm outside the view. `maxLagAngle` is the
 largest angle the arm may trail (default 24 degrees) and `limitStiffness` controls how quickly it
-stiffens as it gets there (default 2). Near the limit the excess is pulled in over a short time
-rather than clamped in one frame, so the arm keeps a little give and eases against the limit
-instead of stopping dead on it. Lower `maxLagAngle` if a long held item clips the edge of the view
-during a fast turn, and raise `settleResponse` if the release still feels abrupt.
+stiffens as it gets there (default 2). The stiffening starts gradually and the saturating curve
+eases the arm into the limit without crossing it, while `settleResponse` gives the return its own
+softer timing. Lower `maxLagAngle` if a long held item clips the edge of the view during a fast
+turn, and raise `settleResponse` if the release still feels abrupt.

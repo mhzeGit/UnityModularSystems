@@ -79,19 +79,16 @@ namespace MHZE.PickupSystem
             float blend = 1f - Mathf.Exp(-Time.deltaTime / Mathf.Max(0.01f, response));
             smoothedCameraRotation = Quaternion.Slerp(smoothedCameraRotation, cameraRotation, blend);
 
-            // Bend the lag through a soft saturating curve, then pull the excess in over a short
-            // time rather than clamping it in one frame. Small overshoots keep a little give, so
-            // the arm eases against the limit instead of stopping dead on it.
+            // Bend the lag through a soft saturating curve. It barely changes small lags and
+            // approaches the limit without crossing it, so the arm keeps a little give instead of
+            // slamming into a wall.
             lagAngle = LagAngle(cameraRotation);
-            if (lagAngle > limit)
+            if (lagAngle > 0.0001f)
             {
                 Quaternion lag = Quaternion.Inverse(cameraRotation) * smoothedCameraRotation;
                 float cappedAngle = SoftLimit(lagAngle, limit);
-                float excess = lagAngle - cappedAngle;
-                float relax = 0.10f / (1f + excess * 3f);
-                float pull = 1f - Mathf.Exp(-Time.deltaTime / Mathf.Max(0.01f, relax));
-                Quaternion cappedRotation = cameraRotation * Quaternion.SlerpUnclamped(Quaternion.identity, lag, cappedAngle / lagAngle);
-                smoothedCameraRotation = Quaternion.Slerp(smoothedCameraRotation, cappedRotation, pull);
+                if (cappedAngle < lagAngle)
+                    smoothedCameraRotation = cameraRotation * Quaternion.SlerpUnclamped(Quaternion.identity, lag, cappedAngle / lagAngle);
             }
 
             transform.rotation = smoothedCameraRotation * cameraToArmRotation;
