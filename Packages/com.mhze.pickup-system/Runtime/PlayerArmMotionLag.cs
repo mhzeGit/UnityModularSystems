@@ -71,11 +71,13 @@ namespace MHZE.PickupSystem
             float lagAngle = LagAngle(cameraRotation);
 
             // Coming back from a turn is eased more gently than the follow that caused it, so the
-            // limit releases softly instead of snapping the arm back to rest.
+            // limit releases softly instead of snapping the arm back to rest. The return is not
+            // stiffened by the limit, otherwise it would speed up exactly when it should relax.
             bool releasing = lagAngle < previousLagAngle - 0.001f;
-            float baseResponse = releasing ? Mathf.Max(rotationResponse, settleResponse) : rotationResponse;
             float tension = Mathf.Clamp01(lagAngle / limit);
-            float response = baseResponse / (1f + limitStiffness * tension * tension);
+            float response = releasing
+                ? settleResponse
+                : rotationResponse / (1f + limitStiffness * tension * tension);
             float blend = 1f - Mathf.Exp(-Time.deltaTime / Mathf.Max(0.01f, response));
             smoothedCameraRotation = Quaternion.Slerp(smoothedCameraRotation, cameraRotation, blend);
 
