@@ -15,14 +15,18 @@ namespace MHZE.PickupSystem
         [Tooltip("How quickly the arm catches up to the camera, in seconds. Larger values give more visible follow-through.")]
         [SerializeField, Min(0.01f)] private float rotationResponse = 0.12f;
 
+        [Tooltip("How gently the arm settles back after a turn, in seconds. Larger values make the release softer.")]
+        [SerializeField, Min(0.01f)] private float settleResponse = 0.24f;
+
         [Tooltip("How far the arm may trail the camera at most, in degrees. The drag stiffens as it approaches this angle.")]
         [SerializeField, Min(1f)] private float maxLagAngle = 24f;
 
         [Tooltip("How strongly the drag stiffens near the limit. Higher values catch up sooner and keep the arm in view during fast turns.")]
-        [SerializeField, Min(0f)] private float limitStiffness = 3f;
+        [SerializeField, Min(0f)] private float limitStiffness = 2f;
 
         private Quaternion cameraToArmRotation;
         private Quaternion smoothedCameraRotation;
+        private float previousLagAngle;
         private bool initialized;
 
         /// <summary>Largest angle, in degrees, that the arm may trail the camera.</summary>
@@ -37,6 +41,13 @@ namespace MHZE.PickupSystem
         {
             get => limitStiffness;
             set => limitStiffness = Mathf.Max(0f, value);
+        }
+
+        /// <summary>How slowly the arm settles back to rest when the camera stops turning, in seconds.</summary>
+        public float SettleResponse
+        {
+            get => settleResponse;
+            set => settleResponse = Mathf.Max(0.01f, value);
         }
 
         private void OnEnable()
@@ -58,27 +69,33 @@ namespace MHZE.PickupSystem
             Quaternion cameraRotation = cameraTransform.rotation;
             float limit = Mathf.Max(1f, maxLagAngle);
             float lagAngle = LagAngle(cameraRotation);
-            float tension = Mathf.Clamp01(lagAngle / limit);
 
-            // In the last stretch before the limit the arm catches up faster, so a fast turn feels
-            // stiff rather than loose. Ordinary turns keep the full follow-through.
-            float nearLimit = Mathf.InverseLerp(0.55f, 1f, tension);
-            float response = rotationResponse / (1f + limitStiffness * nearLimit * nearLimit);
+            // Coming back from a turn is eased more gently than the follow that caused it, so the
+            // limit releases softly instead of snapping the arm back to rest.
+            bool releasing = lagAngle < previousLagAngle - 0.001f;
+            float baseResponse = releasing ? Mathf.Max(rotationResponse, settleResponse) : rotationResponse;
+            float tension = Mathf.Clamp01(lagAngle / limit);
+            float response = baseResponse / (1f + limitStiffness * tension * tension);
             float blend = 1f - Mathf.Exp(-Time.deltaTime / Mathf.Max(0.01f, response));
             smoothedCameraRotation = Quaternion.Slerp(smoothedCameraRotation, cameraRotation, blend);
 
-            // Bend the remaining lag through a soft saturating curve. It barely changes small lags
-            // and approaches the limit without ever crossing it, so the drag never hits a hard stop.
+            // Bend the lag through a soft saturating curve, then pull the excess in over a short
+            // time rather than clamping it in one frame. Small overshoots keep a little give, so
+            // the arm eases against the limit instead of stopping dead on it.
             lagAngle = LagAngle(cameraRotation);
-            if (lagAngle > 0.0001f)
+            if (lagAngle > limit)
             {
                 Quaternion lag = Quaternion.Inverse(cameraRotation) * smoothedCameraRotation;
-                float limited = SoftLimit(lagAngle, limit);
-                if (limited < lagAngle)
-                    smoothedCameraRotation = cameraRotation * Quaternion.SlerpUnclamped(Quaternion.identity, lag, limited / lagAngle);
+                float cappedAngle = SoftLimit(lagAngle, limit);
+                float excess = lagAngle - cappedAngle;
+                float relax = 0.10f / (1f + excess * 3f);
+                float pull = 1f - Mathf.Exp(-Time.deltaTime / Mathf.Max(0.01f, relax));
+                Quaternion cappedRotation = cameraRotation * Quaternion.SlerpUnclamped(Quaternion.identity, lag, cappedAngle / lagAngle);
+                smoothedCameraRotation = Quaternion.Slerp(smoothedCameraRotation, cappedRotation, pull);
             }
 
             transform.rotation = smoothedCameraRotation * cameraToArmRotation;
+            previousLagAngle = LagAngle(cameraRotation);
         }
 
         private float LagAngle(Quaternion cameraRotation)

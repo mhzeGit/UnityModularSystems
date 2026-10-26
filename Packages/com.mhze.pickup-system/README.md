@@ -69,9 +69,11 @@ package tests when testing a Git dependency.
 
 Add PlayerArmMotionLag to the arm rig root (the camera-child object with PlayerArmAnimator) and assign its camera. If left blank, it uses the rig's parent.
 `rotationResponse` controls how quickly it catches up in seconds; larger values create more visible follow-through. The camera remains immediate, while the arm and held item lag behind its rotation.
+`settleResponse` controls the softer return after a turn; larger values let the arm drift back instead of snapping to rest.
 
 The lag is soft-limited so a fast turn cannot leave the arm outside the view. `maxLagAngle` is the
 largest angle the arm may trail (default 24 degrees) and `limitStiffness` controls how quickly it
-stiffens as it gets there (default 3). The arm still eases into the limit rather than stopping at a
-wall, and small, ordinary turns are unaffected. Lower `maxLagAngle` if a long held item clips the
-edge of the view during a fast turn.
+stiffens as it gets there (default 2). Near the limit the excess is pulled in over a short time
+rather than clamped in one frame, so the arm keeps a little give and eases against the limit
+instead of stopping dead on it. Lower `maxLagAngle` if a long held item clips the edge of the view
+during a fast turn, and raise `settleResponse` if the release still feels abrupt.
