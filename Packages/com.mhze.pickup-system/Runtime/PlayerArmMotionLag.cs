@@ -80,11 +80,14 @@ namespace MHZE.PickupSystem
                 : rotationResponse;
 
             // Split the frame so the arm follows the camera in small steps. That keeps the response
-            // independent of frame rate, which matters because the stiffness is progressive.
+            // independent of frame rate and of large camera deltas, which matters because the
+            // stiffness is progressive.
             float dt = Mathf.Max(0f, Time.deltaTime);
             if (dt > 0f)
             {
-                int steps = Mathf.Clamp(Mathf.CeilToInt(dt / 0.0025f), 1, 16);
+                int steps = Mathf.Clamp(
+                    Mathf.Max(Mathf.CeilToInt(dt / 0.0025f), Mathf.CeilToInt(cameraDelta / 2f)),
+                    1, 64);
                 float h = dt / steps;
                 for (int i = 1; i <= steps; i++)
                 {
