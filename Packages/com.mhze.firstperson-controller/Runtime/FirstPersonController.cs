@@ -188,6 +188,13 @@ namespace MHZE.FirstPersonController
 
         public bool IsForceLooking => forceLook != null && forceLook.IsActive;
 
+        /// <summary>Restrict look around the current view. Limits are yaw/pitch degrees; the owner releases its own lock.</summary>
+        public bool TryBeginSoftLookLock(object owner, Vector2 angleLimits, float smoothTime = .12f)
+            => look != null && look.TryBeginSoftLookLock(owner, angleLimits, smoothTime);
+
+        public void EndSoftLookLock(object owner) => look?.EndSoftLookLock(owner);
+        public bool IsSoftLookLocked => look != null && look.IsSoftLookLocked;
+
         // --- Force Move API --------------------------------------
 
         public void ForceMoveTo(Vector3 position, float? speed = null, Action onArrived = null)
@@ -317,6 +324,7 @@ namespace MHZE.FirstPersonController
         private void OnDisable()
         {
             input?.Disable();
+            look?.ClearSoftLookLock();
             UnlockCursor();
         }
 

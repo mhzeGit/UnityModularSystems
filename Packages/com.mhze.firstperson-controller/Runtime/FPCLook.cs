@@ -33,10 +33,15 @@ namespace MHZE.FirstPersonController
         private float sensitivityMultiplier = 1f;
         private bool? invertYOverride;
 
+        private object softLockOwner;
+        private Vector2 softLockCenter, softLockLimits;
+        private float softLockSmoothTime;
+
         public bool IsForced => isForced;
         public bool IsReturning => returningFromForce;
         public float Yaw => currentYaw;
         public float Pitch => currentPitch;
+        public bool IsSoftLookLocked => softLockOwner != null;
 
         public FPCLook(IFPCMovementDriver driver, Transform camera, FPCSettings settings)
         {
@@ -54,6 +59,7 @@ namespace MHZE.FirstPersonController
 
         public void Update(FPCInput input, float deltaTime)
         {
+            if (IsSoftLookLocked && deltaTime <= 0f) return;
             if (isForced)
             {
                 UpdateForcedLook(deltaTime);
@@ -74,14 +80,23 @@ namespace MHZE.FirstPersonController
 
             if (invertYOverride ?? settings.invertY) mouseY = -mouseY;
 
-            targetYaw += mouseX;
-            targetPitch -= mouseY;
+            if (IsSoftLookLocked)
+            {
+                targetYaw = softLockCenter.x + SoftLimitDelta(Mathf.DeltaAngle(softLockCenter.x, targetYaw), mouseX, softLockLimits.x);
+                targetPitch = softLockCenter.y + SoftLimitDelta(targetPitch - softLockCenter.y, -mouseY, softLockLimits.y);
+            }
+            else
+            {
+                targetYaw += mouseX;
+                targetPitch -= mouseY;
+            }
             targetPitch = Mathf.Clamp(targetPitch, settings.verticalRange.x, settings.verticalRange.y);
 
             // --- Smooth toward target ----------------------------
             // Exponential smoothing: fast when far, slow when close
-            float smoothFactor = settings.smoothTime > 0.001f
-                ? 1f - Mathf.Exp(-(1f / settings.smoothTime) * deltaTime)
+            float smoothTime = IsSoftLookLocked ? Mathf.Max(settings.smoothTime, softLockSmoothTime) : settings.smoothTime;
+            float smoothFactor = smoothTime > 0.001f
+                ? 1f - Mathf.Exp(-(1f / smoothTime) * deltaTime)
                 : 1f;
 
             currentYaw = Mathf.LerpAngle(currentYaw, targetYaw, smoothFactor);
@@ -152,6 +167,52 @@ namespace MHZE.FirstPersonController
 
         // --- Public API ------------------------------------------
 
+        /// <summary>Limit input around the current view, with increasing resistance near each angular limit.</summary>
+        public bool TryBeginSoftLookLock(object owner, Vector2 angleLimits, float smoothTime = .12f)
+        {
+            if (owner == null) throw new System.ArgumentNullException(nameof(owner));
+            if (!(angleLimits.x >= 0 && angleLimits.x < 180 && angleLimits.y >= 0 && angleLimits.y < 180))
+                throw new System.ArgumentOutOfRangeException(nameof(angleLimits));
+            if (!(smoothTime >= 0 && smoothTime < float.PositiveInfinity))
+                throw new System.ArgumentOutOfRangeException(nameof(smoothTime));
+            if (IsSoftLookLocked) return ReferenceEquals(softLockOwner, owner);
+            if (isForced || returningFromForce) return false;
+            softLockOwner = owner;
+            softLockCenter = new Vector2(currentYaw, currentPitch);
+            softLockLimits = angleLimits;
+            softLockSmoothTime = smoothTime;
+            targetYaw = currentYaw;
+            targetPitch = currentPitch;
+            return true;
+        }
+
+        /// <summary>Release only this owner's limit, keeping the displayed view and discarding pending input.</summary>
+        public void EndSoftLookLock(object owner)
+        {
+            if (IsSoftLookLocked && ReferenceEquals(softLockOwner, owner)) ClearSoftLookLock();
+        }
+
+        internal void ClearSoftLookLock()
+        {
+            softLockOwner = null;
+            targetYaw = currentYaw;
+            targetPitch = currentPitch;
+        }
+
+        private static float SoftLimitDelta(float offset, float delta, float limit)
+        {
+            if (limit <= 0f) return 0f;
+            // Turning back is immediate; discarded outward input never builds up behind the limit.
+            if (offset * delta < 0f)
+            {
+                float inward = Mathf.Sign(delta) * Mathf.Min(Mathf.Abs(delta), Mathf.Abs(offset));
+                offset += inward;
+                delta -= inward;
+            }
+            if (delta == 0f) return offset;
+            return Mathf.Sign(delta) * (limit - (limit - Mathf.Abs(offset)) * Mathf.Exp(-Mathf.Abs(delta) / limit));
+        }
+
         /// <summary>
         /// Multiply the settings asset's look sensitivity at runtime (options menu).
         /// The settings asset itself is never modified. 1 = unchanged.
@@ -177,6 +238,8 @@ namespace MHZE.FirstPersonController
         {
             Vector3 dirToTarget = worldPoint - driver.Transform.position;
             if (dirToTarget.sqrMagnitude < 0.001f) return;
+
+            ClearSoftLookLock();
 
             dirToTarget.Normalize();
 
@@ -239,6 +302,7 @@ namespace MHZE.FirstPersonController
 
         public void SyncWithTransform()
         {
+            softLockOwner = null;
             Vector3 camAngles = cameraTransform.localEulerAngles;
             currentPitch = camAngles.x > 180f ? camAngles.x - 360f : camAngles.x;
             currentYaw = driver.Transform.eulerAngles.y;

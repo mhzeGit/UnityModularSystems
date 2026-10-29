@@ -13,6 +13,22 @@ is the entry point; `FPCSettings` holds the tuning values.
 - `EnableMove`, `EnableRun`, `EnableJump`, `EnableCrouch`, `EnableLook` switch one input.
 - `CameraHeightOffset` raises or lowers the eyes (metres, negative lowers).
 
+## Soft camera lock
+
+Call `controller.TryBeginSoftLookLock(owner, new Vector2(6f, 4f), .12f)` to anchor a temporary
+look limit at the current yaw and pitch. Mouse sensitivity and invert-Y still apply. Input moves the
+view with progressively stronger resistance toward the limits, with smooth camera response. Turning
+back responds immediately, even after repeatedly pushing against a limit. Zero locks an axis fully.
+Limits must be finite, nonnegative and below 180 degrees; smoothing must be finite and nonnegative.
+
+Call `controller.EndSoftLookLock(owner)` on completion and cancellation. It keeps the displayed
+orientation, discards pending rotation, and restores unrestricted looking without a snap.
+`IsSoftLookLocked` reports whether a limit is active. A second owner cannot replace or release an
+active lock (`TryBeginSoftLookLock` returns false); repeating the same owner leaves its anchor intact.
+Forced look, teleport/synchronization and disabling the controller clear the lock so an old anchor
+cannot constrain a new scene position. A lock cannot start during forced look or its return.
+Control disabling (for example pause) preserves the lock, and zero-time frames do not accumulate input.
+
 ## Seated posture
 
 `FirstPersonSeat` sits the player down: walking, running, jumping and crouching are switched off,
