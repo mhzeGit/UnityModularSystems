@@ -85,7 +85,8 @@ namespace MHZE.BasicMenus
         {
             while (IsLoading) yield return null;
             if (instance == null) { yield return operation; yield break; }
-            yield return instance.StartCoroutine(instance.Transition(sceneName, operation, false));
+            instance.StartCoroutine(instance.Transition(sceneName, operation, false));
+            while (IsLoading) yield return null;
         }
 
         private IEnumerator Load(string sceneName)
