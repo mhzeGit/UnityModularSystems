@@ -207,7 +207,7 @@ namespace MHZE.PickupSystem
             currentPickableItem = pickable;
             currentPickedObject = obj;
 
-            obj.transform.parent = PickableObjectHolder;
+            Reparent(obj.transform, PickableObjectHolder);
             obj.transform.localPosition = pickable.GetItemOffsetLocation();
             obj.transform.localRotation = pickable.GetItemOffsetRotation();
 
@@ -271,7 +271,7 @@ namespace MHZE.PickupSystem
             pickable?.SetPickState(true);
             pickable?.Dropped();
 
-            obj.transform.parent = null;
+            Reparent(obj.transform, null);
 
             if (PlayerArmBase != null)
                 PlayerArmBase.localPosition = neutralArmBaseLocalPosition;
@@ -298,7 +298,7 @@ namespace MHZE.PickupSystem
                 if (currentPickableItem != null)
                     currentPickableItem.SetPickState(true);
 
-                currentPickedObject.transform.parent = null;
+                Reparent(currentPickedObject.transform, null);
             }
 
             if (PlayerArmBase != null)
@@ -315,6 +315,16 @@ namespace MHZE.PickupSystem
 
             attemptedPickableItem = null;
             attemptedPickableObject = null;
+        }
+
+        // A hidden hand is a zero-scale bone and reparenting through it would zero the item's scale,
+        // so the hands are shown for the reparent and put straight back to how they should be.
+        static void Reparent(Transform item, Transform parent)
+        {
+            PlayerArmVisibility arm = PlayerArmVisibility.Current;
+            if (arm != null) arm.RestoreScales();
+            item.parent = parent;
+            if (arm != null) arm.Refresh();
         }
 
         public bool IsHoldingItem() => currentPickedObject != null;

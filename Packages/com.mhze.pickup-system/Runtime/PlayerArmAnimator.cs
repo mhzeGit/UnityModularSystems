@@ -32,6 +32,8 @@ namespace MHZE.PickupSystem
             holdingHash = UnityEngine.Animator.StringToHash(isHoldingParam);
             typeHash = UnityEngine.Animator.StringToHash(holdTypeParam);
             pressureHash = UnityEngine.Animator.StringToHash(holdPressureParam);
+            // Every arm rig hides the hand it is not using; add it by hand only to change its settings.
+            if (!TryGetComponent<PlayerArmVisibility>(out _)) gameObject.AddComponent<PlayerArmVisibility>();
             ResolveReferences();
         }
 

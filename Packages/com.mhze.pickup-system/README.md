@@ -52,6 +52,25 @@ root's neutral position is whatever `PickupSystem` last set; the reach adds to i
 `PlayerArmAnimator`, or assign them. Tune `reachShift`, `elbowPole`, `restStretch` and `maxStretch`
 per rig, with the real first-person view.
 
+## Hiding the hand you are not using (PlayerArmVisibility)
+
+`PlayerArmAnimator` adds `PlayerArmVisibility` to its rig (add it by hand only to change its settings).
+It decides every frame, per hand, whether that hand is drawn:
+
+- **Right hand (Auto)**: visible while `PickupSystem` holds an item, while `PlayerArmReach` reaches, and
+  while the Animator is not in its `Idle` state or is in a transition (the `idleState` field names the
+  state), so a pickup blends up and a release or throw is seen all the way down. Hidden at rest.
+- **Left hand (Auto)**: hidden; it has no use of its own.
+- **Force a hand** under an owner: `PlayerArmVisibility.Current.Show(PlayerHand.Left, owner)`,
+  `Hide(hand, owner)`, then `Clear(owner)`. Hide beats Show beats Auto; a destroyed owner is dropped
+  automatically. The per-hand Inspector setting (Auto / Show / Hide) is the permanent base.
+
+The arm model draws both arms as one skinned mesh, so a hidden hand has its arm bone scaled to zero
+(anything held in that hand goes with it). A zero-scale parent would zero the scale of an item
+reparented through it, so `PickupSystem` restores the true bone scale before it picks up, drops or
+force-releases an item; do not reparent held items to or from the hand bones yourself while a hand is
+forced hidden. `Refresh()` applies the hands immediately instead of at the end of the frame.
+
 ## Authoring and validation
 
 Test pickup, carrying while looking up/down, drop, throw, consumption, handoff, object destruction,

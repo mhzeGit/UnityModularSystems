@@ -1,6 +1,6 @@
 {
   "name": "com.mhze.pickup-system",
-  "version": "1.5.1",
+  "version": "1.6.0",
   "displayName": "Pickup System",
   "description": "A modular pickup system for picking up, holding, and dropping objects with configurable hand/item offsets, physics management, and input-driven drop support.",
   "unity": "2021.3",

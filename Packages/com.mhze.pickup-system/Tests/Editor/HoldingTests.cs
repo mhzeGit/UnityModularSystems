@@ -33,6 +33,24 @@ namespace MHZE.PickupSystem.Tests
             Assert.That(rigObject.transform.localPosition, Is.EqualTo(neutral));
             Assert.That(item.PhysicsEnabled, Is.True);
         }
+        [Test] public void PickingUpWhileTheRightHandIsHiddenKeepsTheItemsScale()
+        {
+            Transform bone = new GameObject("Right Arm").transform;
+            bone.SetParent(new GameObject("Root").transform, false);
+            bone.parent.SetParent(new GameObject("Armature").transform, false);
+            bone.parent.parent.SetParent(rigObject.transform, false);
+            socketObject.transform.SetParent(bone, false);
+            var visibility = rigObject.AddComponent<PlayerArmVisibility>();
+            typeof(PlayerArmVisibility).GetMethod("OnEnable", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).Invoke(visibility, null);
+            visibility.Refresh();
+            Assert.That(bone.localScale, Is.EqualTo(Vector3.zero), "the idle right hand is hidden");
+
+            pickup.PickupObject(first, new TestItem());
+            Assert.That(first.transform.localScale, Is.EqualTo(Vector3.one));
+            pickup.DropCurrentHeldItem();
+            Assert.That(first.transform.lossyScale, Is.EqualTo(Vector3.one));
+        }
+
         [Test] public void DirectReplacementReleasesPreviousItemRatherThanLeavingTwoInHand()
         {
             var previous = new TestItem(); pickup.PickupObject(first, previous);
