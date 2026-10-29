@@ -162,3 +162,22 @@ Runtime/
 Editor/
   BasicMenusSetupWizard
 ```
+
+### Scene transitions
+
+Create one persistent `SceneTransition` on a root overlay Canvas before the first scene loads.
+Assign its overlay/curtain CanvasGroups, loading page, photograph, destination/caption/status labels
+and progress Image (Filled, Horizontal). The component fades in the initial scene, blocks menu Back
+while loading, and replaces scenes asynchronously through `SceneTransition.LoadScene(nameOrPath)`.
+Pause Restart and Main Menu use it automatically; without a screen instance they load asynchronously.
+The bool return rejects duplicate or invalid requests so callers can recover instead of locking UI.
+
+Slides match destination scene names, with title/caption and a Resources texture path. Only the
+selected photo loads asynchronously; it is explicitly released when the transition finishes.
+Single-mode scene replacement uses Unity's automatic unused-asset cleanup, without a second sweep,
+forced collection, or disk-cache deletion. Fades use unscaled time; full replacements resume at 1x.
+For an additive scene plus caller setup, yield `SceneTransition.Cover(sceneName, operation)`; it keeps
+the caller's time scale and leaves existing scenes loaded. The persistent screen owns that coroutine
+so cancellation of the waiting caller cannot strand the overlay. Operations must check their own
+cancellation token before modifying caller-owned state. Never yield scaled waits inside an operation:
+the world is paused while the loading page is visible. Exceptions restore the overlay/time/priority.

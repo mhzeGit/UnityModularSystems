@@ -237,13 +237,12 @@ namespace MHZE.BasicMenus
 
             if (!string.IsNullOrWhiteSpace(restartSceneName))
             {
-                SceneManager.LoadScene(restartSceneName);
+                SceneTransition.LoadScene(restartSceneName);
                 return;
             }
 
             var activeScene = SceneManager.GetActiveScene();
-            if (activeScene.buildIndex >= 0) SceneManager.LoadScene(activeScene.buildIndex);
-            else SceneManager.LoadScene(activeScene.name);
+            SceneTransition.LoadScene(string.IsNullOrEmpty(activeScene.path) ? activeScene.name : activeScene.path);
         }
 
         private void GoToMainMenu()
@@ -257,7 +256,7 @@ namespace MHZE.BasicMenus
                 return;
             }
 
-            SceneManager.LoadScene(mainMenuSceneName);
+            SceneTransition.LoadScene(mainMenuSceneName);
         }
 
         private void QuitGame()
