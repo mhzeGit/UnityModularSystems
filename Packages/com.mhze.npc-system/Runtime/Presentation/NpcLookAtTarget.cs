@@ -57,6 +57,9 @@ namespace ModularNPC
         [SerializeField, Range(-90f, 0f)] private float _minimumPitch = -45f;
         [SerializeField, Range(0f, 90f)] private float _maximumPitch = 60f;
 
+        [Tooltip("While stationary, turn the body to face the target when its horizontal bearing exceeds this angle. 0 disables body turns. Existing rotation commands take precedence.")]
+        [SerializeField, Range(0f, 180f)] private float _bodyTurnThresholdDegrees;
+
         [NonSerialized] private Transform _bone;
         [NonSerialized] private Transform _target;
         [NonSerialized] private float _rootScale = 1f;
@@ -65,6 +68,14 @@ namespace ModularNPC
         [NonSerialized] private float _remainingAngle;
         [NonSerialized] private bool _hasCurrentRotation;
         [NonSerialized] private bool _looking;
+        [NonSerialized] private NpcCommandHandle _bodyTurn = NpcCommandHandle.Invalid;
+
+        /// <summary>Horizontal angle that triggers a body turn; 0 keeps head-only tracking.</summary>
+        public float BodyTurnThresholdDegrees
+        {
+            get => _bodyTurnThresholdDegrees;
+            set => _bodyTurnThresholdDegrees = Mathf.Clamp(value, 0f, 180f);
+        }
 
         /// <summary>The bone being turned, or null until it has been found.</summary>
         public Transform LookTransform => EnsureBone();
@@ -108,6 +119,7 @@ namespace ModularNPC
                 return false;
             }
 
+            if (_target != target) CancelBodyTurn();
             _target = target;
             if (!_looking)
             {
@@ -123,6 +135,7 @@ namespace ModularNPC
         /// <summary>Ends the look and eases the bone back to its rest pose.</summary>
         public void StopLooking()
         {
+            CancelBodyTurn();
             _looking = false;
             _target = null;
             if (EnsureBone() != null)
@@ -143,8 +156,11 @@ namespace ModularNPC
             // A destroyed target ends the look rather than freezing the bone on its last pose.
             if (_looking && _target == null)
             {
+                CancelBodyTurn();
                 _looking = false;
             }
+
+            TickBodyTurn();
 
             Transform parent = bone.parent;
             Vector3 up = parent != null ? parent.up : Vector3.up;
@@ -261,6 +277,44 @@ namespace ModularNPC
             _maximumYaw = Mathf.Clamp(_maximumYaw, 0f, 180f);
             _minimumPitch = Mathf.Clamp(_minimumPitch, -90f, 0f);
             _maximumPitch = Mathf.Clamp(_maximumPitch, 0f, 90f);
+            _bodyTurnThresholdDegrees = Mathf.Clamp(_bodyTurnThresholdDegrees, 0f, 180f);
+        }
+
+        private void TickBodyTurn()
+        {
+            if (!_looking || _bodyTurnThresholdDegrees <= 0f)
+            {
+                CancelBodyTurn();
+                return;
+            }
+
+            if (Npc.Features.TryGetOperational(out INpcNavigation navigation) &&
+                (navigation.State == NpcNavigationState.Moving ||
+                 navigation.State == NpcNavigationState.CalculatingPath))
+            {
+                CancelBodyTurn();
+                return;
+            }
+
+            if (!Npc.Features.TryGetOperational(out INpcRotation rotation) || rotation.IsRotating)
+                return;
+
+            Vector3 direction = _target.position - Transform.position;
+            direction.y = 0f;
+            Vector3 forward = Transform.forward;
+            forward.y = 0f;
+            if (direction.sqrMagnitude > 0.0001f &&
+                Vector3.Angle(forward, direction) > _bodyTurnThresholdDegrees)
+            {
+                _bodyTurn = rotation.FaceTarget(_target, NpcRotationOptions.Default,
+                    new NpcCommandRequest(this, -1, NpcCommandInterruptPolicy.Always)).Handle;
+            }
+        }
+
+        private void CancelBodyTurn()
+        {
+            if (_bodyTurn.IsValid) _bodyTurn.Cancel();
+            _bodyTurn = NpcCommandHandle.Invalid;
         }
 
         /// <summary>
@@ -310,6 +364,7 @@ namespace ModularNPC
 
         private void ResetLook()
         {
+            CancelBodyTurn();
             _looking = false;
             _target = null;
             _hasCurrentRotation = false;

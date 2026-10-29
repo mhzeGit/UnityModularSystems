@@ -53,3 +53,7 @@ Expression offsets are removed in the scheduler early Update/FixedUpdate pass, b
 can write a new face pose, and applied again in LateUpdate. This keeps a held expression visible
 when a body clip changes or animated jaw/lid channels evaluate, without accumulating offsets on
 unanimated facial bones. Features needing this preparation can implement `INpcPreAnimationTickable`.
+
+## Body turns during a look
+
+Set NpcLookAtTarget.BodyTurnThresholdDegrees to a horizontal angle (for example 90) to let a stationary NPC turn its body fully toward a look target after it passes that limit. The head continues tracking throughout. Zero (the default) keeps head-only tracking. This uses INpcRotation, yields to existing rotation commands and active navigation, and cancels its own turn when looking stops, the target changes or the feature shuts down.
