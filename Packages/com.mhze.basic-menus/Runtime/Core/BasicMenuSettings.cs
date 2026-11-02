@@ -70,7 +70,7 @@ namespace MHZE.BasicMenus
             }
             else if (mixerParam == OptionsScreen.MixerParamMaster)
             {
-                AudioListener.volume = linear;
+                SceneAudioFade.MasterVolume = linear;
             }
         }
     }

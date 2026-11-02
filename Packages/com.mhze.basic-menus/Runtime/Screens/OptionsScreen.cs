@@ -553,7 +553,7 @@ namespace MHZE.BasicMenus
             }
             else if (mixerParam == MixerParamMaster)
             {
-                AudioListener.volume = linear;
+                SceneAudioFade.MasterVolume = linear;
             }
         }
 

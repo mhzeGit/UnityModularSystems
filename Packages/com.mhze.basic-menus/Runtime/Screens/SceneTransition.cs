@@ -50,6 +50,7 @@ namespace MHZE.BasicMenus
             if (instance != null && instance != this) { Destroy(gameObject); return; }
             instance = this;
             DontDestroyOnLoad(gameObject);
+            SceneAudioFade.SetGain(0);
             overlay.alpha = 1;
             curtain.alpha = 1;
             page.SetActive(false);
@@ -60,7 +61,7 @@ namespace MHZE.BasicMenus
             if (instance != this) yield break;
             IsOpen = true;
             yield return null;
-            yield return Fade(0);
+            yield return Fade(0, true);
             overlay.alpha = 0;
             overlay.blocksRaycasts = false;
             IsOpen = false;
@@ -112,7 +113,7 @@ namespace MHZE.BasicMenus
             try
             {
                 Phase = "FadeOut";
-                yield return Fade(1);
+                yield return Fade(1, true);
                 yield return ShowSlide(sceneName);
                 page.SetActive(true);
                 progressBar.fillAmount = 0;
@@ -141,10 +142,11 @@ namespace MHZE.BasicMenus
                 // Let Start, layout and the destination camera settle behind black.
                 yield return null;
                 yield return null;
-                yield return Fade(0);
+                yield return Fade(0, true);
             }
             finally
             {
+                SceneAudioFade.Restore();
                 Time.timeScale = replaceScene ? 1 : previousTimeScale;
                 Application.backgroundLoadingPriority = previousPriority;
                 photograph.texture = null;
@@ -177,15 +179,17 @@ namespace MHZE.BasicMenus
             photograph.texture = picture;
         }
 
-        private IEnumerator Fade(float target)
+        private IEnumerator Fade(float target, bool fadeAudio = false)
         {
             float from = curtain.alpha;
             for (float elapsed = 0; elapsed < fadeSeconds; elapsed += Time.unscaledDeltaTime)
             {
                 curtain.alpha = Mathf.Lerp(from, target, Mathf.SmoothStep(0, 1, elapsed / fadeSeconds));
+                if (fadeAudio) SceneAudioFade.SetGain(1 - curtain.alpha);
                 yield return null;
             }
             curtain.alpha = target;
+            if (fadeAudio) SceneAudioFade.SetGain(1 - target);
         }
 
         private static IEnumerator Drive(IEnumerator operation, Action<Exception> failed)
@@ -215,6 +219,7 @@ namespace MHZE.BasicMenus
             if (instance == this)
             {
                 StopAllCoroutines();
+                SceneAudioFade.Restore();
                 instance = null;
             }
             base.OnDestroy();

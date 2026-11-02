@@ -181,3 +181,22 @@ the caller's time scale and leaves existing scenes loaded. The persistent screen
 so cancellation of the waiting caller cannot strand the overlay. Operations must check their own
 cancellation token before modifying caller-owned state. Never yield scaled waits inside an operation:
 the world is paused while the loading page is visible. Exceptions restore the overlay/time/priority.
+
+
+### Global transition audio
+
+`SceneTransition` fades all Unity audio with its curtain (default 0.4 seconds), keeps it silent
+through loading and destination setup, then fades it back with the scene. Startup also fades in.
+This covers Single loads and additive `Cover` operations, including persistent sources and newly
+created sources, without source registration or mixer routing. Failure/destruction restores gain.
+
+`SceneAudioFade` can also be used by a custom loader: yield `FadeTo(0, seconds)`, load/setup while
+silent, then yield `FadeTo(1, seconds)`. Call `Restore()` in cleanup. Only one loader should control
+the global gain at a time. For simultaneous visual fades, run the audio coroutine on the same host.
+The fade uses unscaled time and SmoothStep; zero-duration fades complete immediately.
+
+`Gain` multiplies `MasterVolume` through `AudioListener.volume`; source and mixer settings are untouched.
+The options screen and saved-settings bootstrap use `MasterVolume`, so applying settings in a newly
+loaded scene cannot unmute loading or lose the player's setting. Other listener-volume writers must
+use `SceneAudioFade.MasterVolume` too. A master mute remains muted after reveal. This fades Unity audio;
+external audio engines need their own integration. Cleanup restores attenuation, not stopped clips.
