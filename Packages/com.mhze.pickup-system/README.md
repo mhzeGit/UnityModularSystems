@@ -52,6 +52,13 @@ root's neutral position is whatever `PickupSystem` last set; the reach adds to i
 `PlayerArmAnimator`, or assign them. Tune `reachShift`, `elbowPole`, `restStretch` and `maxStretch`
 per rig, with the real first-person view.
 
+For a shoulder that must stay attached to the camera/body, assign `shoulderAnchor` to a separate
+Transform (outside the arm's own hierarchy). The shoulder stays on that point at full reach,
+and any distance left after the two-bone solve is covered by moving the wrist, stretching the
+forearm without scaling the hand or held item. The usual `maxStretch` still shapes the elbow;
+it does not limit this final wrist correction. Ending/ disabling reach restores the neutral root
+and bone positions. Leaving the anchor empty preserves the normal sliding behavior.
+
 ## Hiding the hand you are not using (PlayerArmVisibility)
 
 `PlayerArmAnimator` adds `PlayerArmVisibility` to its rig (add it by hand only to change its settings).

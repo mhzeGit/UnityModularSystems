@@ -23,6 +23,9 @@ namespace MHZE.PickupSystem
         [SerializeField] private Transform hand;
         [SerializeField] private Transform socket;
 
+        [Tooltip("Optional fixed shoulder point. The wrist stretches to reach the target instead of sliding the shoulder. Leave empty for the normal sliding reach.")]
+        [SerializeField] private Transform shoulderAnchor;
+
         [Tooltip("The other arm: scaled away while this one reaches, so its cut end never shows.")]
         [SerializeField] private Transform otherArm;
 
@@ -212,6 +215,13 @@ namespace MHZE.PickupSystem
 
             armRoot.localPosition = _base + reachShift * eased;
 
+            if (shoulderAnchor != null)
+            {
+                armRoot.position += (shoulderAnchor.position - upperArm.position) * eased;
+                _lastSet = armRoot.localPosition;
+                return;
+            }
+
             // If the target is more than the arm can comfortably reach from here, the whole arm slides toward it.
             Vector3 shoulder = upperArm.position;
             Vector3 wrist = WristFor(Orientation(out _, out _, out _), out float gripToTip, out _);
@@ -335,6 +345,7 @@ namespace MHZE.PickupSystem
             upperArm.rotation = Quaternion.Slerp(animatedUpper, solvedUpper, eased);
             forearm.rotation = Quaternion.Slerp(animatedFore, solvedFore, eased);
             hand.rotation = Quaternion.Slerp(animatedHand, handRotation, eased);
+            if (shoulderAnchor != null) hand.position = Vector3.Lerp(hand.position, wrist, eased);
             _reached = Vector3.Distance(_tip.position, _tipTarget) < 0.01f;
         }
     }
