@@ -45,6 +45,7 @@ namespace MHZE.BasicMenus
         public static void SuppressBackThisFrame()
         {
             _suppressedFrame = Time.frameCount;
+            _handledFrame = Time.frameCount;
         }
 
         /// <summary>Register a screen. Called automatically by <see cref="UIScreen"/>.</summary>
