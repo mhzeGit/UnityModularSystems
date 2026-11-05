@@ -259,6 +259,25 @@ namespace MHZE.ItemIcons.Tests
         }
 
         [Test]
+        public void TheItemDataFileOnlyGainsTheIcon()
+        {
+            PickableItemData data = NewData("Red");
+            NewPrefab("Red", data, PrimitiveType.Cube, Vector3.one, Color.red);
+            AssetDatabase.SaveAssets();
+            string dataPath = Root + "/Red.asset";
+            string before = File.ReadAllText(dataPath);
+
+            ItemIconGenerator.Generate(new[] { data }, settings);
+            AssetDatabase.SaveAssets();
+            string after = File.ReadAllText(dataPath);
+
+            Assert.That(before, Does.Contain("ItemIcon: {fileID: 0}"));
+            Assert.That(after, Does.Contain("ItemIcon: {fileID: 21300000"));
+            Assert.That(after, Does.Not.Contain("m_ObjectHideFlags: 32"), "the mark that keeps assets loaded during a run must not be saved into the file");
+            Assert.That(data.hideFlags & HideFlags.DontUnloadUnusedAsset, Is.EqualTo((HideFlags)0), "and it is gone from the object");
+        }
+
+        [Test]
         public void AnItemWithoutAModelIsReportedAndNothingIsWritten()
         {
             PickableItemData data = NewData("Nowhere");

@@ -151,8 +151,7 @@ namespace MHZE.ItemIcons
             }
             finally
             {
-                foreach (UnityEngine.Object pinnedObject in pinned)
-                    if (pinnedObject != null) pinnedObject.hideFlags &= ~HideFlags.DontUnloadUnusedAsset;
+                Unpin(pinned);
             }
 
             var texture = new Texture2D(image.size, image.size, TextureFormat.RGBA32, false) { hideFlags = HideFlags.DontSave, name = textureName };
@@ -208,9 +207,15 @@ namespace MHZE.ItemIcons
             }
             finally
             {
-                foreach (UnityEngine.Object pinnedObject in pinned)
-                    if (pinnedObject != null) pinnedObject.hideFlags &= ~HideFlags.DontUnloadUnusedAsset;
+                Unpin(pinned);
             }
+        }
+
+        static void Unpin(List<UnityEngine.Object> pinned)
+        {
+            foreach (UnityEngine.Object pinnedObject in pinned)
+                if (pinnedObject != null) pinnedObject.hideFlags &= ~HideFlags.DontUnloadUnusedAsset;
+            pinned.Clear();
         }
 
         static void Pin(UnityEngine.Object asset, List<UnityEngine.Object> pinned)
@@ -269,6 +274,10 @@ namespace MHZE.ItemIcons
             if (!dryRun && jobs.Count > 0)
             {
                 RenderJobs(jobs, settings);
+
+                // The studio is gone: nothing is opened or closed from here on. The marks come off before anything is saved,
+                // or DontUnloadUnusedAsset would be written into the item data (m_ObjectHideFlags).
+                Unpin(pinned);
                 WriteJobs(jobs, settings);
             }
 
