@@ -180,6 +180,7 @@ namespace MHZE.InventorySystem
         void ResetState()
         {
             inventory = null;
+            InputEnabled = true;
             Initialize();
 
             // A bar that was already listening starts over with the new, empty slots.

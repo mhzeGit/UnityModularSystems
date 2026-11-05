@@ -10,7 +10,7 @@ player's hand, and everything the player picks up takes a slot.
 - a picked-up item takes the next free slot, or the selected slot if it is empty
 - the same kind of item **stacks** when its item data allows it, and the stack size is shown
 - a full bar refuses the pickup (the item stays where it is) and shows "Inventory full"
-- the bar is built in code on its own screen-space canvas: a row of squares, the selected one lit
+- the bar is built in code on its own screen-space canvas: a row of squares, the selected one lit; on the InventoryBarView it can sit at the bottom, a bottom corner or the top (`Anchor` and `Margin`), and its size, colours and font are settings
 
 ## Setup
 

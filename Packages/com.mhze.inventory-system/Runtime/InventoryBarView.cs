@@ -5,6 +5,17 @@ using UnityEngine.UI;
 
 namespace MHZE.InventorySystem
 {
+    /// <summary>Which corner or edge of the screen the bar sits at.</summary>
+    public enum BarAnchor
+    {
+        BottomCenter,
+        BottomLeft,
+        BottomRight,
+        TopCenter,
+        TopLeft,
+        TopRight
+    }
+
     /// <summary>
     /// The inventory's bar: a row of slots at the bottom of the screen, built in code on its own screen-space
     /// canvas. Each slot shows its number key, the item's icon (its name until it has one), the stack size when
@@ -19,9 +30,11 @@ namespace MHZE.InventorySystem
         [SerializeField] PlayerInventory inventory;
 
         [Header("Layout (pixels at a 1920 x 1080 canvas)")]
+        [SerializeField] BarAnchor anchor = BarAnchor.BottomCenter;
+        [Tooltip("Distance from the screen edges: x from the left or right edge, y from the top or bottom edge.")]
+        [SerializeField] Vector2 margin = new Vector2(28f, 28f);
         [SerializeField, Min(24f)] float slotSize = 76f;
         [SerializeField, Min(0f)] float slotGap = 10f;
-        [SerializeField, Min(0f)] float bottomMargin = 28f;
         [SerializeField, Min(1f)] float selectedScale = 1.12f;
         [Tooltip("Higher draws on top. Keep it below pause menus and fades.")]
         [SerializeField] int sortingOrder = 30;
@@ -66,6 +79,12 @@ namespace MHZE.InventorySystem
         void Awake()
         {
             if (inventory == null) inventory = GetComponentInParent<PlayerInventory>();
+        }
+
+        void OnValidate()
+        {
+            // Changing the layout in the Inspector while playing shows at once.
+            if (Application.isPlaying && bound != null && bar != null) Rebuild();
         }
 
         void OnEnable()
@@ -188,15 +207,35 @@ namespace MHZE.InventorySystem
             scaler.matchWidthOrHeight = 0.5f;
 
             bar = NewRect("Bar", canvasObject.transform);
-            bar.anchorMin = bar.anchorMax = new Vector2(0.5f, 0f);
-            bar.pivot = new Vector2(0.5f, 0f);
 
             notice = NewText("Notice", bar, 26f, FontStyles.Bold, TextAlignmentOptions.Bottom);
-            notice.rectTransform.anchorMin = notice.rectTransform.anchorMax = new Vector2(0.5f, 1f);
-            notice.rectTransform.pivot = new Vector2(0.5f, 0f);
             notice.rectTransform.sizeDelta = new Vector2(600f, 40f);
-            notice.rectTransform.anchoredPosition = new Vector2(0f, 18f);
             notice.color = new Color(textColor.r, textColor.g, textColor.b, 0f);
+        }
+
+        // The bar sits at its corner or edge of the screen; the notice is on the side of the bar that faces the screen.
+        void PlaceBar(float width)
+        {
+            bool left = anchor == BarAnchor.BottomLeft || anchor == BarAnchor.TopLeft;
+            bool right = anchor == BarAnchor.BottomRight || anchor == BarAnchor.TopRight;
+            bool top = anchor == BarAnchor.TopCenter || anchor == BarAnchor.TopLeft || anchor == BarAnchor.TopRight;
+
+            var corner = new Vector2(left ? 0f : right ? 1f : 0.5f, top ? 1f : 0f);
+            bar.anchorMin = bar.anchorMax = corner;
+            bar.pivot = corner;
+            bar.anchoredPosition = new Vector2(left ? margin.x : right ? -margin.x : 0f, top ? -margin.y : margin.y);
+            bar.sizeDelta = new Vector2(width, slotPixels);
+
+            RectTransform note = notice.rectTransform;
+            var noteSide = new Vector2(corner.x, top ? 0f : 1f);
+            note.anchorMin = note.anchorMax = noteSide;
+            note.pivot = new Vector2(corner.x, top ? 1f : 0f);
+            note.anchoredPosition = new Vector2(0f, top ? -18f : 18f);
+            notice.alignment = left
+                ? (top ? TextAlignmentOptions.TopLeft : TextAlignmentOptions.BottomLeft)
+                : right
+                    ? (top ? TextAlignmentOptions.TopRight : TextAlignmentOptions.BottomRight)
+                    : (top ? TextAlignmentOptions.Top : TextAlignmentOptions.Bottom);
         }
 
         void Rebuild()
@@ -213,8 +252,7 @@ namespace MHZE.InventorySystem
             int count = bound.SlotCount;
             slotPixels = Mathf.Min(slotSize, (MaxBarWidth - (count - 1) * slotGap) / count);
             float width = count * slotPixels + (count - 1) * slotGap;
-            bar.anchoredPosition = new Vector2(0f, bottomMargin);
-            bar.sizeDelta = new Vector2(width, slotPixels);
+            PlaceBar(width);
 
             for (int i = 0; i < count; i++)
             {
