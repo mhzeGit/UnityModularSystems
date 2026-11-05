@@ -1,0 +1,17 @@
+{
+  "name": "com.mhze.inventory-system.Runtime",
+  "rootNamespace": "MHZE.InventorySystem",
+  "references": [
+    "Unity.InputSystem",
+    "Unity.TextMeshPro",
+    "UnityEngine.UI",
+    "com.mhze.pickup-system.Runtime"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": []
+}

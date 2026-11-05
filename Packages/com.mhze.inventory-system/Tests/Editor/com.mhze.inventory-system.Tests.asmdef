@@ -1,0 +1,11 @@
+{
+  "name": "com.mhze.inventory-system.Tests",
+  "references": [
+    "com.mhze.inventory-system.Runtime",
+    "com.mhze.pickup-system.Runtime"
+  ],
+  "includePlatforms": ["Editor"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "autoReferenced": false,
+  "defineConstraints": ["UNITY_INCLUDE_TESTS"]
+}
