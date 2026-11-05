@@ -73,4 +73,4 @@ Items that are not `PickableItemBase` can implement `IInventoryItem` to say how 
 - Story code that calls `PickupSystem.PickupObject` while the bar is full drops the held item to make room
   (the classic behaviour); it never loses an item.
 - `InventoryBarView` is optional. Turn off `Create Bar` and draw your own UI from the events.
-- Tests: `Tests/Editor`. Add `com.mhze.inventory-system` to the project's manifest `testables` to run them.
+- Tests: `Tests/Editor` (the slots, the controller on a real pickup system) and `Tests/PlayMode` (the real update loop with\n  virtual keyboard and mouse: scenarios with several kinds of items, and a randomized run that checks after every step that\n  the bar, the hand and the world still agree). Add `com.mhze.inventory-system` to the project's manifest `testables` to run them.

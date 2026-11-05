@@ -1,0 +1,15 @@
+{
+  "name": "com.mhze.inventory-system.PlayModeTests",
+  "rootNamespace": "MHZE.InventorySystem.Tests",
+  "references": [
+    "com.mhze.inventory-system.Runtime",
+    "com.mhze.pickup-system.Runtime",
+    "Unity.InputSystem",
+    "Unity.InputSystem.TestFramework",
+    "Unity.TextMeshPro",
+    "UnityEngine.UI"
+  ],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "autoReferenced": false,
+  "defineConstraints": ["UNITY_INCLUDE_TESTS"]
+}
