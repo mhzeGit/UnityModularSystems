@@ -36,6 +36,8 @@ namespace MHZE.InventorySystem
         [SerializeField, Min(24f)] float slotSize = 76f;
         [SerializeField, Min(0f)] float slotGap = 10f;
         [SerializeField, Min(1f)] float selectedScale = 1.12f;
+        [Tooltip("Free space between the slot's edge and the item's icon, as a fraction of the slot.")]
+        [SerializeField, Range(0f, 0.3f)] float iconInset = 0.08f;
         [Tooltip("Higher draws on top. Keep it below pause menus and fades.")]
         [SerializeField] int sortingOrder = 30;
 
@@ -278,7 +280,7 @@ namespace MHZE.InventorySystem
             Stretch(view.Fill.rectTransform, 0f);
 
             view.Icon = NewImage("Icon", view.Root, Color.white);
-            Stretch(view.Icon.rectTransform, slotPixels * 0.12f);
+            Stretch(view.Icon.rectTransform, slotPixels * iconInset);
             view.Icon.preserveAspect = true;
             view.Icon.enabled = false;
 
