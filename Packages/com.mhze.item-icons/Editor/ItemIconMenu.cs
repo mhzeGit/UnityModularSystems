@@ -2,7 +2,9 @@ using System;
 using System.IO;
 using MHZE.PickupSystem;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace MHZE.ItemIcons
 {
@@ -103,6 +105,7 @@ namespace MHZE.ItemIcons
             int code = 0;
             try
             {
+                EnsureSavedSceneIsOpen();
                 ItemIconReport report = action();
                 string text = report.ToString();
                 Debug.Log(text);
@@ -119,6 +122,26 @@ namespace MHZE.ItemIcons
             }
 
             if (Application.isBatchMode) EditorApplication.Exit(code);
+        }
+
+        // A batch editor that has no scene history starts on an untitled scene, and Unity cannot add a scene beside that. Open the
+        // first scene of the build (or any scene of the project) instead; the tool never saves it.
+        static void EnsureSavedSceneIsOpen()
+        {
+            if (!Application.isBatchMode || !string.IsNullOrEmpty(SceneManager.GetActiveScene().path)) return;
+
+            foreach (EditorBuildSettingsScene scene in EditorBuildSettings.scenes)
+            {
+                if (!scene.enabled) continue;
+                EditorSceneManager.OpenScene(scene.path, OpenSceneMode.Single);
+                return;
+            }
+
+            foreach (string guid in AssetDatabase.FindAssets("t:Scene", new[] { "Assets" }))
+            {
+                EditorSceneManager.OpenScene(AssetDatabase.GUIDToAssetPath(guid), OpenSceneMode.Single);
+                return;
+            }
         }
     }
 }

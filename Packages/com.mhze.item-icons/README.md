@@ -28,8 +28,8 @@ An agent that can run code in the open editor (Unity MCP `execute_code`) calls
    with a component that points at the item data (the item inside it, even when it is a child), then a scene that does (the
    scene is opened beside the open ones and closed again; nothing in it changes). An item with no model (a generic item data
    nothing uses) is reported as *without a model*, not as an error.
-2. **Makes a clean copy** in a scene of its own (a small empty scene of the package, far from the world's origin, so nothing in the
-   open scenes can show): scripts off, lights and text labels removed, particle systems run for a moment, standing as it
+2. **Makes a clean copy** in a new empty scene added beside the open ones, far from the world's origin so nothing in the
+   open scenes can show: scripts off, lights and text labels removed, particle systems run for a moment, standing as it
    stands in the world but with its turn about the vertical forgotten.
 3. **Turns it to a good side.** Looking straight down, the long side of its footprint is turned across the picture. The camera then
    looks from the front right and above (`Yaw`, `Pitch`).
@@ -68,7 +68,8 @@ The file for an item is `Output Folder / File Prefix + name without the prefix +
 - Needs a graphics device. In batch mode that means no `-nographics`; the tests skip themselves without one.
 - Unity cannot add a scene beside one that was never saved. If the only open scene is untitled and has no changes, the tool replaces it
   for the length of the run and opens a fresh untitled scene afterwards. If it is untitled **with** changes, the tool stops and says
-  to save it.
+  to save it. The command line entry point opens the first scene of the build first, because a batch editor with no scene
+  history starts on an untitled scene.
 - Items placed only at runtime (spawned by a script) have no model to find; name a prefab for them under `Items`.
 - The report lists every item: `Generated`, `Unchanged`, `Skipped`, `NoSource`, `Failed` (and `Planned` in a dry run).
 - A model with `TEMP_` placeholder art gets a placeholder icon. Run `Generate All` again once the art changes.

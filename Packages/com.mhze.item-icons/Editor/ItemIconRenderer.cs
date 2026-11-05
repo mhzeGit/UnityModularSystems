@@ -33,7 +33,6 @@ namespace MHZE.ItemIcons
     public sealed class ItemIconRenderer : IDisposable
     {
         const int ProbeSize = 128;
-        const string StudioScenePath = "Packages/com.mhze.item-icons/Editor/Studio/ItemIconStudio.unity";
 
         readonly ItemIconSettings settings;
         bool replacedUntitled;
@@ -96,29 +95,21 @@ namespace MHZE.ItemIcons
             AddLight("Fill Light", settings.fillColor, settings.fillIntensity, settings.fillAngles);
         }
 
-        // The scene the icons are drawn in: an empty scene of the package, opened beside the open ones. Unity cannot add a scene
-        // beside one that was never saved, so then the open scene is replaced for the length of the run, but only if it is the
-        // only one and has no changes.
+        // The scene the icons are drawn in: a new empty scene, added beside the open ones. Unity cannot add a scene beside one
+        // that was never saved, so then the open scene is replaced for the length of the run, but only if it is the only one
+        // and has no changes (the command line entry point opens a saved scene first, so it never gets here).
         Scene OpenStudio()
         {
             bool untitled = false;
             for (int i = 0; i < SceneManager.sceneCount; i++)
                 if (string.IsNullOrEmpty(SceneManager.GetSceneAt(i).path)) untitled = true;
 
-            bool haveAsset = !string.IsNullOrEmpty(AssetDatabase.AssetPathToGUID(StudioScenePath));
-            if (!untitled)
-            {
-                return haveAsset
-                    ? EditorSceneManager.OpenScene(StudioScenePath, OpenSceneMode.Additive)
-                    : EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
-            }
+            if (!untitled) return EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
 
             if (SceneManager.sceneCount == 1 && !SceneManager.GetSceneAt(0).isDirty)
             {
                 replacedUntitled = true;
-                return haveAsset
-                    ? EditorSceneManager.OpenScene(StudioScenePath, OpenSceneMode.Single)
-                    : EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+                return EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             }
 
             throw new InvalidOperationException("The open scene has never been saved and has changes. Save it, or open a saved scene, before making item icons.");

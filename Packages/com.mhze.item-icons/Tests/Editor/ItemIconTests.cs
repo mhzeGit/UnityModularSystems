@@ -387,6 +387,27 @@ namespace MHZE.ItemIcons.Tests
         }
 
         [Test]
+        public void AnItemPlacedInASceneIsDrawnWithAnUntitledSceneOpen()
+        {
+            PickableItemData data = NewData("Placed");
+            string scenePath = Root + "/Placed.unity";
+            Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            GameObject go = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            go.GetComponent<Renderer>().sharedMaterial = NewMaterial("Placed_Mat", Unlit(), Color.green);
+            go.AddComponent<PickableItemBase>().pickableItemData = data;
+            Assert.That(EditorSceneManager.SaveScene(scene, scenePath), Is.True);
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            data = AssetDatabase.LoadAssetAtPath<PickableItemData>(Root + "/Placed.asset");
+
+            ItemIconReport report = ItemIconGenerator.Generate(new[] { data }, settings);
+
+            Assert.That(report.Find(data).status, Is.EqualTo(ItemIconStatus.Generated), report.ToString());
+            Assert.That(SceneManager.sceneCount, Is.EqualTo(1));
+        }
+
+        [Test]
         public void AnUntitledSceneWithChangesIsNotReplaced()
         {
             PickableItemData data = NewData("Red");
