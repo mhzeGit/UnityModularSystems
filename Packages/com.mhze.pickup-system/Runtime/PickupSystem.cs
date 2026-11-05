@@ -21,6 +21,29 @@ namespace MHZE.PickupSystem
         public event System.Action<IPickable> OnItemPicked;
         public event System.Action OnAttemptedPickWhileOccupied;
 
+        /// <summary>A pickup was refused because the <see cref="Bag"/> has no room for the item.</summary>
+        public event System.Action<GameObject> OnPickRefused;
+
+        /// <summary>
+        /// The bag behind the hand, set by an inventory. Null (the default) keeps the classic behaviour: one
+        /// held item, and a pickup while occupied waits for the hand to free up. With a bag, a pickup while
+        /// occupied puts the held item away and the new one takes its place.
+        /// </summary>
+        public IPickupBag Bag { get; set; }
+
+        /// <summary>
+        /// True only while the held item is being put away into the <see cref="Bag"/>. An
+        /// <see cref="OnPickedItemChanged"/>(null) raised in that window means "stowed", not "dropped".
+        /// </summary>
+        public bool IsStowing { get; private set; }
+
+        /// <summary>
+        /// True only while the player's own interaction picks an item up (<see cref="CheckIfPickable"/>). An
+        /// <see cref="OnPickedItemChanged"/> raised in that window is the player taking something; raised outside
+        /// it, a story or a script put the item in the hand with <see cref="PickupObject"/>.
+        /// </summary>
+        public bool IsPlayerPickup { get; private set; }
+
         IPickable currentPickableItem;
         GameObject currentPickedObject;
 
@@ -86,6 +109,7 @@ namespace MHZE.PickupSystem
                 Debug.LogWarning($"PickupSystem on '{gameObject.name}' destroyed while holding '{currentPickedObject.name}'. Forcing release without callbacks.", this);
                 ForceReleaseWithoutCallbacks();
             }
+            Bag = null;
             if (Instance == this) Instance = null;
         }
 
@@ -143,12 +167,34 @@ namespace MHZE.PickupSystem
                 return;
             }
 
+            IPickupBag bag = Bag;
+            if (bag != null)
+            {
+                // Something the story put in the hand stays there: the hand is busy, as it always was.
+                if (currentPickableItem != null && currentPickedObject != interactedObject && bag.IsHandLocked)
+                {
+                    OnAttemptedPickWhileOccupied?.Invoke();
+                    return;
+                }
+
+                // Behind the hand there is a bag, so there is no "hand is full": the held item is put away.
+                // Only a bag with no room for it refuses the pickup, and nothing moves.
+                if (!bag.Contains(interactedObject) && !bag.CanKeep(interactedObject, pickable))
+                {
+                    OnPickRefused?.Invoke(interactedObject);
+                    return;
+                }
+
+                PickupByPlayer(interactedObject, pickable);
+                return;
+            }
+
             if (currentPickableItem != null)
             {
                 if (dropOnPickup)
                 {
                     DropObject(currentPickedObject, currentPickableItem);
-                    PickupObject(interactedObject, pickable);
+                    PickupByPlayer(interactedObject, pickable);
                     return;
                 }
 
@@ -163,7 +209,22 @@ namespace MHZE.PickupSystem
             }
             else
             {
-                PickupObject(interactedObject, pickable);
+                PickupByPlayer(interactedObject, pickable);
+            }
+        }
+
+        // The player's own pickup, as opposed to PickupObject called by a story or a script. Listeners of
+        // OnPickedItemChanged can tell them apart with IsPlayerPickup.
+        void PickupByPlayer(GameObject obj, IPickable pickable)
+        {
+            IsPlayerPickup = true;
+            try
+            {
+                PickupObject(obj, pickable);
+            }
+            finally
+            {
+                IsPlayerPickup = false;
             }
         }
 
@@ -176,7 +237,7 @@ namespace MHZE.PickupSystem
             // An occupied pickup request must never leave a second item attached to the hand.
             if (currentPickedObject == null && attemptedPickableObject != null && attemptedPickableItem != null)
             {
-                PickupObject(attemptedPickableObject, attemptedPickableItem);
+                PickupByPlayer(attemptedPickableObject, attemptedPickableItem);
             }
         }
 
@@ -201,8 +262,16 @@ namespace MHZE.PickupSystem
             }
 
             if (currentPickedObject == obj) return;
-            if (currentPickedObject != null) DropObject(currentPickedObject, currentPickableItem);
+
+            // An item the bag already keeps is drawn from it, not picked up anew: it is switched back on and
+            // its pickup callbacks (which belong to taking it out of the world) do not run again.
+            IPickupBag bag = Bag;
+            bool fromBag = bag != null && bag.Contains(obj);
+
+            if (currentPickedObject != null) FreeHandFor(obj, pickable);
             CaptureNeutralArmPosition();
+
+            if (fromBag && !obj.activeSelf) obj.SetActive(true);
 
             currentPickableItem = pickable;
             currentPickedObject = obj;
@@ -215,13 +284,76 @@ namespace MHZE.PickupSystem
                 PlayerArmBase.localPosition = neutralArmBaseLocalPosition + pickable.GetHandOffsetLocation();
 
             pickable.SetPickState(false);
-            pickable.Picked();
+            if (!fromBag)
+            {
+                pickable.Picked();
+                OnItemPicked?.Invoke(pickable);
+            }
 
-            OnItemPicked?.Invoke(pickable);
             OnPickedItemChanged?.Invoke(obj);
 
             attemptedPickableItem = null;
             attemptedPickableObject = null;
+        }
+
+        // The hand is needed for another item. The held one is put away when the bag keeps it and has room
+        // for the newcomer too; otherwise it is dropped, which is what the hand always did.
+        void FreeHandFor(GameObject incoming, IPickable incomingPickable)
+        {
+            IPickupBag bag = Bag;
+            if (bag != null
+                && bag.Contains(currentPickedObject)
+                && (bag.Contains(incoming) || bag.CanKeep(incoming, incomingPickable))
+                && StowHeldItem())
+            {
+                return;
+            }
+
+            DropObject(currentPickedObject, currentPickableItem);
+        }
+
+        /// <summary>
+        /// Puts the held item away into the <see cref="Bag"/> without dropping it: it is parented under the
+        /// bag's stash and switched off, its drop callbacks do not run, and listeners see
+        /// <see cref="OnPickedItemChanged"/>(null) with <see cref="IsStowing"/> set. Draw it again with
+        /// <see cref="PickupObject"/>. Returns false when nothing is held or there is no bag.
+        /// </summary>
+        public bool StowHeldItem()
+        {
+            IPickupBag bag = Bag;
+            if (bag == null || bag.StashRoot == null || currentPickedObject == null) return false;
+
+            GameObject stowed = currentPickedObject;
+            Reparent(stowed.transform, bag.StashRoot);
+
+            if (PlayerArmBase != null)
+                PlayerArmBase.localPosition = neutralArmBaseLocalPosition;
+
+            currentPickableItem = null;
+            currentPickedObject = null;
+
+            if (delayedPickCoroutine != null)
+            {
+                StopCoroutine(delayedPickCoroutine);
+                delayedPickCoroutine = null;
+            }
+
+            attemptedPickableItem = null;
+            attemptedPickableObject = null;
+
+            IsStowing = true;
+            try
+            {
+                OnPickedItemChanged?.Invoke(null);
+            }
+            finally
+            {
+                IsStowing = false;
+            }
+
+            // Last, so listeners of the change above still find it in place.
+            if (stowed != null) stowed.SetActive(false);
+            return true;
         }
 
         public void DropCurrentHeldItem()
