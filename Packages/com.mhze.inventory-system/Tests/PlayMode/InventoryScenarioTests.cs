@@ -428,5 +428,34 @@ namespace MHZE.InventorySystem.Tests
             yield return PressKey(keyboard.digit1Key);
             Assert.That(bag.SelectedIndex, Is.EqualTo(0));
             Assert.That(pickup.GetCurrentObject(), Is.EqualTo(mine.gameObject));
-        }}
+        }
+
+        [UnityTest]
+        public IEnumerator TheBarLogsNoFontWarningsForLongNames()
+        {
+            var warnings = new System.Collections.Generic.List<string>();
+            Application.LogCallback capture = (message, stack, type) =>
+            {
+                if (type == LogType.Warning && message.Contains("font asset")) warnings.Add(message);
+            };
+
+            Application.logMessageReceived += capture;
+            try
+            {
+                BuildRig();
+                yield return null;
+                PickableItemData longName = Data("A very long item name that cannot possibly fit one slot of the bar", 1);
+                Item("Long", longName).Pickup();
+                yield return null;
+                Canvas.ForceUpdateCanvases();
+                yield return new WaitForSeconds(0.3f);
+            }
+            finally
+            {
+                Application.logMessageReceived -= capture;
+            }
+
+            Assert.That(warnings, Is.Empty, string.Join("\n", warnings));
+        }
+    }
 }

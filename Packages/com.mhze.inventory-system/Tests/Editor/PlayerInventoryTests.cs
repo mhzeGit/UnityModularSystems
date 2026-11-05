@@ -530,6 +530,66 @@ namespace MHZE.InventorySystem.Tests
             Assert.That(bag.Holds(brush.gameObject), Is.True, "the brush is put away, not lost");
         }
 
+        // ───────────────────────────── items that must stay in the hand ─────────────────────────────
+
+        [Test]
+        public void AnItemThatMustStayInTheHandCannotBePutAwayOrReplaced()
+        {
+            TestItem other = Item("other"), soup = Item("soup"), third = Item("third");
+            Pick(other);
+            Pick(soup);
+            soup.StayInHand = true;
+            var blocked = 0;
+            bag.SelectionBlocked += () => blocked++;
+            var occupied = 0;
+            pickup.OnAttemptedPickWhileOccupied += () => occupied++;
+
+            Assert.That(bag.IsHandLocked, Is.True);
+            Assert.That(bag.Select(0), Is.False);
+            Assert.That(bag.SelectNext(), Is.False);
+            Pick(third);
+            bag.Tick();
+
+            Assert.That(blocked, Is.EqualTo(2));
+            Assert.That(pickup.GetCurrentObject(), Is.EqualTo(soup.gameObject), "the soup stays in the hand");
+            Assert.That(soup.gameObject.activeSelf, Is.True);
+            Assert.That(bag.Holds(third.gameObject), Is.False, "no other pickup while the hand is busy");
+            Assert.That(occupied, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void ItemsCanBePutAwayAgainOnceTheyStopAskingToStay()
+        {
+            TestItem other = Item("other"), soup = Item("soup");
+            Pick(other);
+            Pick(soup);
+            soup.StayInHand = true;
+            Assert.That(bag.Select(0), Is.False);
+
+            soup.StayInHand = false;
+            Assert.That(bag.IsHandLocked, Is.False);
+            Assert.That(bag.Select(0), Is.True);
+            bag.Tick();
+
+            Assert.That(pickup.GetCurrentObject(), Is.EqualTo(other.gameObject));
+            Assert.That(bag.Holds(soup.gameObject), Is.True, "the soup is in the bar, put away");
+        }
+
+        [Test]
+        public void AnItemThatMustStayCanStillBeDroppedAndThenTheKeysWork()
+        {
+            TestItem soup = Item("soup"), mine = Item("mine");
+            Pick(soup);
+            soup.StayInHand = true;
+
+            pickup.DropCurrentHeldItem();
+            bag.Tick();
+
+            Assert.That(bag.IsHandLocked, Is.False);
+            Assert.That(bag.Holds(soup.gameObject), Is.False);
+            Pick(mine);
+            Assert.That(pickup.GetCurrentObject(), Is.EqualTo(mine.gameObject));
+        }
         // ───────────────────────────── slot count and release ─────────────────────────────
 
         [Test]
@@ -640,12 +700,14 @@ namespace MHZE.InventorySystem.Tests
             Assert.That(info.Kind, Is.EqualTo(go));
         }
 
-        sealed class TestItem : MonoBehaviour, IPickable, IInventoryItem
+        sealed class TestItem : MonoBehaviour, IPickable, IInventoryItem, IKeepInHand
         {
             public Object Kind;
             public int MaxStack = 1;
             public string Label = "item";
             public bool PhysicsEnabled = true;
+            public bool StayInHand;
+            public bool MustStayInHand => StayInHand;
             public int PickedCount;
             public int DroppedCount;
 

@@ -92,11 +92,20 @@ namespace MHZE.InventorySystem
         public GameObject HeldItem => handItem;
 
         /// <summary>
-        /// The item in the hand was put there by the story or a script (flowers at the door, a brush, a torch, a
-        /// cat to carry), not picked up by the player, and has to stay until it is released: the keys and the wheel
-        /// do nothing and the player's pickups are refused meanwhile. Dropping it with the drop key ends this.
+        /// The item in the hand has to stay there until it is released: the story or a script put it there (flowers at
+        /// the door, a brush, a torch, a cat to carry) rather than the player picking it up, or it says so itself
+        /// (<see cref="IKeepInHand"/>). The keys and the wheel do nothing and the player's pickups are refused
+        /// meanwhile. Dropping it with the drop key ends this.
         /// </summary>
-        public bool IsHandLocked => lockedItem != null && lockedItem == handItem;
+        public bool IsHandLocked
+        {
+            get
+            {
+                if (handItem == null) return false;
+                if (lockedItem != null && lockedItem == handItem) return true;
+                return handItem.TryGetComponent(out IKeepInHand keep) && keep.MustStayInHand;
+            }
+        }
 
         /// <summary>Where put-away items wait, switched off.</summary>
         public Transform StashRoot => GetOrCreateStash();

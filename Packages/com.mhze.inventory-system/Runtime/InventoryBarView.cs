@@ -288,7 +288,8 @@ namespace MHZE.InventorySystem
             view.Name.fontSizeMin = Mathf.Round(slotPixels * 0.12f);
             view.Name.fontSizeMax = Mathf.Round(slotPixels * 0.22f);
             view.Name.textWrappingMode = TextWrappingModes.Normal;
-            view.Name.overflowMode = TextOverflowModes.Ellipsis;
+            // Not Ellipsis: the default TextMesh Pro font has no ellipsis glyph and would log a warning for every label.
+            view.Name.overflowMode = TextOverflowModes.Truncate;
             view.Name.gameObject.SetActive(false);
 
             view.Key = NewText("Key", view.Root, Mathf.Round(slotPixels * 0.19f), FontStyles.Bold, TextAlignmentOptions.TopLeft);

@@ -66,6 +66,7 @@ bag.SlotChanged += i => { };  // also SelectionChanged, SlotCountChanged, Pickup
 ```
 
 Items that are not `PickableItemBase` can implement `IInventoryItem` to say how they are named, shown and stacked.
+An item that cannot be pocketed (a full bowl of soup) or whose game reads "not in the hand" as "dropped" implements `IKeepInHand`: while it says `MustStayInHand` the bar will not put it away and takes no other pickup, until it is dropped or handed over.
 
 ## Notes and limits
 
