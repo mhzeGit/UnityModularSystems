@@ -1,0 +1,8 @@
+{
+  "name": "com.mhze.wall-break-system.Tests",
+  "references": ["com.mhze.wall-break-system.Runtime"],
+  "includePlatforms": ["Editor"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "autoReferenced": false,
+  "defineConstraints": ["UNITY_INCLUDE_TESTS"]
+}

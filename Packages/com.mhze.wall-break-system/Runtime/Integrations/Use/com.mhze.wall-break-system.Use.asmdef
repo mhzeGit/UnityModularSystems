@@ -1,0 +1,8 @@
+{
+  "name": "com.mhze.wall-break-system.Use",
+  "rootNamespace": "MHZE.WallBreak",
+  "references": ["com.mhze.wall-break-system.Runtime", "com.mhze.use-system.Runtime"],
+  "autoReferenced": true,
+  "defineConstraints": ["MHZE_WALLBREAK_USE"],
+  "versionDefines": [{"name":"com.mhze.use-system", "expression":"", "define":"MHZE_WALLBREAK_USE"}]
+}

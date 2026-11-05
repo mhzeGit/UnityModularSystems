@@ -1,0 +1,8 @@
+{
+  "name": "com.mhze.wall-break-system.Editor",
+  "rootNamespace": "MHZE.WallBreak.Editor",
+  "references": ["com.mhze.wall-break-system.Runtime"],
+  "includePlatforms": ["Editor"],
+  "autoReferenced": true,
+  "defineConstraints": []
+}

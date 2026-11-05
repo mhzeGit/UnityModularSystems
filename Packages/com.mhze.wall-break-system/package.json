@@ -1,0 +1,13 @@
+{
+  "name": "com.mhze.wall-break-system",
+  "version": "1.1.0",
+  "displayName": "Wall Break System",
+  "description": "Put a crack on any wall and break it with a tool. Procedurally shatters the wall's own mesh into irregular pieces (keeping its material, UVs and lightmap UVs) that fall as rubble and leave a walkable, jagged hole. Works on any textured slab-like wall in any scene.",
+  "unity": "2021.3",
+  "author": {
+    "name": "MHZE",
+    "email": "mhze.uk@gmail.com",
+    "url": "https://github.com/mhzeGit/"
+  },
+  "dependencies": {}
+}

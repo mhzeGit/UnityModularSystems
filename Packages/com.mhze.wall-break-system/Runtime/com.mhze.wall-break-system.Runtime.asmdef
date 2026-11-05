@@ -1,0 +1,12 @@
+{
+  "name": "com.mhze.wall-break-system.Runtime",
+  "rootNamespace": "MHZE.WallBreak",
+  "references": [],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": []
+}

@@ -1,0 +1,8 @@
+{
+  "name": "WallLab.PlayTests",
+  "references": ["com.mhze.wall-break-system.Runtime"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "includePlatforms": [],
+  "autoReferenced": false,
+  "defineConstraints": ["UNITY_INCLUDE_TESTS"]
+}
