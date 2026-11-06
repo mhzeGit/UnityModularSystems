@@ -2,7 +2,31 @@
 
 `PickupSystem` owns the one held object, attachment, physics callbacks and release.
 `PlayerArmAnimator` presents that state on an animated first-person rig. It never owns inventory,
-consumption, throwing physics or story progression.
+consumption, throwing physics or story progression. An inventory can sit behind the hand through the
+small `IPickupBag` contract (below); the `com.mhze.inventory-system` package implements it.
+
+## A bag behind the hand (IPickupBag)
+
+Without a bag the hand holds one item: a pickup while occupied waits (`OnAttemptedPickWhileOccupied`) and
+the story drops the held item to take another. Set `PickupSystem.Bag` to an `IPickupBag` and the hand can
+carry more than the one item:
+
+- `CheckIfPickable` (the player's interaction) refuses with `OnPickRefused` when the bag has no room
+  (`CanKeep`), otherwise the pickup goes ahead even while the hand is full.
+- Whenever the hand has to give up an item for another (a pickup, `PickupObject` from the story) it
+  **stows** the held item instead of dropping it, provided the bag `Contains` it and has room for the
+  newcomer. Otherwise it drops it exactly as before.
+- `StowHeldItem()` parents the held item under `Bag.StashRoot` and switches it off. No `Dropped()`
+  callback runs and the physics state stays "held". Listeners get `OnPickedItemChanged(null)` with
+  `IsStowing` set, so they can tell a stow from a drop.
+- `PickupObject` on an item the bag already `Contains` draws it from the stash: it is switched on and put
+  in the hand without `Picked()` or `OnItemPicked`.
+- `IsHandLocked` lets the bag say the held item came from the story and has to stay: the player's pickups are then
+  refused with `OnAttemptedPickWhileOccupied`, as in a hand that is simply full. `IsPlayerPickup` is true while the
+  player's own interaction picks something up, so listeners can tell it from a story calling `PickupObject`.
+- `PickableItemData.MaxStack` (1 by default) is the stack size an inventory uses for that item.
+
+Without a bag nothing changes.
 
 ## First-person holding
 

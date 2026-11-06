@@ -14,6 +14,11 @@ namespace MHZE.PickupSystem
         public Sprite ItemIcon;
         public GameObject ItemPrefab;
 
+        [Header("Inventory")]
+        [Min(1)]
+        [Tooltip("How many of this item share one inventory slot. 1 means it does not stack. Items stack only when they use this same item data asset.")]
+        public int MaxStack = 1;
+
         [Header("Pickup Settings")]
         public bool IsPickable;
         [Tooltip("Shared grip, finger closure and arm presentation. Null retains the legacy hand fields below.")]

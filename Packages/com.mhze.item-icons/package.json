@@ -1,0 +1,15 @@
+{
+  "name": "com.mhze.item-icons",
+  "version": "1.0.0",
+  "displayName": "Item Icons",
+  "description": "Editor tool that draws an icon for every pickable item from the item's own model, through the project's own render pipeline and shaders, under a fixed studio light, and assigns it to the item data. Run it from a menu, from code or from the command line.",
+  "unity": "2021.3",
+  "author": {
+    "name": "MHZE",
+    "email": "mhze.uk@gmail.com",
+    "url": "https://github.com/mhzeGit/"
+  },
+  "dependencies": {
+    "com.mhze.pickup-system": "1.8.0"
+  }
+}

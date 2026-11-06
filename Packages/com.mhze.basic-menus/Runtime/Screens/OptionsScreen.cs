@@ -692,6 +692,16 @@ namespace MHZE.BasicMenus
         public override bool OnBack()
         {
             if (!IsOpen) return false;
+            // Cancel reaches the router before the EventSystem's dropdown item.
+            // Consume it here so a single press only dismisses the popup.
+            bool dismissedDropdown = false;
+            foreach (var dropdown in GetComponentsInChildren<TMP_Dropdown>())
+            {
+                if (!dropdown.IsExpanded) continue;
+                dropdown.Hide();
+                dismissedDropdown = true;
+            }
+            if (dismissedDropdown) return true;
             Close();
             return true;
         }

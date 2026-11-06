@@ -377,6 +377,7 @@ namespace MHZE.BasicMenus
 
             rebindOverlay?.SetActive(true);
             RegisterBackHandler();
+            if (bindingText != null) bindingText.text = "Waiting for input...";
 
             if (rebindPromptText != null)
             {
@@ -424,6 +425,9 @@ namespace MHZE.BasicMenus
 
         private void FinishRebind(InputAction action, int bindingIndex, bool allCompositeParts, bool isComplete)
         {
+            // Re-enabling UI actions while the cancel key is still held can
+            // deliver that same press to Back. The rebind has consumed it.
+            if (!isComplete) UIBackRouter.SuppressBackThisFrame();
             UnregisterBackHandler();
             rebindOverlay?.SetActive(false);
 
@@ -486,7 +490,7 @@ namespace MHZE.BasicMenus
 
         private bool HandleBackWhileRebinding()
         {
-            if (_rebindOperation == null || rebindOverlay == null || !rebindOverlay.activeSelf)
+            if (_rebindOperation == null)
                 return false;
 
             _rebindOperation.Cancel();

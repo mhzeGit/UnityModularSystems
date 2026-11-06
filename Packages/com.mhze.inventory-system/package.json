@@ -1,0 +1,17 @@
+{
+  "name": "com.mhze.inventory-system",
+  "version": "1.1.0",
+  "displayName": "Inventory System",
+  "description": "A minimal hotbar inventory for first-person pickups: a configurable number of slots, number keys and the scroll wheel to switch, empty slots for empty hands, stacking per item and a simple bar of dark stone slabs built in code that slides off the screen when nothing changes. Sits on top of the Pickup System.",
+  "unity": "2022.3",
+  "author": {
+    "name": "MHZE",
+    "email": "mhze.uk@gmail.com",
+    "url": "https://github.com/mhzeGit/"
+  },
+  "dependencies": {
+    "com.unity.inputsystem": "1.7.0",
+    "com.unity.ugui": "1.0.0",
+    "com.mhze.pickup-system": "1.8.0"
+  }
+}

@@ -72,6 +72,13 @@ Read the mode from anywhere with `UIInputState.Current` and subscribe to `UIInpu
 
 ### Options & persistence
 
+An expanded TextMeshPro dropdown inside Options consumes Back before the screen closes. One
+Escape/gamepad B dismisses the dropdown and leaves Options open, including while paused. The next
+Back closes Options and returns to its parent screen.
+Canceling a rebind consumes the same key before UI actions are re-enabled, so it cannot also
+close Options or resume Pause. Binding rows show "Waiting for input..." during capture even
+when no separate rebind overlay is assigned.
+
 `OptionsScreen` applies changes immediately and stores them in `PlayerPrefs`:
 
 | Setting | Key | Notes |

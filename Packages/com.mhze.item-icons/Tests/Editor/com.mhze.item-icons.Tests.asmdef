@@ -1,0 +1,11 @@
+{
+  "name": "com.mhze.item-icons.Tests",
+  "references": [
+    "com.mhze.item-icons.Editor",
+    "com.mhze.pickup-system.Runtime"
+  ],
+  "includePlatforms": ["Editor"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "autoReferenced": false,
+  "defineConstraints": ["UNITY_INCLUDE_TESTS"]
+}
