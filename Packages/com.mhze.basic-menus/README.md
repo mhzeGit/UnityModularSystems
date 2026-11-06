@@ -112,6 +112,10 @@ Add one `InputRebindRowUI` per rebindable action inside the options screen (or d
 - Rebinding supports composite bindings, cancel keys (Escape), clearing a binding (Backspace/Delete), and optional duplicate prevention.
 - Overrides are saved and reloaded per action asset through the options screen.
 
+To supply a shared binding icon library at runtime, call `InputRebindRowUI.SetBindingIconLibrary`.
+A UI row without an assigned Image draws the sprite in the existing TextMeshProUGUI label slot.
+A custom presentation can read `DisplayedBindingIcon` after the row refreshes.
+
 ### Button effects & sounds
 
 - `UIButtonEffects` tracks Normal / Hovered / Selected / Pressed / Disabled for any Selectable and forwards state to effect modules: `UIScaleEffect`, `UIColorEffect`, or your own subclass of `UIButtonEffect`.

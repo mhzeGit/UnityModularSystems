@@ -86,6 +86,34 @@ namespace MHZE.BasicMenus
 
         private static readonly List<InputRebindRowUI> ActiveRows = new List<InputRebindRowUI>();
 
+        private Image _runtimeBindingIcon;
+
+        /// <summary>The icon resolved for the effective binding, or null when the label is text.</summary>
+        public Sprite DisplayedBindingIcon { get; private set; }
+
+        /// <summary>Apply an icon library to an existing row. If needed, add an image inside its UI label slot.</summary>
+        public void SetBindingIconLibrary(BindingIconLibrary library)
+        {
+            iconLibrary = library;
+            if (library != null && bindingIconImage == null && _runtimeBindingIcon == null &&
+                bindingText is TextMeshProUGUI label)
+            {
+                var iconObject = new GameObject("Binding Icon", typeof(RectTransform), typeof(Image));
+                var rect = (RectTransform)iconObject.transform;
+                rect.SetParent(label.rectTransform, false);
+                rect.anchorMin = Vector2.zero;
+                rect.anchorMax = Vector2.one;
+                rect.offsetMin = Vector2.zero;
+                rect.offsetMax = Vector2.zero;
+
+                _runtimeBindingIcon = iconObject.GetComponent<Image>();
+                _runtimeBindingIcon.preserveAspect = true;
+                _runtimeBindingIcon.raycastTarget = false;
+            }
+
+            UpdateDisplay();
+        }
+
         /// <summary>The action asset this row belongs to, if resolvable.</summary>
         public InputActionAsset ActionAsset => actionReference?.action?.actionMap?.asset;
 
@@ -191,38 +219,40 @@ namespace MHZE.BasicMenus
                     : actionDisplayName;
             }
 
-            if (!TryResolveBinding(out var action, out var bindingIndex))
+            string displayString = _rebindOperation != null ? "Waiting for input..." : string.Empty;
+            Sprite icon = null;
+            if (_rebindOperation == null && TryResolveBinding(out var action, out var bindingIndex))
             {
-                if (bindingText != null)
-                    bindingText.text = string.Empty;
+                displayString = action.GetBindingDisplayString(
+                    bindingIndex,
+                    out var deviceLayoutName,
+                    out var controlPath,
+                    InputBinding.DisplayStringOptions.DontUseShortDisplayNames);
 
-                if (bindingIconImage != null)
-                    bindingIconImage.gameObject.SetActive(false);
-
-                return;
+                if (iconLibrary != null)
+                {
+                    if (deviceLayoutName == "Gamepad" && Gamepad.current != null)
+                        deviceLayoutName = Gamepad.current.layout;
+                    iconLibrary.TryGetIcon(deviceLayoutName, controlPath, out icon);
+                }
             }
 
-            var displayString = action.GetBindingDisplayString(
-                bindingIndex,
-                out var deviceLayoutName,
-                out var controlPath,
-                InputBinding.DisplayStringOptions.DontUseShortDisplayNames);
-
-            Sprite icon = null;
-            var hasIcon = false;
-            if (iconLibrary != null)
-                hasIcon = iconLibrary.TryGetIcon(deviceLayoutName, controlPath, out icon);
-
-            if (bindingIconImage != null)
+            DisplayedBindingIcon = icon;
+            var image = bindingIconImage != null ? bindingIconImage : _runtimeBindingIcon;
+            if (image != null)
             {
-                bindingIconImage.gameObject.SetActive(hasIcon);
-                bindingIconImage.sprite = hasIcon ? icon : null;
+                image.sprite = icon;
+                image.gameObject.SetActive(icon != null);
             }
 
             if (bindingText != null)
             {
-                bindingText.gameObject.SetActive(!hasIcon);
                 bindingText.text = displayString;
+                // Keep the UI label in the layout when its child is drawing the icon.
+                if (_runtimeBindingIcon != null)
+                    bindingText.enabled = icon == null;
+                else
+                    bindingText.gameObject.SetActive(image == null || icon == null);
             }
         }
 
@@ -377,7 +407,7 @@ namespace MHZE.BasicMenus
 
             rebindOverlay?.SetActive(true);
             RegisterBackHandler();
-            if (bindingText != null) bindingText.text = "Waiting for input...";
+            UpdateDisplay();
 
             if (rebindPromptText != null)
             {
