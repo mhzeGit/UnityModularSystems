@@ -73,6 +73,12 @@ namespace MHZE.InventorySystem
         /// <summary>The player tried to switch away from an item the story put in the hand, which has to stay there.</summary>
         public event Action SelectionBlocked;
 
+        /// <summary>
+        /// The player asked for the slot that is already selected (pressed its key, or scrolled against the end of a bar
+        /// that does not wrap). Nothing changed; a bar that hides itself comes back for it.
+        /// </summary>
+        public event Action SelectionRepeated;
+
         /// <summary>The slots and their content.</summary>
         public Inventory Inventory
         {
@@ -282,11 +288,18 @@ namespace MHZE.InventorySystem
 
         /// <summary>
         /// Selects a slot; the hand follows. Returns false for a slot that does not exist, one that is already
-        /// selected, or while the hand holds something the story put there (<see cref="IsHandLocked"/>).
+        /// selected (<see cref="SelectionRepeated"/> is raised), or while the hand holds something the story put there
+        /// (<see cref="IsHandLocked"/>).
         /// </summary>
         public bool Select(int index)
         {
-            if (inventory == null || index < 0 || index >= inventory.SlotCount || index == selected) return false;
+            if (inventory == null || index < 0 || index >= inventory.SlotCount) return false;
+
+            if (index == selected)
+            {
+                SelectionRepeated?.Invoke();
+                return false;
+            }
 
             if (IsHandLocked)
             {

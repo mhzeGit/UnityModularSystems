@@ -212,6 +212,38 @@ namespace MHZE.InventorySystem.Tests
             Assert.That(bag.SelectedIndex, Is.EqualTo(0));
         }
 
+        [Test]
+        public void AskingForTheSelectedSlotAgainChangesNothingAndSaysSo()
+        {
+            int repeated = 0, changed = 0;
+            bag.SelectionRepeated += () => repeated++;
+            bag.SelectionChanged += _ => changed++;
+
+            Assert.That(bag.Select(0), Is.False, "slot 1 is already selected");
+            Assert.That(repeated, Is.EqualTo(1));
+            Assert.That(changed, Is.EqualTo(0));
+
+            Assert.That(bag.Select(3), Is.True);
+            Assert.That(repeated, Is.EqualTo(1), "a real switch is not a repeat");
+            Assert.That(changed, Is.EqualTo(1));
+
+            Assert.That(bag.Select(3), Is.False);
+            Assert.That(repeated, Is.EqualTo(2));
+            Assert.That(bag.SelectedIndex, Is.EqualTo(3));
+        }
+
+        [Test]
+        public void ASlotThatDoesNotExistIsNotARepeat()
+        {
+            int repeated = 0;
+            bag.SelectionRepeated += () => repeated++;
+
+            bag.Select(-1);
+            bag.Select(6);
+
+            Assert.That(repeated, Is.EqualTo(0));
+        }
+
         // ───────────────────────────── stacking ─────────────────────────────
 
         [Test]
