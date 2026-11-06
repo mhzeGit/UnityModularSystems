@@ -110,7 +110,9 @@ namespace MHZE.InventorySystem
         float slotPixels;
         PlayerInventory bound;
 
-        // Sliding away: where the bar rests, which way it leaves and how far, and how far it has come back.
+        // Sliding away: where the bar rests, which way it leaves and how far, and how far it has come back. The waits are
+        // measured in real time (not the clock of the current frame), so a change raised between two frames, or during a
+        // long one, gets its full wait.
         Vector2 restPosition;
         float slideDirection = -1f;
         float slideDistance;
@@ -179,7 +181,7 @@ namespace MHZE.InventorySystem
         /// <summary>Brings the bar on screen and keeps it there for at least this many seconds from now.</summary>
         public void Show(float seconds)
         {
-            shownUntil = Mathf.Max(shownUntil, Time.unscaledTime + Mathf.Max(0f, seconds));
+            shownUntil = Mathf.Max(shownUntil, Time.realtimeSinceStartup + Mathf.Max(0f, seconds));
         }
 
         /// <summary>Slides the bar away now, unless <see cref="AutoHide"/> is off.</summary>
@@ -300,7 +302,7 @@ namespace MHZE.InventorySystem
             if (notice == null) return;
 
             notice.text = fullMessage;
-            noticeUntil = Time.unscaledTime + NoticeSeconds;
+            noticeUntil = Time.realtimeSinceStartup + NoticeSeconds;
         }
 
         void Update()
@@ -321,7 +323,7 @@ namespace MHZE.InventorySystem
 
             if (notice != null)
             {
-                float left = noticeUntil - Time.unscaledTime;
+                float left = noticeUntil - Time.realtimeSinceStartup;
                 Color c = notice.color;
                 c.a = Mathf.Clamp01(left / 0.4f);
                 notice.color = c;
@@ -339,7 +341,7 @@ namespace MHZE.InventorySystem
         {
             if (bar == null) return;
 
-            float goal = !autoHide || Time.unscaledTime < shownUntil ? 1f : 0f;
+            float goal = !autoHide || Time.realtimeSinceStartup < shownUntil ? 1f : 0f;
             if (!Mathf.Approximately(reveal, goal))
             {
                 float seconds = goal > reveal ? slideInSeconds : slideOutSeconds;

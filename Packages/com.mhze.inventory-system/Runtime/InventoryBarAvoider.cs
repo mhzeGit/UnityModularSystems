@@ -82,10 +82,10 @@ namespace MHZE.InventorySystem
         bool HasBar()
         {
             if (bar != null) return true;
-            if (Time.unscaledTime < nextLook) return false;
+            if (Time.realtimeSinceStartup < nextLook) return false;
 
             // The bar may appear after this element does; look again now and then, not every frame.
-            nextLook = Time.unscaledTime + 0.5f;
+            nextLook = Time.realtimeSinceStartup + 0.5f;
             bar = FindAnyObjectByType<InventoryBarView>();
             return bar != null;
         }
