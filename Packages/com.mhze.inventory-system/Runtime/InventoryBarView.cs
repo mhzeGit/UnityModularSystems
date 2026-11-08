@@ -18,7 +18,7 @@ namespace MHZE.InventorySystem
 
     /// <summary>
     /// The inventory's bar: a row of separate dark stone slabs at the bottom of the screen, built in code on its own
-    /// screen-space canvas. Each slab shows its number key in chalk, the item's icon (its name until it has one) and the
+    /// screen-space canvas. Each slab shows the item's icon (its name until it has one) and the
     /// stack size when it is more than one. The selected slab is lighter, has a thin ochre edge and chalk marks in
     /// three corners, and a short ochre line under it. The stone is drawn by the bar itself (a different grain for every
     /// slab); hand-made sprites can replace it.
@@ -72,7 +72,7 @@ namespace MHZE.InventorySystem
         [SerializeField] Color selectedStoneColor = new Color(0.29f, 0.255f, 0.19f, 1f);
         [Tooltip("The thin edge of the selected slot and the short line under it.")]
         [SerializeField] Color accentColor = new Color(0.91f, 0.72f, 0.3f, 1f);
-        [Tooltip("The chalk of the numbers, the count and the corner marks of the selected slot.")]
+        [Tooltip("The chalk of the stack count and the corner marks of the selected slot.")]
         [SerializeField] Color textColor = new Color(0.97f, 0.95f, 0.88f, 1f);
         [Tooltip("1 keeps the selected slot the size of the others; more makes it bigger.")]
         [SerializeField, Min(1f)] float selectedSlotScale = 1f;
@@ -94,7 +94,6 @@ namespace MHZE.InventorySystem
             public int Variant;
             public Image Icon;
             public TextMeshProUGUI Name;
-            public TextMeshProUGUI Key;
             public TextMeshProUGUI Count;
             public float Scale = 1f;
             public float Punch;
@@ -508,17 +507,6 @@ namespace MHZE.InventorySystem
             view.Name.overflowMode = TextOverflowModes.Truncate;
             view.Name.gameObject.SetActive(false);
 
-            // The number sits clear of the corner marks.
-            view.Key = NewText("Key", view.Root, Mathf.Round(slotPixels * 0.19f), FontStyles.Bold, TextAlignmentOptions.TopLeft);
-            view.Key.rectTransform.anchorMin = view.Key.rectTransform.anchorMax = new Vector2(0f, 1f);
-            view.Key.rectTransform.pivot = new Vector2(0f, 1f);
-            view.Key.rectTransform.sizeDelta = new Vector2(slotPixels * 0.4f, slotPixels * 0.3f);
-            view.Key.rectTransform.anchoredPosition = new Vector2(slotPixels * 0.13f, -slotPixels * 0.07f);
-            view.Key.color = new Color(textColor.r, textColor.g, textColor.b, 0.85f);
-            view.Key.outlineWidth = 0.2f;
-            view.Key.outlineColor = new Color32(0, 0, 0, 190);
-            view.Key.text = KeyLabel(index);
-
             view.Count = NewText("Count", view.Root, Mathf.Round(slotPixels * 0.27f), FontStyles.Bold, TextAlignmentOptions.BottomRight);
             view.Count.rectTransform.anchorMin = view.Count.rectTransform.anchorMax = new Vector2(1f, 0f);
             view.Count.rectTransform.pivot = new Vector2(1f, 0f);
@@ -569,17 +557,8 @@ namespace MHZE.InventorySystem
                 bool selected = i == bound.SelectedIndex;
                 view.Fill.sprite = selected ? stoneSelected[view.Variant] : stone[view.Variant];
                 view.Marks.gameObject.SetActive(selected);
-                Color key = textColor;
-                key.a = selected ? 1f : 0.85f;
-                view.Key.color = key;
                 view.Name.color = selected ? textColor : new Color(textColor.r, textColor.g, textColor.b, 0.82f);
             }
-        }
-
-        static string KeyLabel(int index)
-        {
-            if (index < 9) return (index + 1).ToString();
-            return index == 9 ? "0" : string.Empty;
         }
 
         // ───────────────────────────── the selected slot's marks ─────────────────────────────

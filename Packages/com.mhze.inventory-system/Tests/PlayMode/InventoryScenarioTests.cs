@@ -320,7 +320,7 @@ namespace MHZE.InventorySystem.Tests
             bag.SetSlotCount(9);
             yield return null;
             Assert.That(bag.GetComponentInChildren<InventoryBarView>(true).transform.Find("Inventory Bar/Bar").childCount, Is.EqualTo(9 + 1));
-            Assert.That(SlotText(8, "Key"), Is.EqualTo("9"));
+            Assert.That(bag.GetComponentInChildren<InventoryBarView>(true).transform.Find("Inventory Bar/Bar/Slot 9/Key"), Is.Null);
 
             bag.SetSlotCount(2);
             yield return null;
@@ -329,8 +329,8 @@ namespace MHZE.InventorySystem.Tests
 
             bag.SetSlotCount(12);
             yield return null;
-            Assert.That(SlotText(9, "Key"), Is.EqualTo("0"), "the tenth slot is on the 0 key");
-            Assert.That(SlotText(10, "Key"), Is.EqualTo(""), "slots past ten have no key");
+            Assert.That(bag.GetComponentInChildren<InventoryBarView>(true).transform.Find("Inventory Bar/Bar/Slot 10/Key"), Is.Null);
+            Assert.That(bag.GetComponentInChildren<InventoryBarView>(true).transform.Find("Inventory Bar/Bar/Slot 11/Key"), Is.Null);
             yield return PressKey(keyboard.digit0Key);
             Assert.That(bag.SelectedIndex, Is.EqualTo(9));
         }
