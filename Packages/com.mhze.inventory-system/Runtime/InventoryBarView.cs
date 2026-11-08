@@ -19,8 +19,8 @@ namespace MHZE.InventorySystem
     /// <summary>
     /// The inventory's bar: a row of separate dark stone slabs at the bottom of the screen, built in code on its own
     /// screen-space canvas. Each slab shows the item's icon (its name until it has one) and the
-    /// stack size when it is more than one. The selected slab is lighter, has a thin ochre edge and chalk marks in
-    /// three corners, and a short ochre line under it. The stone is drawn by the bar itself (a different grain for every
+    /// stack size when it is more than one. The selected slab is lighter and has a thin ochre edge. The stone is drawn by
+    /// the bar itself (a different grain for every
     /// slab); hand-made sprites can replace it.
     /// <para>
     /// The bar keeps out of the way: it slides off the edge of the screen when nothing has changed for a few seconds, and
@@ -72,7 +72,7 @@ namespace MHZE.InventorySystem
         [SerializeField] Color selectedStoneColor = new Color(0.29f, 0.255f, 0.19f, 1f);
         [Tooltip("The thin edge of the selected slot and the short line under it.")]
         [SerializeField] Color accentColor = new Color(0.91f, 0.72f, 0.3f, 1f);
-        [Tooltip("The chalk of the stack count and the corner marks of the selected slot.")]
+        [Tooltip("The chalk of the stack count.")]
         [SerializeField] Color textColor = new Color(0.97f, 0.95f, 0.88f, 1f);
         [Tooltip("1 keeps the selected slot the size of the others; more makes it bigger.")]
         [SerializeField, Min(1f)] float selectedSlotScale = 1f;
@@ -90,7 +90,6 @@ namespace MHZE.InventorySystem
             public RectTransform Root;
             public Image Shadow;
             public Image Fill;
-            public RectTransform Marks;
             public int Variant;
             public Image Icon;
             public TextMeshProUGUI Name;
@@ -132,7 +131,6 @@ namespace MHZE.InventorySystem
         Sprite[] stone = new Sprite[0];
         Sprite[] stoneSelected = new Sprite[0];
         Sprite shadow;
-        Sprite lineSprite;
         Color artStone;
         Color artSelectedStone;
         Color artAccent;
@@ -450,7 +448,6 @@ namespace MHZE.InventorySystem
 
             int count = bound.SlotCount;
             slotPixels = Mathf.Min(slotSize, (MaxBarWidth - (count - 1) * slotGap) / count);
-            EnsureLine();
             float width = count * slotPixels + (count - 1) * slotGap;
             PlaceBar(width);
             ApplyReveal(true);
@@ -488,8 +485,6 @@ namespace MHZE.InventorySystem
             view.Fill = NewImage("Fill", view.Root, Color.white);
             Stretch(view.Fill.rectTransform, 0f);
             view.Fill.sprite = stone[view.Variant];
-
-            view.Marks = CreateMarks(view.Root);
 
             view.Icon = NewImage("Icon", view.Root, Color.white);
             Stretch(view.Icon.rectTransform, slotPixels * iconInset);
@@ -556,59 +551,8 @@ namespace MHZE.InventorySystem
                 SlotView view = views[i];
                 bool selected = i == bound.SelectedIndex;
                 view.Fill.sprite = selected ? stoneSelected[view.Variant] : stone[view.Variant];
-                view.Marks.gameObject.SetActive(selected);
                 view.Name.color = selected ? textColor : new Color(textColor.r, textColor.g, textColor.b, 0.82f);
             }
-        }
-
-        // ───────────────────────────── the selected slot's marks ─────────────────────────────
-
-        // Chalk marks in three corners of the slab (the fourth is where the number is) and a rounded line under it. They sit
-        // between the slab and its icon, so the icon is drawn over them, and they are only switched on for the selected slot.
-        RectTransform CreateMarks(RectTransform slot)
-        {
-            RectTransform marks = NewRect("Marks", slot);
-            Stretch(marks, 0f);
-
-            float inset = Mathf.Max(4f, Mathf.Round(slotPixels * 0.06f));
-            float arm = Mathf.Round(slotPixels * 0.2f);
-            float thick = Mathf.Max(2f, Mathf.Round(slotPixels * 0.022f));
-            for (int corner = 0; corner < 4; corner++)
-            {
-                if (corner == 2) continue;   // top left: the number
-
-                float sx = (corner & 1) == 0 ? 0f : 1f;
-                float sy = (corner & 2) == 0 ? 0f : 1f;
-                var anchor = new Vector2(sx, sy);
-                var pivot = new Vector2(sx, sy);
-                var offset = new Vector2(sx == 0f ? inset : -inset, sy == 0f ? inset : -inset);
-                NewMark("Corner " + corner + " across", marks, anchor, pivot, new Vector2(arm, thick), offset, textColor);
-                NewMark("Corner " + corner + " down", marks, anchor, pivot, new Vector2(thick, arm), offset, textColor);
-            }
-
-            RectTransform line = NewRect("Line", marks);
-            line.anchorMin = line.anchorMax = new Vector2(0.5f, 0f);
-            line.pivot = new Vector2(0.5f, 1f);
-            line.sizeDelta = new Vector2(lineSprite.rect.width, lineSprite.rect.height);
-            line.anchoredPosition = new Vector2(0f, -Mathf.Round(slotPixels * 0.07f));
-            var lineImage = line.gameObject.AddComponent<Image>();
-            lineImage.sprite = lineSprite;
-            lineImage.color = accentColor;
-            lineImage.raycastTarget = false;
-            marks.gameObject.SetActive(false);
-            return marks;
-        }
-
-        void NewMark(string objectName, RectTransform parent, Vector2 anchor, Vector2 pivot, Vector2 size, Vector2 position, Color color)
-        {
-            RectTransform rect = NewRect(objectName, parent);
-            rect.anchorMin = rect.anchorMax = anchor;
-            rect.pivot = pivot;
-            rect.sizeDelta = size;
-            rect.anchoredPosition = position;
-            var image = rect.gameObject.AddComponent<Image>();
-            image.color = color;
-            image.raycastTarget = false;
         }
 
         // ───────────────────────────── the stone ─────────────────────────────
@@ -649,7 +593,6 @@ namespace MHZE.InventorySystem
             stone = new Sprite[0];
             stoneSelected = new Sprite[0];
             shadow = null;
-            lineSprite = null;
         }
 
         // A square slab of dark stone with softly rounded corners: broad patches of lighter and darker stone, fine grain, a few
@@ -714,38 +657,6 @@ namespace MHZE.InventorySystem
             }
 
             return MakeSprite(pixels, n, n, "Inventory Stone");
-        }
-
-        // The line under the selected slot: a pill drawn at the size it is shown, so its ends are round and not stretched.
-        void EnsureLine()
-        {
-            int w = Mathf.Max(8, Mathf.RoundToInt(slotPixels * 0.9f));
-            int h = Mathf.Max(3, Mathf.RoundToInt(slotPixels * 0.04f));
-            if (lineSprite != null && Mathf.RoundToInt(lineSprite.rect.width) == w && Mathf.RoundToInt(lineSprite.rect.height) == h) return;
-
-            if (lineSprite != null)
-            {
-                Texture2D old = lineSprite.texture;
-                art.Remove(lineSprite);
-                art.Remove(old);
-                Destroy(lineSprite);
-                Destroy(old);
-            }
-
-            var pixels = new Color32[w * h];
-            float radius = h * 0.5f;
-            for (int y = 0; y < h; y++)
-            {
-                for (int x = 0; x < w; x++)
-                {
-                    float centre = Mathf.Clamp(x + 0.5f, radius, w - radius);
-                    float dx = x + 0.5f - centre, dy = y + 0.5f - radius;
-                    float distance = Mathf.Sqrt(dx * dx + dy * dy) - radius;
-                    pixels[y * w + x] = new Color32(255, 255, 255, ToByte(Mathf.Clamp01(0.5f - distance)));
-                }
-            }
-
-            lineSprite = MakeSprite(pixels, w, h, "Inventory Line");
         }
 
         // A soft dark halo in the shape of a slab, a little bigger than the slab and drawn under it.

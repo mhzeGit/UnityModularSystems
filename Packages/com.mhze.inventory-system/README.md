@@ -10,7 +10,7 @@ player's hand, and everything the player picks up takes a slot.
 - a picked-up item takes the next free slot, or the selected slot if it is empty
 - the same kind of item **stacks** when its item data allows it, and the stack size is shown
 - a full bar refuses the pickup (the item stays where it is) and shows "Inventory full"
-- the bar is built in code on its own screen-space canvas: a row of separate dark stone slabs, the selected one lighter with a thin ochre edge, chalk marks in its corners and a short ochre line under it; on the InventoryBarView it can sit at the bottom, a bottom corner or the top (`Anchor` and `Margin`), and its size, colours and font are settings
+- the bar is built in code on its own screen-space canvas: a row of separate dark stone slabs, the selected one lighter with a thin ochre edge; on the InventoryBarView it can sit at the bottom, a bottom corner or the top (`Anchor` and `Margin`), and its size, colours and font are settings
 - **the bar keeps out of the way**: it slides off the edge of the screen when nothing has changed for a few seconds and comes back, for a few seconds, whenever the player switches slot (also pressing the key of the slot already held), picks something up, drops something or is refused (`Auto Hide`, `Visible Seconds`); `InventoryBarAvoider` lets other UI (the subtitles) use the space while the bar is away
 
 ## Setup
