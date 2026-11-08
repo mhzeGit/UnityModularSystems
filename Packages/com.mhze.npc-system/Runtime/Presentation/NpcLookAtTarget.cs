@@ -60,6 +60,25 @@ namespace ModularNPC
         [Tooltip("While stationary, turn the body to face the target when its horizontal bearing exceeds this angle. 0 disables body turns. Existing rotation commands take precedence.")]
         [SerializeField, Range(0f, 180f)] private float _bodyTurnThresholdDegrees;
 
+        [Tooltip("Disable automatic eye tracking. Otherwise LeftEye/RightEye bones follow the head target when present.")]
+        [SerializeField] private bool _disableEyeTracking;
+        [SerializeField] private string _leftEyeBoneName = "LeftEye";
+        [SerializeField] private string _rightEyeBoneName = "RightEye";
+        [Tooltip("Maximum eye yaw/pitch from neutral. Zero uses 30/20 degrees for older serialized features.")]
+        [SerializeField] private Vector2 _eyeAngleLimits = new Vector2(30f, 20f);
+        [Tooltip("Eye speed in degrees/second. Zero uses 720 for older serialized features.")]
+        [SerializeField, Min(0f)] private float _eyeDegreesPerSecond = 720f;
+
+        private sealed class EyePose
+        {
+            public Transform Bone;
+            public Quaternion Rest;
+            public Quaternion Current;
+            public Vector3 Forward;
+            public Vector3 Up;
+        }
+
+        [NonSerialized] private EyePose[] _eyes;
         [NonSerialized] private Transform _bone;
         [NonSerialized] private Transform _target;
         [NonSerialized] private float _rootScale = 1f;
@@ -200,7 +219,8 @@ namespace ModularNPC
             bone.rotation = _currentWorldRotation;
             _remainingAngle = Quaternion.Angle(_currentWorldRotation, goal);
 
-            if (!_looking && _remainingAngle <= SettleTolerance)
+            bool eyesSettled = TickEyes(deltaTime);
+            if (!_looking && _remainingAngle <= SettleTolerance && eyesSettled)
             {
                 _remainingAngle = 0f;
                 _hasCurrentRotation = false;
@@ -263,6 +283,7 @@ namespace ModularNPC
         {
             ResetLook();
             _bone = null;
+            _eyes = null;
         }
 
         protected override void OnFeatureValidate()
@@ -278,6 +299,9 @@ namespace ModularNPC
             _minimumPitch = Mathf.Clamp(_minimumPitch, -90f, 0f);
             _maximumPitch = Mathf.Clamp(_maximumPitch, 0f, 90f);
             _bodyTurnThresholdDegrees = Mathf.Clamp(_bodyTurnThresholdDegrees, 0f, 180f);
+            _eyeDegreesPerSecond = Mathf.Max(0f, _eyeDegreesPerSecond);
+            _eyeAngleLimits.x = Mathf.Clamp(_eyeAngleLimits.x, 0f, 60f);
+            _eyeAngleLimits.y = Mathf.Clamp(_eyeAngleLimits.y, 0f, 45f);
         }
 
         private void TickBodyTurn()
@@ -365,6 +389,9 @@ namespace ModularNPC
         private void ResetLook()
         {
             CancelBodyTurn();
+            if (_eyes != null)
+                foreach (var eye in _eyes)
+                    if (eye.Bone != null) { eye.Bone.localRotation = eye.Rest; eye.Current = eye.Rest; }
             _looking = false;
             _target = null;
             _hasCurrentRotation = false;
@@ -392,9 +419,72 @@ namespace ModularNPC
                 // The offset is authored in metres at the character's design scale, so a scaled
                 // character keeps its eyes on the right spot. Cached: the scale does not change.
                 _rootScale = Mathf.Abs(root.lossyScale.y);
+                BindEyes(root);
             }
 
             return _bone;
+        }
+
+        // Calibrate gaze from the head's neutral forward, not the eye bone's authored axes.
+        // Imported rigs commonly give the two eyeballs different local orientations.
+        private void BindEyes(Transform root)
+        {
+            var eyes = new List<EyePose>();
+            if (!_disableEyeTracking)
+            {
+                var transforms = root.GetComponentsInChildren<Transform>(true);
+                string[] names = { string.IsNullOrEmpty(_leftEyeBoneName) ? "LeftEye" : _leftEyeBoneName,
+                    string.IsNullOrEmpty(_rightEyeBoneName) ? "RightEye" : _rightEyeBoneName };
+                foreach (string name in names)
+                    foreach (var candidate in transforms)
+                        if (candidate != _bone && candidate.IsChildOf(_bone) &&
+                            string.Equals(candidate.name, name, StringComparison.OrdinalIgnoreCase) &&
+                            !eyes.Exists(e => e.Bone == candidate))
+                        {
+                            Quaternion parentRotation = candidate.parent.rotation;
+                            eyes.Add(new EyePose { Bone = candidate, Rest = candidate.localRotation,
+                                Current = candidate.localRotation,
+                                Forward = Quaternion.Inverse(parentRotation) * _bone.forward,
+                                Up = Quaternion.Inverse(parentRotation) * _bone.up });
+                            break;
+                        }
+            }
+            _eyes = eyes.ToArray();
+        }
+
+        // Runs after the head, so each eye converges on the same world target using its own pivot.
+        // Only eyeball bones are changed; lids, expressions and the existing body turn keep ownership.
+        private bool TickEyes(float deltaTime)
+        {
+            bool settled = true;
+            if (_eyes == null) return settled;
+            foreach (var eye in _eyes)
+            {
+                if (eye.Bone == null) continue;
+                Quaternion goal = eye.Rest;
+                if (_looking && _target != null)
+                {
+                    Vector3 direction = _target.position - eye.Bone.position;
+                    if (direction.sqrMagnitude > 0.000001f)
+                    {
+                        Quaternion basis = Quaternion.LookRotation(eye.Forward, eye.Up);
+                        Vector3 local = Quaternion.Inverse(basis) *
+                            (Quaternion.Inverse(eye.Bone.parent.rotation) * direction);
+                        float yawLimit = _eyeAngleLimits.x > 0f ? _eyeAngleLimits.x : 30f;
+                        float pitchLimit = _eyeAngleLimits.y > 0f ? _eyeAngleLimits.y : 20f;
+                        float yaw = Mathf.Clamp(Mathf.Atan2(local.x, local.z) * Mathf.Rad2Deg, -yawLimit, yawLimit);
+                        float pitch = Mathf.Clamp(-Mathf.Atan2(local.y,
+                            new Vector2(local.x, local.z).magnitude) * Mathf.Rad2Deg, -pitchLimit, pitchLimit);
+                        Vector3 aim = basis * (Quaternion.Euler(pitch, yaw, 0f) * Vector3.forward);
+                        goal = Quaternion.FromToRotation(eye.Forward, aim) * eye.Rest;
+                    }
+                }
+                eye.Current = Quaternion.RotateTowards(eye.Current, goal,
+                    (_eyeDegreesPerSecond > 0f ? _eyeDegreesPerSecond : 720f) * Mathf.Max(0f, deltaTime));
+                eye.Bone.localRotation = eye.Current;
+                settled &= Quaternion.Angle(eye.Current, goal) <= SettleTolerance;
+            }
+            return settled;
         }
 
         private Transform FindBoneByName()

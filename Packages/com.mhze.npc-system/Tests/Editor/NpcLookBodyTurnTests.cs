@@ -22,6 +22,14 @@ namespace ModularNPC.Tests
                 .SetValue(null, scheduler.AddComponent(schedulerType));
             root = new GameObject("look test");
             new GameObject("Head").transform.SetParent(root.transform);
+            var head = root.transform.Find("Head");
+            foreach (var name in new[] { "LeftEye", "RightEye" })
+            {
+                var eye = new GameObject(name).transform;
+                eye.SetParent(head, false);
+                eye.localPosition = new Vector3(name == "LeftEye" ? -0.04f : 0.04f, 0.1f, 0.08f);
+                eye.localRotation = Quaternion.Euler(name == "LeftEye" ? 13f : -9f, 17f, 5f);
+            }
             target = new GameObject("target");
             npc = root.AddComponent<Npc>();
             rotation = npc.AddFeature<NpcRotation>();
@@ -48,6 +56,40 @@ namespace ModularNPC.Tests
             target.transform.position = Quaternion.Euler(0f, yaw, 0f) * Vector3.forward * 2f;
             Assert.That(look.LookAt(target.transform), Is.True);
             look.Tick(1f / 60f);
+        }
+
+        [Test] public void EyesConvergeWithDifferentAuthoredBoneAxesAndRelease()
+        {
+            var head = root.transform.Find("Head");
+            var left = head.Find("LeftEye"); var right = head.Find("RightEye");
+            Quaternion leftRest = left.localRotation, rightRest = right.localRotation;
+            Vector3 leftAxis = Quaternion.Inverse(left.rotation) * head.forward;
+            Vector3 rightAxis = Quaternion.Inverse(right.rotation) * head.forward;
+            target.transform.position = new Vector3(0.3f, 0.2f, 1f);
+            look.LookAt(target.transform);
+            for (int i = 0; i < 120; i++) look.Tick(1f / 60f);
+            Assert.That(Vector3.Angle(left.rotation * leftAxis, target.transform.position-left.position), Is.LessThan(0.1f));
+            Assert.That(Vector3.Angle(right.rotation * rightAxis, target.transform.position-right.position), Is.LessThan(0.1f));
+            look.StopLooking();
+            for (int i = 0; i < 120; i++) look.Tick(1f / 60f);
+            Assert.That(Quaternion.Angle(left.localRotation, leftRest), Is.LessThan(0.1f));
+            Assert.That(Quaternion.Angle(right.localRotation, rightRest), Is.LessThan(0.1f));
+        }
+
+        [Test] public void EyesLeadSlowHeadWithoutExceedingTheirLimits()
+        {
+            typeof(NpcLookAtTarget).GetField("_degreesPerSecond", Private).SetValue(look, 1f);
+            var eye = root.transform.Find("Head/LeftEye");
+            Quaternion rest = eye.localRotation;
+            Aim(80f);
+            for (int i = 0; i < 10; i++) look.Tick(1f / 60f);
+            float turn = Quaternion.Angle(rest, eye.localRotation);
+            Assert.That(turn, Is.GreaterThan(20f));
+            Assert.That(turn, Is.LessThan(37f)); // combined yaw/pitch cone
+            Object.DestroyImmediate(target);
+            for (int i = 0; i < 240; i++) look.Tick(1f / 60f);
+            Assert.That(look.IsLooking, Is.False);
+            Assert.That(Quaternion.Angle(rest, eye.localRotation), Is.LessThan(0.1f));
         }
 
         [TestCase(89f, false)]

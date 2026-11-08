@@ -57,3 +57,16 @@ unanimated facial bones. Features needing this preparation can implement `INpcPr
 ## Body turns during a look
 
 Set NpcLookAtTarget.BodyTurnThresholdDegrees to a horizontal angle (for example 90) to let a stationary NPC turn its body fully toward a look target after it passes that limit. The head continues tracking throughout. Zero (the default) keeps head-only tracking. This uses INpcRotation, yields to existing rotation commands and active navigation, and cancels its own turn when looking stops, the target changes or the feature shuts down.
+
+### Eye tracking with the head target
+
+`NpcLookAtTarget` automatically binds `LeftEye` and `RightEye` descendants of its head bone.
+Both eyeballs track the existing `INpcLook` target after the head's LateUpdate, without changing
+lid bones. No second target or controller is needed. Gaze axes are calibrated from the neutral
+head forward, preserving differently oriented eye bones. Each eye converges from its own pivot.
+Eye yaw/pitch are limited to 30/20 degrees, with 720 degrees/second motion; configure the eye
+bone names, angle limits, speed, or Disable Eye Tracking on the feature for other rigs.
+Missing eye bones preserve head-only behavior. Zero speed/limits and empty names use defaults
+for older SerializeReference instances. StopLooking, target destruction and deactivation release
+the eyes; deactivation restores neutral immediately. Eye neutral is the bound rest pose, as with
+the head: animate the lids for blinks/expressions, rather than also animating eyeball gaze.
