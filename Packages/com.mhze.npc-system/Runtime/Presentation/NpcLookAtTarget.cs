@@ -71,6 +71,9 @@ namespace ModularNPC
         [SerializeField] private Vector2 _eyeAngleLimits = new Vector2(30f, 20f);
         [Tooltip("Eye speed in degrees/second. Zero uses 720 for older serialized features.")]
         [SerializeField, Min(0f)] private float _eyeDegreesPerSecond = 720f;
+        [Tooltip("Eyes snap straight onto the target every frame (still within the eye angle limits), ignoring Eye Degrees Per Second. " +
+                 "Use with a Drag Delay so the head trails smoothly while the eyes stay locked on.")]
+        [SerializeField] private bool _eyesFollowInstantly;
 
         private sealed class EyePose
         {
@@ -97,6 +100,13 @@ namespace ModularNPC
         {
             get => Mathf.Max(0f, _dragDelay);
             set => _dragDelay = Mathf.Max(0f, value);
+        }
+
+        /// <summary>True snaps the eyes onto the target each frame, independent of head <see cref="DragDelay"/>.</summary>
+        public bool EyesFollowInstantly
+        {
+            get => _eyesFollowInstantly;
+            set => _eyesFollowInstantly = value;
         }
 
         /// <summary>Horizontal angle that triggers a body turn; 0 keeps head-only tracking.</summary>
@@ -499,8 +509,12 @@ namespace ModularNPC
                         goal = Quaternion.FromToRotation(eye.Forward, aim) * eye.Rest;
                     }
                 }
-                eye.Current = Quaternion.RotateTowards(eye.Current, goal,
-                    (_eyeDegreesPerSecond > 0f ? _eyeDegreesPerSecond : 720f) * Mathf.Max(0f, deltaTime));
+                // While looking, instant eyes land on the target this frame. Returning to rest keeps the
+                // normal speed so the eyes do not pop back when looking stops.
+                eye.Current = _eyesFollowInstantly && _looking
+                    ? goal
+                    : Quaternion.RotateTowards(eye.Current, goal,
+                        (_eyeDegreesPerSecond > 0f ? _eyeDegreesPerSecond : 720f) * Mathf.Max(0f, deltaTime));
                 eye.Bone.localRotation = eye.Current;
                 settled &= Quaternion.Angle(eye.Current, goal) <= SettleTolerance;
             }

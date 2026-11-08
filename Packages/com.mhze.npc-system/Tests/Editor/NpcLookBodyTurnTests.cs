@@ -92,6 +92,21 @@ namespace ModularNPC.Tests
             Assert.That(Quaternion.Angle(rest, eye.localRotation), Is.LessThan(0.1f));
         }
 
+        [Test] public void InstantEyesLockOnInOneTickWhileHeadStillTrails()
+        {
+            look.BodyTurnThresholdDegrees = 0f;
+            look.DragDelay = 1f;
+            var head = root.transform.Find("Head");
+            var left = head.Find("LeftEye");
+            Vector3 axis = Quaternion.Inverse(left.rotation) * head.forward;
+            target.transform.position = new Vector3(0.3f, 0.2f, 1f);
+            look.EyesFollowInstantly = true;
+            look.LookAt(target.transform);
+            look.Tick(1f / 60f);
+            Assert.That(look.RemainingAngle, Is.GreaterThan(1f)); // head has not arrived
+            Assert.That(Vector3.Angle(left.rotation * axis, target.transform.position - left.position), Is.LessThan(0.1f));
+        }
+
         [Test] public void ZeroDragTracksImmediatelyIncludingRetargeting()
         {
             look.BodyTurnThresholdDegrees = 0f;

@@ -82,3 +82,8 @@ pose survives Animator writes, retargeting continues from the current pose, and 
 is independent of frame rate. Body-turn thresholds and eye tracking remain independent;
 Degrees Per Second still controls the return to rest after StopLooking. Existing serialized
 features default to zero drag until a value is set.
+
+`NpcLookAtTarget.EyesFollowInstantly` (Inspector: **Eyes Follow Instantly**) makes the eyes land on
+the target every tick while looking, ignoring Eye Degrees Per Second, so a smooth head drag never
+makes the gaze lag. Eye angle limits still apply, so the eyes lead a slow head and saturate at their
+limits until it catches up. Returning to rest after StopLooking still uses the normal eye speed. Off by default.
