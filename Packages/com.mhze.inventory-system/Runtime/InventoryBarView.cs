@@ -371,7 +371,7 @@ namespace MHZE.InventorySystem
 
                 // Tall and narrow while it moves out, short and wide while it comes back in.
                 float speed = view.LiftVelocity / (Mathf.Max(selectedLift, 1f) * liftOmega);
-                float stretch = Mathf.Clamp(speed * squash * 1.6f, -squash, squash);
+                float stretch = Mathf.Clamp(speed * squash, -squash, squash);
                 float size = view.Scale + pop;
                 view.Root.localScale = new Vector3(size * (1f - stretch * 0.7f), size * (1f + stretch), 1f);
                 view.Root.anchoredPosition = new Vector2(view.BaseX, view.Lift * outward);
