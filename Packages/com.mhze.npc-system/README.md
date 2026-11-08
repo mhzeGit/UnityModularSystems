@@ -70,3 +70,15 @@ Missing eye bones preserve head-only behavior. Zero speed/limits and empty names
 for older SerializeReference instances. StopLooking, target destruction and deactivation release
 the eyes; deactivation restores neutral immediately. Eye neutral is the bound rest pose, as with
 the head: animate the lids for blinks/expressions, rather than also animating eyeball gaze.
+
+### Head follow drag
+
+`NpcLookAtTarget.DragDelay` (Inspector: **Drag Delay**) is the head follow smoothing time in
+seconds: `0` snaps to the current target on every tick, while larger values trail it smoothly.
+Try `0.15`–`0.3` seconds for gentle drag or `0.6` for a slower response. This is exponential
+following, not a fixed wait: after one delay interval the head has covered about 63% of the
+remaining angle toward a stationary target. Negative values clamp to zero. The accumulated
+pose survives Animator writes, retargeting continues from the current pose, and the response
+is independent of frame rate. Body-turn thresholds and eye tracking remain independent;
+Degrees Per Second still controls the return to rest after StopLooking. Existing serialized
+features default to zero drag until a value is set.

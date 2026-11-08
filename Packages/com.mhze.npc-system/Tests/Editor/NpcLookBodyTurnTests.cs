@@ -78,7 +78,7 @@ namespace ModularNPC.Tests
 
         [Test] public void EyesLeadSlowHeadWithoutExceedingTheirLimits()
         {
-            typeof(NpcLookAtTarget).GetField("_degreesPerSecond", Private).SetValue(look, 1f);
+            look.DragDelay = 10f;
             var eye = root.transform.Find("Head/LeftEye");
             Quaternion rest = eye.localRotation;
             Aim(80f);
@@ -90,6 +90,55 @@ namespace ModularNPC.Tests
             for (int i = 0; i < 240; i++) look.Tick(1f / 60f);
             Assert.That(look.IsLooking, Is.False);
             Assert.That(Quaternion.Angle(rest, eye.localRotation), Is.LessThan(0.1f));
+        }
+
+        [Test] public void ZeroDragTracksImmediatelyIncludingRetargeting()
+        {
+            look.BodyTurnThresholdDegrees = 0f;
+            look.DragDelay = 0f;
+            Aim(70f);
+            Assert.That(look.RemainingAngle, Is.LessThan(0.01f));
+            Aim(-50f);
+            Assert.That(look.RemainingAngle, Is.LessThan(0.01f));
+        }
+
+        [Test] public void HigherDragTrailsMoreAndConvergesWithoutOvershoot()
+        {
+            look.BodyTurnThresholdDegrees = 0f;
+            target.transform.position = Vector3.right * 2f;
+            look.DragDelay = 0.2f;
+            look.LookAt(target.transform);
+            look.Tick(0.1f);
+            float fast = look.RemainingAngle;
+            look.StopLooking(); look.Tick(1f);
+            look.DragDelay = 0.8f;
+            look.LookAt(target.transform);
+            look.Tick(0.1f);
+            Assert.That(look.RemainingAngle, Is.GreaterThan(fast));
+            float previous = look.RemainingAngle;
+            for (int i = 0; i < 600; i++)
+            {
+                look.Tick(1f / 60f);
+                Assert.That(look.RemainingAngle, Is.LessThanOrEqualTo(previous + 0.001f));
+                previous = look.RemainingAngle;
+            }
+            Assert.That(look.RemainingAngle, Is.LessThan(0.1f));
+        }
+
+        [Test] public void DragIsFrameRateIndependentAndClampsNegativeValues()
+        {
+            look.BodyTurnThresholdDegrees = 0f;
+            look.DragDelay = -1f;
+            Assert.That(look.DragDelay, Is.Zero);
+            look.DragDelay = 0.4f;
+            target.transform.position = Vector3.right * 2f;
+            look.LookAt(target.transform);
+            for (int i = 0; i < 30; i++) look.Tick(1f / 30f);
+            Quaternion at30 = look.LookTransform.rotation;
+            look.StopLooking(); look.Tick(1f);
+            look.LookAt(target.transform);
+            for (int i = 0; i < 60; i++) look.Tick(1f / 60f);
+            Assert.That(Quaternion.Angle(at30, look.LookTransform.rotation), Is.LessThan(0.1f));
         }
 
         [TestCase(89f, false)]

@@ -43,7 +43,10 @@ namespace ModularNPC
                  "directly at it.")]
         [SerializeField, Min(0f)] private float _eyeHeightOffset;
 
-        [Tooltip("How fast the bone turns toward the target, in degrees per second.")]
+        [Tooltip("Head follow smoothing time in seconds. 0 follows instantly; higher values add smooth trailing drag. Not a wait before turning.")]
+        [SerializeField, Min(0f)] private float _dragDelay;
+
+        [Tooltip("How fast the bone returns to rest after looking stops, in degrees per second.")]
         [SerializeField, Min(1f)] private float _degreesPerSecond = DefaultDegreesPerSecond;
 
         [Tooltip("How close to the rest rotation the bone must get before the ease-back stops.")]
@@ -88,6 +91,13 @@ namespace ModularNPC
         [NonSerialized] private bool _hasCurrentRotation;
         [NonSerialized] private bool _looking;
         [NonSerialized] private NpcCommandHandle _bodyTurn = NpcCommandHandle.Invalid;
+
+        /// <summary>Follow smoothing time in seconds. Zero snaps to the target; higher values trail smoothly.</summary>
+        public float DragDelay
+        {
+            get => Mathf.Max(0f, _dragDelay);
+            set => _dragDelay = Mathf.Max(0f, value);
+        }
 
         /// <summary>Horizontal angle that triggers a body turn; 0 keeps head-only tracking.</summary>
         public float BodyTurnThresholdDegrees
@@ -212,10 +222,19 @@ namespace ModularNPC
                 _hasCurrentRotation = true;
             }
 
-            _currentWorldRotation = Quaternion.RotateTowards(
-                _currentWorldRotation,
-                goal,
-                TurnSpeed * Mathf.Max(0f, deltaTime));
+            // Exponential following gives a trailing feel without a fixed wait or overshoot.
+            // Cache the accumulated pose above so Animator writes cannot restart the drag each frame.
+            if (_looking)
+            {
+                float delay = DragDelay;
+                float follow = delay <= 0f ? 1f : 1f - Mathf.Exp(-Mathf.Max(0f, deltaTime) / delay);
+                _currentWorldRotation = Quaternion.Slerp(_currentWorldRotation, goal, follow);
+            }
+            else
+            {
+                _currentWorldRotation = Quaternion.RotateTowards(
+                    _currentWorldRotation, goal, TurnSpeed * Mathf.Max(0f, deltaTime));
+            }
             bone.rotation = _currentWorldRotation;
             _remainingAngle = Quaternion.Angle(_currentWorldRotation, goal);
 
@@ -291,6 +310,7 @@ namespace ModularNPC
             // Speed and tolerance clamp only negatives: 0 means "unset" on a serialized instance that
             // predates the field, and TurnSpeed/SettleTolerance fall back to their defaults for it.
             // Clamping 0 up to the inspector minimum would turn that fallback into 1 degree/second.
+            _dragDelay = Mathf.Max(0f, _dragDelay);
             _eyeHeightOffset = Mathf.Max(0f, _eyeHeightOffset);
             _degreesPerSecond = Mathf.Max(0f, _degreesPerSecond);
             _settleToleranceDegrees = Mathf.Max(0f, _settleToleranceDegrees);
