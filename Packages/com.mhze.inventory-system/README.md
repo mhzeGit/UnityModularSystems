@@ -10,7 +10,7 @@ player's hand, and everything the player picks up takes a slot.
 - a picked-up item takes the next free slot, or the selected slot if it is empty
 - the same kind of item **stacks** when its item data allows it, and the stack size is shown
 - a full bar refuses the pickup (the item stays where it is) and shows "Inventory full"
-- the bar is built in code on its own screen-space canvas: a row of separate dark stone slabs, the selected one lighter with a thin ochre edge; on the InventoryBarView it can sit at the bottom, a bottom corner or the top (`Anchor` and `Margin`), and its size, colours and font are settings
+- the bar is built in code on its own screen-space canvas: a row of separate dark stone slabs, the selected one lighter with a thin ochre edge and standing a little above the others (switching makes it hop, see *Switching slots*); on the InventoryBarView it can sit at the bottom, a bottom corner or the top (`Anchor` and `Margin`), and its size, colours and font are settings
 - **the bar keeps out of the way**: it slides off the edge of the screen when nothing has changed for a few seconds and comes back, for a few seconds, whenever the player switches slot (also pressing the key of the slot already held), picks something up, drops something or is refused (`Auto Hide`, `Visible Seconds`); `InventoryBarAvoider` lets other UI (the subtitles) use the space while the bar is away
 
 ## Setup
@@ -51,6 +51,16 @@ asked every frame, for example "the player has control":
 ```csharp
 inventory.InputGate = () => controller.ControlsEnabled;
 ```
+
+## Switching slots
+
+The selected slab stands **Selected Lift** (12 px at 1920 x 1080) out from the others, towards the middle of the screen.
+When the player switches slot the new slab hops there, overshooting a little, tall and narrow on the way up and short
+and wide as it lands, and the icon on it rocks and comes to rest; the slab it replaces settles back into line the same
+way. Both are springs in unscaled time, so scrolling quickly through the slots turns each hop round smoothly instead of
+restarting it, and the bar measures its clearance and slide with the lift included. Settings on the InventoryBarView
+(Switching): **Selected Lift** (0 keeps all slabs in line), **Lift Speed** (bounces per second, 3.5), **Lift Bounce**
+(0 rises without overshoot, 0.7), **Squash** (0.12) and **Icon Wobble** (degrees, 9; 0 keeps the icon still).
 
 ## The bar slides away
 

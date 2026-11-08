@@ -19,7 +19,9 @@ namespace MHZE.InventorySystem
     /// <summary>
     /// The inventory's bar: a row of separate dark stone slabs at the bottom of the screen, built in code on its own
     /// screen-space canvas. Each slab shows the item's icon (its name until it has one) and the
-    /// stack size when it is more than one. The selected slab is lighter and has a thin ochre edge. The stone is drawn by
+    /// stack size when it is more than one. The selected slab is lighter, has a thin ochre edge and stands a little above
+    /// the others: switching makes the new slab hop up with a squash and stretch and its icon rock, while the old one
+    /// settles back into line (springs, so fast scrolling stays smooth; see the Switching settings). The stone is drawn by
     /// the bar itself (a different grain for every
     /// slab); hand-made sprites can replace it.
     /// <para>
@@ -77,6 +79,18 @@ namespace MHZE.InventorySystem
         [Tooltip("1 keeps the selected slot the size of the others; more makes it bigger.")]
         [SerializeField, Min(1f)] float selectedSlotScale = 1f;
 
+        [Header("Switching")]
+        [Tooltip("How far the selected slab stands out from the others, in pixels at 1920 x 1080. It hops there when it is selected and the slab it replaces settles back into line. 0 keeps every slab in line.")]
+        [SerializeField, Min(0f)] float selectedLift = 12f;
+        [Tooltip("How quickly a slab hops up or settles back, in bounces per second.")]
+        [SerializeField, Range(1f, 8f)] float liftSpeed = 3.5f;
+        [Tooltip("0 rises smoothly and stops; higher overshoots and bounces before it rests.")]
+        [SerializeField, Range(0f, 1f)] float liftBounce = 0.7f;
+        [Tooltip("How much a slab stretches while it rises and squashes while it comes down. 0 keeps its shape.")]
+        [SerializeField, Range(0f, 0.3f)] float squash = 0.12f;
+        [Tooltip("How far, in degrees, the icon of a newly selected slot rocks before it comes to rest. 0 keeps it still.")]
+        [SerializeField, Range(0f, 30f)] float iconWobble = 9f;
+
         [Header("Messages")]
         [SerializeField] string fullMessage = "Inventory full";
 
@@ -84,19 +98,35 @@ namespace MHZE.InventorySystem
         const float NoticeSeconds = 1.6f;
         const float NoticeHeight = 40f;
         const float NoticeOffset = 18f;
+        const float SpringStep = 1f / 120f;
+        // The icon rocks a little slower than the slab hops, and with less damping, so it is still swinging as the slab lands.
+        const float WobbleSpeedFactor = 0.8f;
+        const float WobbleDamping = 0.3f;
+        // How far a spring with WobbleDamping swings, as a fraction of its starting speed over its frequency.
+        const float WobblePeakRatio = 0.672f;
 
         sealed class SlotView
         {
             public RectTransform Root;
             public Image Shadow;
+            public Vector2 ShadowMin;
+            public Vector2 ShadowMax;
             public Image Fill;
             public int Variant;
             public Image Icon;
             public TextMeshProUGUI Name;
             public TextMeshProUGUI Count;
+            public float BaseX;
             public float Scale = 1f;
             public float Punch;
             public int ShownCount = -1;
+
+            // Springs: how far the slab stands out and how fast it moves; how far the icon is tilted and how fast it turns.
+            public float Lift;
+            public float LiftVelocity;
+            public float Tilt;
+            public float TiltVelocity;
+            public bool Resting;
         }
 
         readonly List<SlotView> views = new List<SlotView>();
@@ -285,6 +315,13 @@ namespace MHZE.InventorySystem
         {
             ApplySelection();
             Show();
+
+            // The slab hops by itself (its spring now aims higher); the icon on it gets a push so it rocks.
+            if (index >= 0 && index < views.Count && iconWobble > 0f)
+            {
+                float omega = WobbleOmega();
+                views[index].TiltVelocity = iconWobble * omega / WobblePeakRatio;
+            }
         }
 
         // Pressing the key of the slot that is already selected changes nothing, but it is a question about the bar.
@@ -308,14 +345,48 @@ namespace MHZE.InventorySystem
 
             float dt = Time.unscaledDeltaTime;
             float follow = 1f - Mathf.Exp(-20f * dt);
+            float liftOmega = LiftOmega();
+            float liftDamping = Mathf.Lerp(1f, 0.25f, liftBounce);
+            float wobbleOmega = WobbleOmega();
+            float outward = -slideDirection; // up for a bar at the bottom, down for a bar at the top
             for (int i = 0; i < views.Count; i++)
             {
                 SlotView view = views[i];
-                float target = i == bound.SelectedIndex ? selectedSlotScale : 1f;
-                view.Scale = Mathf.Lerp(view.Scale, target, follow);
+                bool selected = i == bound.SelectedIndex;
+                float target = selected ? selectedSlotScale : 1f;
+                float liftTarget = selected ? selectedLift : 0f;
+
+                // A slab at rest is left alone: writing to it would make the canvas redraw every frame.
+                bool moving = view.Punch > 0f || view.Scale != target || view.Lift != liftTarget || view.LiftVelocity != 0f
+                              || view.Tilt != 0f || view.TiltVelocity != 0f;
+                if (!moving && view.Resting) continue;
+                view.Resting = !moving;
+
+                view.Scale = Mathf.Abs(view.Scale - target) < 0.0005f ? target : Mathf.Lerp(view.Scale, target, follow);
                 view.Punch = Mathf.MoveTowards(view.Punch, 0f, dt * 5f);
                 float pop = view.Punch * view.Punch * 0.08f;
-                view.Root.localScale = Vector3.one * (view.Scale + pop);
+
+                Spring(ref view.Lift, ref view.LiftVelocity, liftTarget, liftOmega, liftDamping, dt);
+                Spring(ref view.Tilt, ref view.TiltVelocity, 0f, wobbleOmega, WobbleDamping, dt);
+
+                // Tall and narrow while it moves out, short and wide while it comes back in.
+                float speed = view.LiftVelocity / (Mathf.Max(selectedLift, 1f) * liftOmega);
+                float stretch = Mathf.Clamp(speed * squash * 1.6f, -squash, squash);
+                float size = view.Scale + pop;
+                view.Root.localScale = new Vector3(size * (1f - stretch * 0.7f), size * (1f + stretch), 1f);
+                view.Root.anchoredPosition = new Vector2(view.BaseX, view.Lift * outward);
+
+                // The shadow stays partly behind, so the slab seems to lift off the bar.
+                if (view.Shadow != null)
+                {
+                    var back = new Vector2(0f, -view.Lift * outward * 0.5f);
+                    view.Shadow.rectTransform.offsetMin = view.ShadowMin + back;
+                    view.Shadow.rectTransform.offsetMax = view.ShadowMax + back;
+                }
+
+                var tilt = Quaternion.Euler(0f, 0f, view.Tilt);
+                view.Icon.rectTransform.localRotation = tilt;
+                view.Name.rectTransform.localRotation = tilt;
             }
 
             if (notice != null)
@@ -351,6 +422,36 @@ namespace MHZE.InventorySystem
             }
 
             ApplyReveal();
+        }
+
+        float LiftOmega()
+        {
+            return 2f * Mathf.PI * liftSpeed;
+        }
+
+        float WobbleOmega()
+        {
+            return 2f * Mathf.PI * liftSpeed * WobbleSpeedFactor;
+        }
+
+        // A damped spring pulling value towards target: omega is its speed (radians per second), damping 1 settles without
+        // overshoot and less than 1 bounces. Small fixed steps keep it steady when a frame is long.
+        static void Spring(ref float value, ref float velocity, float target, float omega, float damping, float dt)
+        {
+            dt = Mathf.Min(dt, 0.1f);
+            int steps = Mathf.Max(1, Mathf.CeilToInt(dt / SpringStep));
+            float h = dt / steps;
+            for (int s = 0; s < steps; s++)
+            {
+                velocity += (-omega * omega * (value - target) - 2f * damping * omega * velocity) * h;
+                value += velocity * h;
+            }
+
+            if (Mathf.Abs(value - target) < 0.01f && Mathf.Abs(velocity) < 0.05f)
+            {
+                value = target;
+                velocity = 0f;
+            }
         }
 
         void ApplyReveal(bool force = false)
@@ -417,16 +518,18 @@ namespace MHZE.InventorySystem
             bar.sizeDelta = new Vector2(width, slotPixels);
 
             // Away is past the edge of the screen: the margin, the slot (as big as it gets) and its shadow and line.
-            float tall = slotPixels * Mathf.Max(1.1f, selectedSlotScale);
+            // The selected slab stands out by its lift, so that counts too.
+            float tall = slotPixels * Mathf.Max(1.1f, selectedSlotScale) + selectedLift;
             slideDirection = top ? 1f : -1f;
             slideDistance = margin.y + tall + 16f;
-            barClearance = margin.y + slotPixels * selectedSlotScale + 4f;
+            barClearance = margin.y + slotPixels * selectedSlotScale + selectedLift + 4f;
 
             RectTransform note = notice.rectTransform;
             var noteSide = new Vector2(corner.x, top ? 0f : 1f);
             note.anchorMin = note.anchorMax = noteSide;
             note.pivot = new Vector2(corner.x, top ? 1f : 0f);
-            note.anchoredPosition = new Vector2(0f, top ? -NoticeOffset : NoticeOffset);
+            float noteOffset = NoticeOffset + selectedLift;
+            note.anchoredPosition = new Vector2(0f, top ? -noteOffset : noteOffset);
             notice.alignment = left
                 ? (top ? TextAlignmentOptions.TopLeft : TextAlignmentOptions.BottomLeft)
                 : right
@@ -460,6 +563,12 @@ namespace MHZE.InventorySystem
 
             for (int i = 0; i < views.Count; i++) Refresh(i);
             ApplySelection();
+
+            // A new bar is not a switch: the selected slab starts where it rests, without a hop.
+            for (int i = 0; i < views.Count; i++)
+            {
+                if (i == bound.SelectedIndex) views[i].Lift = selectedLift;
+            }
         }
 
         SlotView CreateSlot(int index, float x)
@@ -470,6 +579,7 @@ namespace MHZE.InventorySystem
             view.Root.pivot = new Vector2(0.5f, 0.5f);
             view.Root.sizeDelta = new Vector2(slotPixels, slotPixels);
             view.Root.anchoredPosition = new Vector2(x, 0f);
+            view.BaseX = x;
 
             view.Variant = index % Mathf.Max(1, stone.Length);
 
@@ -479,6 +589,8 @@ namespace MHZE.InventorySystem
             float drop = Mathf.Round(slotPixels * ShadowDrop);
             view.Shadow.rectTransform.offsetMin = new Vector2(-pad, -pad - drop);
             view.Shadow.rectTransform.offsetMax = new Vector2(pad, pad - drop);
+            view.ShadowMin = view.Shadow.rectTransform.offsetMin;
+            view.ShadowMax = view.Shadow.rectTransform.offsetMax;
             view.Shadow.sprite = shadow;
             view.Shadow.enabled = shadow != null;
 
