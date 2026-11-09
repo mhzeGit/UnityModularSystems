@@ -76,6 +76,14 @@ namespace MHZE.UltimateDoorSystem
     [SerializeField] private AudioClip _openSound;
     [Tooltip("Played when the door starts closing.")]
     [SerializeField] private AudioClip _closeSound;
+    [Tooltip("Played when someone tries to open the door while it is locked (handle rattle).")]
+    [SerializeField] private AudioClip _lockedSound;
+
+    [Header("Locked Rattle")]
+    [Tooltip("Curve and numbers of the small shake on a locked try. Empty = DoorRattleProfile.Default.")]
+    [SerializeField] private DoorRattleProfile _rattleProfile;
+    [Tooltip("Per-door multiplier of the rattle size. 0 turns the shake off (the sound still plays).")]
+    [SerializeField] private float _rattleAmplitude = 1f;
 
     public ArgEventBinding OnOpened = new ArgEventBinding();
     public ArgEventBinding OnClosed = new ArgEventBinding();
@@ -92,6 +100,10 @@ namespace MHZE.UltimateDoorSystem
     private bool _reverseDirection;
     private bool _isAnimating;
     private bool _isOpening;
+    private Coroutine _rattleRoutine;
+    private Quaternion _rattleBaseRot;
+    private Vector3 _rattleBasePos;
+    private float _lastLockedSoundTime = -100f;
 
     public DoorState State => _state;
     public DoorMode Mode => _mode;
@@ -193,8 +205,80 @@ namespace MHZE.UltimateDoorSystem
         }
     }
 
+    private void OnDisable()
+    {
+        CancelRattle();
+    }
+
+    /// <summary>Stops a running locked rattle and puts the door back exactly on the pose it started from.</summary>
+    private void CancelRattle()
+    {
+        if (_rattleRoutine == null) return;
+        StopCoroutine(_rattleRoutine);
+        _rattleRoutine = null;
+        _transform.localRotation = _rattleBaseRot;
+        _transform.localPosition = _rattleBasePos;
+    }
+
+    private void StartRattle()
+    {
+        DoorRattleProfile profile = _rattleProfile != null ? _rattleProfile : DoorRattleProfile.Default;
+
+        // Every click restarts from the stored pose first, so nothing accumulates.
+        CancelRattle();
+
+        if (Time.time - _lastLockedSoundTime >= profile.soundCooldown)
+        {
+            _lastLockedSoundTime = Time.time;
+            PlayLockedSound(profile);
+        }
+
+        if (_isAnimating || _rattleAmplitude <= 0f || profile.duration <= 0f) return;
+        if (_animationType != AnimationType.Procedural && _animationType != AnimationType.None) return;
+
+        _rattleBaseRot = _transform.localRotation;
+        _rattleBasePos = _transform.localPosition;
+        _rattleRoutine = StartCoroutine(RattleRoutine(profile));
+    }
+
+    private IEnumerator RattleRoutine(DoorRattleProfile profile)
+    {
+        float elapsed = 0f;
+        while (elapsed < profile.duration)
+        {
+            if (_state != DoorState.Locked || _isAnimating) break;
+            elapsed += Time.deltaTime;
+            float v = profile.offsetCurve.Evaluate(Mathf.Clamp01(elapsed / profile.duration)) * _rattleAmplitude;
+
+            if (_mode == DoorMode.Rotating)
+                _transform.localRotation = _rattleBaseRot * Quaternion.AngleAxis(v * profile.peakDegrees, _rotationAxis.normalized);
+            else
+                _transform.localPosition = _rattleBasePos + _slideAxis.normalized * (v * profile.peakSlide);
+
+            yield return null;
+        }
+
+        _transform.localRotation = _rattleBaseRot;
+        _transform.localPosition = _rattleBasePos;
+        _rattleRoutine = null;
+    }
+
+    private void PlayLockedSound(DoorRattleProfile profile)
+    {
+        if (_lockedSound == null) return;
+        if (_audioSource == null)
+        {
+            _audioSource = GetComponent<AudioSource>();
+            if (_audioSource == null)
+                _audioSource = gameObject.AddComponent<AudioSource>();
+        }
+        _audioSource.pitch = 1f + UnityEngine.Random.Range(-profile.pitchVariation, profile.pitchVariation);
+        _audioSource.PlayOneShot(_lockedSound, 1f - UnityEngine.Random.Range(0f, profile.volumeVariation));
+    }
+
     private void StopExistingRoutine()
     {
+        CancelRattle();
         if (_moveRoutine != null)
         {
             StopCoroutine(_moveRoutine);
@@ -240,6 +324,7 @@ namespace MHZE.UltimateDoorSystem
                 _audioSource = gameObject.AddComponent<AudioSource>();
         }
 
+        _audioSource.pitch = 1f;
         _audioSource.PlayOneShot(clip);
     }
 
@@ -262,6 +347,7 @@ namespace MHZE.UltimateDoorSystem
 
     private void HandleAttemptOpenLocked()
     {
+        StartRattle();
         switch (_animationType)
         {
             case AnimationType.Animation:
@@ -380,7 +466,11 @@ namespace MHZE.UltimateDoorSystem
 
     public void Toggle(Transform interactor)
     {
-        if (_state == DoorState.Locked) return;
+        if (_state == DoorState.Locked)
+        {
+            HandleAttemptOpenLocked();
+            return;
+        }
 
         if (_isAnimating)
         {
@@ -422,6 +512,7 @@ namespace MHZE.UltimateDoorSystem
     public void Unlock(string input)
     {
         if (_state != DoorState.Locked) return;
+        CancelRattle();
 
         if (!_hasPassword || string.IsNullOrEmpty(_passwordHash))
         {
