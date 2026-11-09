@@ -97,6 +97,7 @@ bag.Holds(someObject);        // in the hand or put away
 bag.IsHandLocked;             // the story put the held item there; it stays until released
 bag.ReleaseAll();             // everything back into the world in front of the player
 bag.Inventory[0].Count;       // slot content: Info.Name, Info.Icon, Count, items
+bag.BeginQuiet(); /* ...pick up... */ bag.EndQuiet();  // changes happen but the bar stays off screen
 bag.SlotChanged += i => { };  // also SelectionChanged, SelectionRepeated, SlotCountChanged, PickupRefused, SelectionBlocked
 ```
 

@@ -1,6 +1,6 @@
 {
   "name": "com.mhze.inventory-system",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "displayName": "Inventory System",
   "description": "A minimal hotbar inventory for first-person pickups: a configurable number of slots, number keys and the scroll wheel to switch, empty slots for empty hands, stacking per item and a simple bar of dark stone slabs built in code, whose selected slab hops up when the player switches, that slides off the screen when nothing changes. Sits on top of the Pickup System.",
   "unity": "2022.3",

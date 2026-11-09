@@ -205,9 +205,11 @@ namespace MHZE.InventorySystem
             Show(visibleSeconds);
         }
 
-        /// <summary>Brings the bar on screen and keeps it there for at least this many seconds from now.</summary>
+        /// <summary>Brings the bar on screen and keeps it there for at least this many seconds from now. Does nothing while <see cref="PlayerInventory.IsQuiet"/>.</summary>
         public void Show(float seconds)
         {
+            // The story is changing the hand on purpose and asked the bar to keep still (see PlayerInventory.BeginQuiet).
+            if (bound != null && bound.IsQuiet) return;
             shownUntil = Mathf.Max(shownUntil, Time.realtimeSinceStartup + Mathf.Max(0f, seconds));
         }
 

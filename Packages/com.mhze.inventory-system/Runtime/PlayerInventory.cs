@@ -202,6 +202,20 @@ namespace MHZE.InventorySystem
             SlotCountChanged?.Invoke();
         }
 
+        int quietDepth;
+
+        /// <summary>True between <see cref="BeginQuiet"/> and <see cref="EndQuiet"/>: the bar does not slide on screen for changes made now.</summary>
+        public bool IsQuiet => quietDepth > 0;
+
+        /// <summary>
+        /// Starts a stretch in which slot and selection changes still happen but the bar does not pop up (the story handing
+        /// over the first item). Pair with <see cref="EndQuiet"/>, e.g. in try/finally; they nest.
+        /// </summary>
+        public void BeginQuiet() { quietDepth++; }
+
+        /// <summary>Ends a <see cref="BeginQuiet"/> stretch.</summary>
+        public void EndQuiet() { quietDepth = Mathf.Max(0, quietDepth - 1); }
+
         /// <summary>Creates the slots. Safe to call again; it only does anything once.</summary>
         public void Initialize()
         {
