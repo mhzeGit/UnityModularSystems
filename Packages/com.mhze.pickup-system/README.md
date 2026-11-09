@@ -115,6 +115,13 @@ EditMode tests cover additive neutral offsets before Start, direct replacement a
 data resolution. Add `com.mhze.pickup-system` to the test project's manifest `testables` to expose
 package tests when testing a Git dependency.
 
+## Items the player cannot drop (IHeldUntilReleased)
+
+A component on a pickable item can implement `IHeldUntilReleased` and return `BlocksPlayerRelease = true` while the
+player must keep it (a gift to hand over). The drop input then does nothing, silently, and without a bag a pickup of
+something else is refused like a full hand. `PickupSystem.HeldItemBlocksPlayerRelease` reports it so a throw system can
+refuse too. `DropCurrentHeldItem()` ignores it, so the story can always take the item. Items without it are unchanged.
+
 ## Camera-follow smoothing
 
 Add PlayerArmMotionLag to the arm rig root (the camera-child object with PlayerArmAnimator) and assign its camera. If left blank, it uses the rig's parent.

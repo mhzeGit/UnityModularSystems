@@ -137,6 +137,7 @@ namespace MHZE.PickupSystem
         void DropInputPerformed(InputAction.CallbackContext context)
         {
             if (currentPickedObject == null) return;
+            if (HeldItemBlocksPlayerRelease) return;
 
             if (currentPickableItem == null)
             {
@@ -146,6 +147,12 @@ namespace MHZE.PickupSystem
             DropObject(currentPickedObject, currentPickableItem);
         }
         #endregion
+
+        /// <summary>True while the held item is an <see cref="IHeldUntilReleased"/> that refuses to be dropped or thrown by the player.</summary>
+        public bool HeldItemBlocksPlayerRelease =>
+            currentPickedObject != null
+            && currentPickedObject.TryGetComponent(out IHeldUntilReleased lockedItem)
+            && lockedItem.BlocksPlayerRelease;
 
         public void CheckIfPickable(GameObject interactedObject)
         {
@@ -191,6 +198,12 @@ namespace MHZE.PickupSystem
 
             if (currentPickableItem != null)
             {
+                if (HeldItemBlocksPlayerRelease)
+                {
+                    OnAttemptedPickWhileOccupied?.Invoke();
+                    return;
+                }
+
                 if (dropOnPickup)
                 {
                     DropObject(currentPickedObject, currentPickableItem);

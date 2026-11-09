@@ -33,6 +33,23 @@ namespace MHZE.PickupSystem.Tests
             Assert.That(rigObject.transform.localPosition, Is.EqualTo(neutral));
             Assert.That(item.PhysicsEnabled, Is.True);
         }
+        [Test] public void ItemHeldUntilReleasedRefusesPlayerReleaseButStillDropsFromCode()
+        {
+            var lockedItem = first.AddComponent<LockedItem>();
+            lockedItem.Locked = true;
+            pickup.PickupObject(first, new TestItem());
+            Assert.That(pickup.HeldItemBlocksPlayerRelease, Is.True);
+            lockedItem.Locked = false;
+            Assert.That(pickup.HeldItemBlocksPlayerRelease, Is.False);
+            lockedItem.Locked = true;
+            pickup.DropCurrentHeldItem();
+            Assert.That(pickup.IsHoldingItem(), Is.False);
+        }
+        private sealed class LockedItem : MonoBehaviour, IHeldUntilReleased
+        {
+            public bool Locked;
+            public bool BlocksPlayerRelease => Locked;
+        }
         [Test] public void PickingUpWhileTheRightHandIsHiddenKeepsTheItemsScale()
         {
             Transform bone = new GameObject("Right Arm").transform;
