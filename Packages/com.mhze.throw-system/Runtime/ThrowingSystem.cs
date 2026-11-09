@@ -32,6 +32,9 @@ namespace MHZE.ThrowSystem
         public event System.Action<float> OnThrowChargeProgress;
         public event System.Action<GameObject> OnItemThrown;
 
+        /// <summary>Optional. Return false for a held object that may not be thrown right now; the throw input then does nothing.</summary>
+        public System.Func<GameObject, bool> CanThrowFilter;
+
         GameObject currentHeldObject;
         bool isCharging;
         float chargeTimer;
@@ -60,6 +63,7 @@ namespace MHZE.ThrowSystem
         void OnThrowInputStarted(InputAction.CallbackContext ctx)
         {
             if (currentHeldObject == null) return;
+            if (CanThrowFilter != null && !CanThrowFilter(currentHeldObject)) return;
 
             isCharging = true;
             chargeTimer = 0f;
@@ -90,7 +94,7 @@ namespace MHZE.ThrowSystem
 
         void PerformThrow()
         {
-            if (currentHeldObject == null)
+            if (currentHeldObject == null || (CanThrowFilter != null && !CanThrowFilter(currentHeldObject)))
             {
                 CancelCharge();
                 return;
