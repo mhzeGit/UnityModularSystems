@@ -122,6 +122,23 @@ player must keep it (a gift to hand over). The drop input then does nothing, sil
 something else is refused like a full hand. `PickupSystem.HeldItemBlocksPlayerRelease` reports it so a throw system can
 refuse too. `DropCurrentHeldItem()` ignores it, so the story can always take the item. Items without it are unchanged.
 
+## Drop safety (walls)
+
+The hand reaches ahead of the camera, so standing close to a wall and pressing the drop key used to let go of the
+item on the far side of it, or inside it. The player's drop is now refused (silently; `OnDropBlocked` fires) while
+`PickupSystem.IsHeldItemObstructed(out Collider blocker)` is true:
+
+- **Contact**: an oriented box around each mesh of the held item (its colliders are off while held) overlaps
+  a solid collider, widened by `dropClearanceMargin` (2 cm).
+- **Line**: a line from the camera (`DropCheckOrigin`, else `Camera.main`) to the item's centre crosses a
+  solid collider, which catches an item wholly behind a thin wall that nothing overlaps.
+
+Triggers, the item's own and the player's colliders, free-moving rigid bodies and other pickable items never count.
+`dropObstacleLayers` limits the layers; `CheckDropClearance = false` turns it off. `DropCurrentHeldItem()` is code
+and ignores it, like `IHeldUntilReleased`. A throw system should refuse too: the game's `PickupThrowMediator`
+returns `false` from `ThrowingSystem.CanThrowFilter` when `IsHeldItemObstructed` and calls `NotifyReleaseBlocked()`.
+Queries run only when the player presses drop or throw, never per frame. The logic lives in `HeldItemClearance`.
+
 ## Camera-follow smoothing
 
 Add PlayerArmMotionLag to the arm rig root (the camera-child object with PlayerArmAnimator) and assign its camera. If left blank, it uses the rig's parent.

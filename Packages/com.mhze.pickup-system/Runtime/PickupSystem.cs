@@ -14,8 +14,21 @@ namespace MHZE.PickupSystem
         [Header("Pickup Behaviour")]
         [SerializeField] private bool dropOnPickup = false;
 
+        [Header("Drop Safety")]
+        [Tooltip("Refuse the player's drop (and throw) while the held item touches something solid or a wall stands between the camera and it, so an item held over or through a wall is never let go on the far side.")]
+        [SerializeField] bool checkDropClearance = true;
+        [Tooltip("Where the player looks from, for the line check. Empty uses Camera.main.")]
+        [SerializeField] Transform dropCheckOrigin;
+        [Tooltip("Layers that can obstruct a drop.")]
+        [SerializeField] LayerMask dropObstacleLayers = ~0;
+        [Tooltip("Metres added around the item when testing for contact.")]
+        [SerializeField, Min(0f)] float dropClearanceMargin = 0.02f;
+
         [Header("Inputs")]
         [SerializeField] InputActionReference DropInputAction;
+
+        /// <summary>The player asked to drop the held item but it is held into something solid; nothing was dropped.</summary>
+        public event System.Action<GameObject> OnDropBlocked;
 
         public event System.Action<GameObject> OnPickedItemChanged;
         public event System.Action<IPickable> OnItemPicked;
@@ -139,6 +152,12 @@ namespace MHZE.PickupSystem
             if (currentPickedObject == null) return;
             if (HeldItemBlocksPlayerRelease) return;
 
+            if (IsHeldItemObstructed(out _))
+            {
+                OnDropBlocked?.Invoke(currentPickedObject);
+                return;
+            }
+
             if (currentPickableItem == null)
             {
                 Debug.LogWarning("currentPickedObject exists but currentPickableItem is null — dropping via transform parent only.", this);
@@ -153,6 +172,37 @@ namespace MHZE.PickupSystem
             currentPickedObject != null
             && currentPickedObject.TryGetComponent(out IHeldUntilReleased lockedItem)
             && lockedItem.BlocksPlayerRelease;
+
+        /// <summary>Turns the wall check on the player's drop and throw on or off at run time.</summary>
+        public bool CheckDropClearance { get => checkDropClearance; set => checkDropClearance = value; }
+
+        /// <summary>Where the line check starts (the camera). Null falls back to <c>Camera.main</c>.</summary>
+        public Transform DropCheckOrigin { get => dropCheckOrigin; set => dropCheckOrigin = value; }
+
+        /// <summary>
+        /// True while the held item touches something solid, or a wall stands between the camera and it: letting go
+        /// now would put it on the far side or inside the wall. <paramref name="blocker"/> is the collider in the
+        /// way. Always false with nothing held or with <see cref="CheckDropClearance"/> off. This guards only the
+        /// player's own drop and throw; <see cref="DropCurrentHeldItem"/> is code and ignores it.
+        /// </summary>
+        public bool IsHeldItemObstructed(out Collider blocker)
+        {
+            blocker = null;
+            if (!checkDropClearance || currentPickedObject == null) return false;
+
+            Transform origin = dropCheckOrigin;
+            if (origin == null && Camera.main != null) origin = Camera.main.transform;
+
+            Transform playerRoot = PickableObjectHolder != null ? PickableObjectHolder.root : null;
+            blocker = HeldItemClearance.FindBlocker(currentPickedObject, origin, playerRoot, dropObstacleLayers, dropClearanceMargin);
+            return blocker != null;
+        }
+
+        /// <summary>Raises <see cref="OnDropBlocked"/> for the held item; a throw system that refused a throw calls this.</summary>
+        public void NotifyReleaseBlocked()
+        {
+            if (currentPickedObject != null) OnDropBlocked?.Invoke(currentPickedObject);
+        }
 
         public void CheckIfPickable(GameObject interactedObject)
         {
