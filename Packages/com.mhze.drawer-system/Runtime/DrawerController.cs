@@ -75,6 +75,15 @@ namespace MHZE.DrawerSystem
         /// <summary>Local axis the drawer slides along.</summary>
         public Vector3 SlideAxis => slideAxis;
 
+        /// <summary>The source used for the open and close sounds.</summary>
+        public AudioSource AudioSource => audioSource;
+
+        /// <summary>Clip played when the drawer starts opening.</summary>
+        public AudioClip OpenSound => openSound;
+
+        /// <summary>Clip played when the drawer starts closing.</summary>
+        public AudioClip CloseSound => closeSound;
+
         private void Awake()
         {
             closedLocalPosition = transform.localPosition;
