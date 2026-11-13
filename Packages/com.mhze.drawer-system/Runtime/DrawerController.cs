@@ -353,17 +353,17 @@ namespace MHZE.DrawerSystem
             Vector3 axis = Abs(slideAxis.normalized);
             Vector3 localScale = transform.localScale;
 
-            MeshFilter meshFilter = GetComponent<MeshFilter>();
-            if (meshFilter != null && meshFilter.sharedMesh != null)
-                return Vector3.Dot(Vector3.Scale(meshFilter.sharedMesh.bounds.size, localScale), axis);
+            BoxCollider boxCollider = GetComponent<BoxCollider>();
+            if (boxCollider != null)
+                return Vector3.Dot(Vector3.Scale(boxCollider.size, localScale), axis);
 
             MeshCollider meshCollider = GetComponent<MeshCollider>();
             if (meshCollider != null && meshCollider.sharedMesh != null)
                 return Vector3.Dot(Vector3.Scale(meshCollider.sharedMesh.bounds.size, localScale), axis);
 
-            BoxCollider boxCollider = GetComponent<BoxCollider>();
-            if (boxCollider != null)
-                return Vector3.Dot(Vector3.Scale(boxCollider.size, localScale), axis);
+            MeshFilter meshFilter = GetComponent<MeshFilter>();
+            if (meshFilter != null && meshFilter.sharedMesh != null)
+                return Vector3.Dot(Vector3.Scale(meshFilter.sharedMesh.bounds.size, localScale), axis);
 
             return 0.4f;
         }
@@ -374,11 +374,13 @@ namespace MHZE.DrawerSystem
             Vector3 size = Vector3.one * 0.4f;
             Vector3 localCenter = Vector3.zero;
 
-            MeshFilter meshFilter = GetComponent<MeshFilter>();
-            if (meshFilter != null && meshFilter.sharedMesh != null)
+            // A batched MeshFilter points at the whole scene's combined mesh, not the drawer. The
+            // collider keeps the drawer's own mesh, so it is the reliable source after batching.
+            BoxCollider boxCollider = GetComponent<BoxCollider>();
+            if (boxCollider != null)
             {
-                localCenter = meshFilter.sharedMesh.bounds.center;
-                size = meshFilter.sharedMesh.bounds.size;
+                localCenter = boxCollider.center;
+                size = boxCollider.size;
             }
             else
             {
@@ -390,18 +392,18 @@ namespace MHZE.DrawerSystem
                 }
                 else
                 {
-                    BoxCollider boxCollider = GetComponent<BoxCollider>();
-                    if (boxCollider != null)
+                    MeshFilter meshFilter = GetComponent<MeshFilter>();
+                    if (meshFilter != null && meshFilter.sharedMesh != null)
                     {
-                        localCenter = boxCollider.center;
-                        size = boxCollider.size;
+                        localCenter = meshFilter.sharedMesh.bounds.center;
+                        size = meshFilter.sharedMesh.bounds.size;
                     }
                 }
             }
 
             Vector3 scaledSize = Vector3.Scale(size, Abs(transform.lossyScale));
             scaledSize.x *= contentWidthDepthScale;
-            scaledSize.z *= contentWidthDepthScale;
+            scaledSize.z = Mathf.Max(scaledSize.z * contentWidthDepthScale, 0.3f);
             scaledSize.y *= contentHeightScale;
 
             center = transform.TransformPoint(localCenter);
