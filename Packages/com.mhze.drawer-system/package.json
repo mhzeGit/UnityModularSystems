@@ -1,0 +1,12 @@
+{
+  "name": "com.mhze.drawer-system",
+  "version": "1.0.0",
+  "displayName": "Drawer System",
+  "description": "Sliding drawers with open/close sound, a non-blocking contents volume, and rigidbody-aware carrying of the items inside.",
+  "unity": "2021.3",
+  "author": {
+    "name": "MHZE",
+    "email": "mhze.uk@gmail.com",
+    "url": "https://github.com/mhzeGit/"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "com.mhze.drawer-system.Runtime",
+  "rootNamespace": "MHZE.DrawerSystem",
+  "references": [],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
