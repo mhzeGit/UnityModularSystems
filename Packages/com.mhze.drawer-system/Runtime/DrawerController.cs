@@ -57,7 +57,6 @@ namespace MHZE.DrawerSystem
         private readonly HashSet<Collider> ignoredColliders = new HashSet<Collider>();
 
         private Vector3 closedLocalPosition;
-        private Vector3 pendingContentsDelta;
         private Coroutine moveRoutine;
 
         /// <summary>True while the drawer is open or heading to open.</summary>
@@ -104,7 +103,6 @@ namespace MHZE.DrawerSystem
         private void OnDisable()
         {
             StopMove();
-            pendingContentsDelta = Vector3.zero;
             ReleaseContents();
         }
 
@@ -140,6 +138,7 @@ namespace MHZE.DrawerSystem
 
             PlaySound(open ? openSound : closeSound);
             CollectContents();
+            BeginCarry();
 
             Vector3 target = open ? OpenLocalPosition : closedLocalPosition;
             moveRoutine = StartCoroutine(AnimateMove(target));
@@ -160,27 +159,19 @@ namespace MHZE.DrawerSystem
                 transform.localPosition = Vector3.LerpUnclamped(startLocalPosition, targetLocalPosition, movementCurve.Evaluate(t));
 
                 Vector3 currentWorld = transform.position;
-                pendingContentsDelta += currentWorld - previousWorld;
+                CarryContents(currentWorld - previousWorld);
                 previousWorld = currentWorld;
 
                 yield return null;
             }
 
             transform.localPosition = targetLocalPosition;
-            pendingContentsDelta += transform.position - previousWorld;
+            CarryContents(transform.position - previousWorld);
+            EndCarry();
 
             moveRoutine = null;
             IsMoving = false;
             MovementCompleted?.Invoke(IsOpen);
-        }
-
-        private void FixedUpdate()
-        {
-            if (pendingContentsDelta == Vector3.zero)
-                return;
-
-            CarryContents(pendingContentsDelta);
-            pendingContentsDelta = Vector3.zero;
         }
 
         private void PlaySound(AudioClip clip)
@@ -201,12 +192,14 @@ namespace MHZE.DrawerSystem
 
         private void StopMove()
         {
-            if (moveRoutine == null)
-                return;
+            if (moveRoutine != null)
+            {
+                StopCoroutine(moveRoutine);
+                moveRoutine = null;
+                IsMoving = false;
+            }
 
-            StopCoroutine(moveRoutine);
-            moveRoutine = null;
-            IsMoving = false;
+            EndCarry();
         }
 
         private void CollectContents()
@@ -287,7 +280,7 @@ namespace MHZE.DrawerSystem
 
                 if (content.Body != null)
                 {
-                    content.Body.MovePosition(content.Body.position + delta);
+                    content.Body.position += delta;
                     content.Body.WakeUp();
                 }
                 else
@@ -295,6 +288,48 @@ namespace MHZE.DrawerSystem
                     content.Transform.position += delta;
                 }
             }
+        }
+
+        private void BeginCarry()
+        {
+            for (int i = 0; i < carriedContents.Count; i++)
+            {
+                Rigidbody body = carriedContents[i].Body;
+                if (body == null)
+                    continue;
+
+                ZeroVelocity(body);
+                body.useGravity = false;
+                body.isKinematic = true;
+            }
+        }
+
+        private void EndCarry()
+        {
+            for (int i = 0; i < carriedContents.Count; i++)
+            {
+                CarriedContent content = carriedContents[i];
+                if (content.Body == null)
+                    continue;
+                if (!HasEnabledCollider(content.Colliders))
+                    continue;
+
+                content.Body.isKinematic = content.WasKinematic;
+                content.Body.useGravity = content.WasGravity;
+                ZeroVelocity(content.Body);
+            }
+
+            carriedContents.Clear();
+        }
+
+        private static void ZeroVelocity(Rigidbody body)
+        {
+#if UNITY_6000_0_OR_NEWER
+            body.linearVelocity = Vector3.zero;
+#else
+            body.velocity = Vector3.zero;
+#endif
+            body.angularVelocity = Vector3.zero;
         }
 
         private static bool HasEnabledCollider(Collider[] colliders)
@@ -394,12 +429,16 @@ namespace MHZE.DrawerSystem
             public readonly Transform Transform;
             public readonly Rigidbody Body;
             public readonly Collider[] Colliders;
+            public readonly bool WasKinematic;
+            public readonly bool WasGravity;
 
             public CarriedContent(Transform transform, Rigidbody body, Collider[] colliders)
             {
                 Transform = transform;
                 Body = body;
                 Colliders = colliders;
+                WasKinematic = body != null && body.isKinematic;
+                WasGravity = body == null || body.useGravity;
             }
 
             public bool IsValid(Transform drawer, float releaseDistance)
