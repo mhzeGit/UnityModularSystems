@@ -56,6 +56,36 @@ namespace MHZE.PickupSystem
             return lineOrigin != null ? FindOnLine(lineOrigin.position, total.center, item.transform, playerRoot, layerMask) : null;
         }
 
+        /// <summary>
+        /// Slides <paramref name="item"/> from where it is toward <paramref name="lineOrigin"/> (the camera) until
+        /// <see cref="FindBlocker"/> finds nothing in the way, and leaves it there: the nearest spot on the player's
+        /// side of the wall. It never comes closer to the camera than <paramref name="minDistance"/>. Returns false,
+        /// with the item back where it was, when no such spot exists (the camera itself is pressed into the wall).
+        /// </summary>
+        public static bool TryMoveToPlayerSide(GameObject item, Transform lineOrigin, Transform playerRoot, int layerMask, float margin, float minDistance, float step)
+        {
+            if (item == null || lineOrigin == null) return false;
+
+            Transform t = item.transform;
+            Vector3 start = t.position;
+            Vector3 toCamera = lineOrigin.position - start;
+            float available = toCamera.magnitude - minDistance;
+            if (available <= 0f) return false;
+
+            Vector3 direction = toCamera / toCamera.magnitude;
+            step = Mathf.Max(0.01f, step);
+            for (float d = step; ; d += step)
+            {
+                bool last = d >= available;
+                t.position = start + direction * Mathf.Min(d, available);
+                if (FindBlocker(item, lineOrigin, playerRoot, layerMask, margin) == null) return true;
+                if (last) break;
+            }
+
+            t.position = start;
+            return false;
+        }
+
         static Collider FindOverlap(Renderer r, Transform item, Transform playerRoot, int layerMask, float margin)
         {
             Vector3 center;

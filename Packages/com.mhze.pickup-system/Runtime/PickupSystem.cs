@@ -23,11 +23,15 @@ namespace MHZE.PickupSystem
         [SerializeField] LayerMask dropObstacleLayers = ~0;
         [Tooltip("Metres added around the item when testing for contact.")]
         [SerializeField, Min(0f)] float dropClearanceMargin = 0.02f;
+        [Tooltip("When the held item is in or behind a wall, the drop slides it back toward the camera to the first clear spot, in steps of this many metres.")]
+        [SerializeField, Min(0.01f)] float dropPullBackStep = 0.05f;
+        [Tooltip("The closest to the camera a pulled-back item may be dropped. If nothing clear is found farther out than this, the drop is refused.")]
+        [SerializeField, Min(0f)] float dropPullBackLimit = 0.3f;
 
         [Header("Inputs")]
         [SerializeField] InputActionReference DropInputAction;
 
-        /// <summary>The player asked to drop the held item but it is held into something solid; nothing was dropped.</summary>
+        /// <summary>The player asked to drop the held item but it is held into a wall with no clear spot on the player's side; nothing was dropped.</summary>
         public event System.Action<GameObject> OnDropBlocked;
 
         public event System.Action<GameObject> OnPickedItemChanged;
@@ -149,13 +153,24 @@ namespace MHZE.PickupSystem
 
         void DropInputPerformed(InputAction.CallbackContext context)
         {
-            if (currentPickedObject == null) return;
-            if (HeldItemBlocksPlayerRelease) return;
+            TryPlayerDrop();
+        }
 
-            if (IsHeldItemObstructed(out _))
+        /// <summary>
+        /// The player's own drop: refused for an <see cref="IHeldUntilReleased"/> item; when the held item is in or
+        /// behind a wall it is first slid back toward the camera to the nearest clear spot, so it lands on the
+        /// player's side. Refused (raising <see cref="OnDropBlocked"/>) only when no clear spot exists.
+        /// Returns true when the item was dropped.
+        /// </summary>
+        public bool TryPlayerDrop()
+        {
+            if (currentPickedObject == null) return false;
+            if (HeldItemBlocksPlayerRelease) return false;
+
+            if (IsHeldItemObstructed(out _) && !TryMoveHeldItemToPlayerSide())
             {
                 OnDropBlocked?.Invoke(currentPickedObject);
-                return;
+                return false;
             }
 
             if (currentPickableItem == null)
@@ -164,7 +179,25 @@ namespace MHZE.PickupSystem
             }
 
             DropObject(currentPickedObject, currentPickableItem);
+            return true;
         }
+
+        // Moves the held item (still in the hand) so a release lands it clear of the wall.
+        bool TryMoveHeldItemToPlayerSide()
+        {
+            Transform origin = DropLineOrigin();
+            if (origin == null) return false;
+            return HeldItemClearance.TryMoveToPlayerSide(currentPickedObject, origin, DropPlayerRoot(), dropObstacleLayers,
+                dropClearanceMargin, dropPullBackLimit, dropPullBackStep);
+        }
+
+        Transform DropLineOrigin()
+        {
+            if (dropCheckOrigin != null) return dropCheckOrigin;
+            return Camera.main != null ? Camera.main.transform : null;
+        }
+
+        Transform DropPlayerRoot() => PickableObjectHolder != null ? PickableObjectHolder.root : null;
         #endregion
 
         /// <summary>True while the held item is an <see cref="IHeldUntilReleased"/> that refuses to be dropped or thrown by the player.</summary>
@@ -182,19 +215,16 @@ namespace MHZE.PickupSystem
         /// <summary>
         /// True while the held item touches something solid, or a wall stands between the camera and it: letting go
         /// now would put it on the far side or inside the wall. <paramref name="blocker"/> is the collider in the
-        /// way. Always false with nothing held or with <see cref="CheckDropClearance"/> off. This guards only the
-        /// player's own drop and throw; <see cref="DropCurrentHeldItem"/> is code and ignores it.
+        /// way. Always false with nothing held or with <see cref="CheckDropClearance"/> off. The player's drop
+        /// (<see cref="TryPlayerDrop"/>) answers it by sliding the item to the player's side, a throw by refusing;
+        /// <see cref="DropCurrentHeldItem"/> is code and ignores it.
         /// </summary>
         public bool IsHeldItemObstructed(out Collider blocker)
         {
             blocker = null;
             if (!checkDropClearance || currentPickedObject == null) return false;
 
-            Transform origin = dropCheckOrigin;
-            if (origin == null && Camera.main != null) origin = Camera.main.transform;
-
-            Transform playerRoot = PickableObjectHolder != null ? PickableObjectHolder.root : null;
-            blocker = HeldItemClearance.FindBlocker(currentPickedObject, origin, playerRoot, dropObstacleLayers, dropClearanceMargin);
+            blocker = HeldItemClearance.FindBlocker(currentPickedObject, DropLineOrigin(), DropPlayerRoot(), dropObstacleLayers, dropClearanceMargin);
             return blocker != null;
         }
 

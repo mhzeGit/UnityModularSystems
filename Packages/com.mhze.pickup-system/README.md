@@ -125,18 +125,23 @@ refuse too. `DropCurrentHeldItem()` ignores it, so the story can always take the
 ## Drop safety (walls)
 
 The hand reaches ahead of the camera, so standing close to a wall and pressing the drop key used to let go of the
-item on the far side of it, or inside it. The player's drop is now refused (silently; `OnDropBlocked` fires) while
-`PickupSystem.IsHeldItemObstructed(out Collider blocker)` is true:
+item on the far side of it, or inside it. Now `PickupSystem.TryPlayerDrop()` (what the drop key calls) first asks
+`IsHeldItemObstructed(out Collider blocker)`:
 
 - **Contact**: an oriented box around each mesh of the held item (its colliders are off while held) overlaps
   a solid collider, widened by `dropClearanceMargin` (2 cm).
 - **Line**: a line from the camera (`DropCheckOrigin`, else `Camera.main`) to the item's centre crosses a
   solid collider, which catches an item wholly behind a thin wall that nothing overlaps.
 
-Triggers, the item's own and the player's colliders, free-moving rigid bodies and other pickable items never count.
-`dropObstacleLayers` limits the layers; `CheckDropClearance = false` turns it off. `DropCurrentHeldItem()` is code
-and ignores it, like `IHeldUntilReleased`. A throw system should refuse too: the game's `PickupThrowMediator`
-returns `false` from `ThrowingSystem.CanThrowFilter` when `IsHeldItemObstructed` and calls `NotifyReleaseBlocked()`.
+When it is obstructed the item is slid back toward the camera, `dropPullBackStep` (5 cm) at a time, to the nearest
+spot where both checks pass, and dropped there: on the player's side of the wall. It never comes closer to the camera
+than `dropPullBackLimit` (30 cm); when no clear spot exists the drop is refused (the item stays in the hand and
+`OnDropBlocked` fires). Triggers, the item's own and the player's colliders, free-moving rigid bodies and other
+pickable items never count. `dropObstacleLayers` limits the layers; `CheckDropClearance = false` turns the check
+off. `DropCurrentHeldItem()` is code and ignores all of it, like `IHeldUntilReleased`.
+
+A throw is not relocated: a throw system should refuse while `IsHeldItemObstructed` (the game's
+`PickupThrowMediator` returns `false` from `ThrowingSystem.CanThrowFilter` and calls `NotifyReleaseBlocked()`).
 Queries run only when the player presses drop or throw, never per frame. The logic lives in `HeldItemClearance`.
 
 ## Camera-follow smoothing

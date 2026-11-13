@@ -152,6 +152,51 @@ namespace MHZE.PickupSystem.Tests
             Assert.That(pickup.IsHoldingItem(), Is.False);
         }
 
+        [Test]
+        public void DropPressedIntoAWallLandsOnThePlayersSide()
+        {
+            BuildWall(0.75f, 0.3f); // near face at z = 0.6
+            Hold(0.7f);
+            Assert.That(pickup.TryPlayerDrop(), Is.True);
+            Assert.That(pickup.IsHoldingItem(), Is.False);
+            Assert.That(item.transform.parent, Is.Null);
+            Assert.That(item.transform.position.z, Is.LessThan(0.6f - 0.1f), "the cube must be wholly on the camera side of the wall");
+            Assert.That(item.transform.position.z, Is.GreaterThanOrEqualTo(0.3f - 0.001f), "never closer to the camera than the pull-back limit");
+        }
+
+        [Test]
+        public void DropBehindAThinWallLandsOnThePlayersSide()
+        {
+            BuildWall(0.55f, 0.02f);
+            Hold(0.7f);
+            Assert.That(pickup.TryPlayerDrop(), Is.True);
+            Assert.That(item.transform.position.z, Is.LessThan(0.55f - 0.01f - 0.1f));
+        }
+
+        [Test]
+        public void DropInOpenSpaceStaysWhereItIs()
+        {
+            Hold(0.5f);
+            Vector3 before = item.transform.position;
+            Assert.That(pickup.TryPlayerDrop(), Is.True);
+            Assert.That(item.transform.position, Is.EqualTo(before));
+        }
+
+        [Test]
+        public void DropIsRefusedWhenNoClearSpotExistsOnThePlayersSide()
+        {
+            // A wall 15 cm from the camera leaves no room between it and the 30 cm pull-back limit.
+            BuildWall(0.15f, 0.02f);
+            Hold(0.6f);
+            Vector3 before = item.transform.position;
+            bool blockedEvent = false;
+            pickup.OnDropBlocked += _ => blockedEvent = true;
+            Assert.That(pickup.TryPlayerDrop(), Is.False);
+            Assert.That(pickup.IsHoldingItem(), Is.True);
+            Assert.That(item.transform.position, Is.EqualTo(before));
+            Assert.That(blockedEvent, Is.True);
+        }
+
         sealed class StubBehaviour : MonoBehaviour, IPickable
         {
             public void Picked() { }
