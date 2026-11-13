@@ -135,7 +135,7 @@ item on the far side of it, or inside it. Now `PickupSystem.TryPlayerDrop()` (wh
 
 When it is obstructed the item is slid back toward the camera, `dropPullBackStep` (5 cm) at a time, to the nearest
 spot where both checks pass, and dropped there: on the player's side of the wall. It never comes closer to the camera
-than `dropPullBackLimit` (30 cm); when no clear spot exists the drop is refused (the item stays in the hand and
+than `dropPullBackLimit` (10 cm); when no clear spot exists the drop is refused (the item stays in the hand and
 `OnDropBlocked` fires). Triggers, the item's own and the player's colliders, free-moving rigid bodies and other
 pickable items never count. `dropObstacleLayers` limits the layers; `CheckDropClearance = false` turns the check
 off. `DropCurrentHeldItem()` is code and ignores all of it, like `IHeldUntilReleased`.

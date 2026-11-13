@@ -26,7 +26,7 @@ namespace MHZE.PickupSystem
         [Tooltip("When the held item is in or behind a wall, the drop slides it back toward the camera to the first clear spot, in steps of this many metres.")]
         [SerializeField, Min(0.01f)] float dropPullBackStep = 0.05f;
         [Tooltip("The closest to the camera a pulled-back item may be dropped. If nothing clear is found farther out than this, the drop is refused.")]
-        [SerializeField, Min(0f)] float dropPullBackLimit = 0.3f;
+        [SerializeField, Min(0f)] float dropPullBackLimit = 0.1f;
 
         [Header("Inputs")]
         [SerializeField] InputActionReference DropInputAction;

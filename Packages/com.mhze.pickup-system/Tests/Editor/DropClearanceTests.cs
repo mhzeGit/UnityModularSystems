@@ -161,7 +161,7 @@ namespace MHZE.PickupSystem.Tests
             Assert.That(pickup.IsHoldingItem(), Is.False);
             Assert.That(item.transform.parent, Is.Null);
             Assert.That(item.transform.position.z, Is.LessThan(0.6f - 0.1f), "the cube must be wholly on the camera side of the wall");
-            Assert.That(item.transform.position.z, Is.GreaterThanOrEqualTo(0.3f - 0.001f), "never closer to the camera than the pull-back limit");
+            Assert.That(item.transform.position.z, Is.GreaterThanOrEqualTo(0.1f - 0.001f), "never closer to the camera than the pull-back limit");
         }
 
         [Test]
@@ -185,7 +185,7 @@ namespace MHZE.PickupSystem.Tests
         [Test]
         public void DropIsRefusedWhenNoClearSpotExistsOnThePlayersSide()
         {
-            // A wall 15 cm from the camera leaves no room between it and the 30 cm pull-back limit.
+            // A wall 15 cm from the camera leaves no room between it and the 10 cm pull-back limit for a 20 cm cube.
             BuildWall(0.15f, 0.02f);
             Hold(0.6f);
             Vector3 before = item.transform.position;
