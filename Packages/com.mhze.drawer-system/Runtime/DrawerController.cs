@@ -15,10 +15,12 @@ namespace MHZE.DrawerSystem
         [Header("Motion")]
         [Tooltip("Local axis the drawer slides along when it opens.")]
         [SerializeField] private Vector3 slideAxis = Vector3.forward;
-        [Tooltip("Local distance the drawer slides out. 0 uses the measured drawer depth times Auto Open Fraction.")]
+        [Tooltip("Distance the drawer slides out, in the parent's units. 0 fits it automatically: the drawer comes out until only Keep Inside of its back is still inside the furniture.")]
         [SerializeField] private float openDistance = 0f;
-        [Tooltip("Fraction of the measured drawer depth used when Open Distance is 0.")]
-        [SerializeField, Range(0.1f, 1.5f)] private float autoOpenFraction = 0.9f;
+        [Tooltip("Automatic fit only: how much of the drawer's back stays inside the furniture when fully open, in the parent's units.")]
+        [SerializeField, Min(0f)] private float keepInsideDistance = 0.04f;
+        [Tooltip("Automatic fit only: upper limit of Keep Inside as a fraction of the drawer depth, so shallow drawers still come out far enough.")]
+        [SerializeField, Range(0f, 0.5f)] private float keepInsideMaxFraction = 0.2f;
         [Tooltip("Duration of the open/close move in seconds.")]
         [SerializeField, Min(0.05f)] private float duration = 0.45f;
         [Tooltip("Curve sampled over the duration; 0 is closed and 1 is open.")]
@@ -74,6 +76,9 @@ namespace MHZE.DrawerSystem
         /// <summary>Local axis the drawer slides along.</summary>
         public Vector3 SlideAxis => slideAxis;
 
+        /// <summary>How far the drawer slides out, in the parent's units. Fitted automatically when the field is 0.</summary>
+        public float OpenDistance => openDistance;
+
         /// <summary>The source used for the open and close sounds.</summary>
         public AudioSource AudioSource => audioSource;
 
@@ -88,7 +93,7 @@ namespace MHZE.DrawerSystem
             closedLocalPosition = transform.localPosition;
 
             if (openDistance <= 0f)
-                openDistance = MeasureDrawerDepth() * autoOpenFraction;
+                openDistance = FitOpenDistance();
 
             if (audioSource == null)
                 audioSource = GetComponent<AudioSource>();
@@ -220,6 +225,9 @@ namespace MHZE.DrawerSystem
                     continue;
                 if (hit.CompareTag("Player"))
                     continue;
+                // Drawer bodies sit on the interaction layer: a neighbouring drawer is furniture, never contents.
+                if (hit.GetComponentInParent<DrawerController>() != null)
+                    continue;
 
                 Rigidbody body = hit.attachedRigidbody;
                 bool onContentLayer = (contentLayers.value & (1 << hit.gameObject.layer)) != 0;
@@ -348,24 +356,109 @@ namespace MHZE.DrawerSystem
 
         private void ReleaseContents() => carriedContents.Clear();
 
-        private float MeasureDrawerDepth()
+        /// <summary>
+        /// Works out how far the drawer can come out: until only <c>keepInside</c> of its back is left inside the
+        /// furniture, so it is fully out but never slides off. Everything is measured along the slide axis in the
+        /// parent's space, which is the space the slide itself happens in: the drawer's own colliders give its depth,
+        /// the nearest ancestor with colliders (the furniture body) gives the front face it slides out of.
+        /// </summary>
+        private float FitOpenDistance()
         {
-            Vector3 axis = Abs(slideAxis.normalized);
-            Vector3 localScale = transform.localScale;
+            Transform space = transform.parent;
+            Vector3 axis = slideAxis.normalized;
 
-            BoxCollider boxCollider = GetComponent<BoxCollider>();
-            if (boxCollider != null)
-                return Vector3.Dot(Vector3.Scale(boxCollider.size, localScale), axis);
+            bool haveDrawer = false;
+            float drawerMin = float.MaxValue;
+            float drawerMax = float.MinValue;
+            foreach (Collider collider in GetComponents<Collider>())
+            {
+                if (collider.isTrigger || !TryGetAxisRange(collider, space, axis, out float low, out float high))
+                    continue;
+                haveDrawer = true;
+                drawerMin = Mathf.Min(drawerMin, low);
+                drawerMax = Mathf.Max(drawerMax, high);
+            }
 
-            MeshCollider meshCollider = GetComponent<MeshCollider>();
-            if (meshCollider != null && meshCollider.sharedMesh != null)
-                return Vector3.Dot(Vector3.Scale(meshCollider.sharedMesh.bounds.size, localScale), axis);
+            if (!haveDrawer)
+                return FallbackOpenDistance;
 
-            MeshFilter meshFilter = GetComponent<MeshFilter>();
-            if (meshFilter != null && meshFilter.sharedMesh != null)
-                return Vector3.Dot(Vector3.Scale(meshFilter.sharedMesh.bounds.size, localScale), axis);
+            float depth = drawerMax - drawerMin;
+            float keepInside = Mathf.Min(keepInsideDistance, depth * keepInsideMaxFraction);
 
-            return 0.4f;
+            // The drawer is fully out when its back edge reaches the furniture's front face, minus what stays inside.
+            float travel = depth - keepInside;
+            if (TryGetCarcassFront(space, axis, out float carcassFront))
+                travel = Mathf.Min(carcassFront - keepInside - drawerMin, travel);
+
+            return Mathf.Max(travel, depth * 0.3f);
+        }
+
+        private const float FallbackOpenDistance = 0.36f;
+
+        private bool TryGetCarcassFront(Transform space, Vector3 axis, out float front)
+        {
+            front = 0f;
+            for (Transform ancestor = transform.parent; ancestor != null; ancestor = ancestor.parent)
+            {
+                bool found = false;
+                float max = float.MinValue;
+                foreach (Collider collider in ancestor.GetComponents<Collider>())
+                {
+                    if (collider.isTrigger || !collider.enabled || !TryGetAxisRange(collider, space, axis, out _, out float high))
+                        continue;
+                    found = true;
+                    max = Mathf.Max(max, high);
+                }
+
+                if (found)
+                {
+                    front = max;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>Extent of a collider along an axis of <paramref name="space"/>, from its true (rotated, scaled) shape.</summary>
+        private static bool TryGetAxisRange(Collider collider, Transform space, Vector3 axis, out float low, out float high)
+        {
+            low = float.MaxValue;
+            high = float.MinValue;
+
+            Transform source = collider.transform;
+            Vector3 center;
+            Vector3 size;
+            if (collider is BoxCollider box)
+            {
+                center = box.center;
+                size = box.size;
+            }
+            else if (collider is MeshCollider mesh && mesh.sharedMesh != null)
+            {
+                center = mesh.sharedMesh.bounds.center;
+                size = mesh.sharedMesh.bounds.size;
+            }
+            else
+            {
+                // Spheres, capsules and anything else: the world bounds are the best available shape.
+                source = null;
+                center = collider.bounds.center;
+                size = collider.bounds.size;
+            }
+
+            for (int i = 0; i < 8; i++)
+            {
+                Vector3 corner = center + Vector3.Scale(size * 0.5f, new Vector3(
+                    (i & 1) == 0 ? -1f : 1f, (i & 2) == 0 ? -1f : 1f, (i & 4) == 0 ? -1f : 1f));
+                Vector3 world = source != null ? source.TransformPoint(corner) : corner;
+                Vector3 local = space != null ? space.InverseTransformPoint(world) : world;
+                float d = Vector3.Dot(local, axis);
+                low = Mathf.Min(low, d);
+                high = Mathf.Max(high, d);
+            }
+
+            return high >= low;
         }
 
         private void GetContentBounds(out Vector3 center, out Vector3 halfExtents, out Quaternion rotation)
@@ -424,6 +517,25 @@ namespace MHZE.DrawerSystem
             Gizmos.color = new Color(0.2f, 0.9f, 1f, 0.35f);
             Gizmos.DrawWireCube(Vector3.zero, halfExtents * 2f);
             Gizmos.matrix = previous;
+
+            DrawOpenPoseGizmo();
+        }
+
+        // Shows where the drawer's collider ends up when fully open, so a bad fit is visible without playing.
+        private void DrawOpenPoseGizmo()
+        {
+            Collider own = GetComponent<Collider>();
+            if (own == null)
+                return;
+
+            float distance = openDistance > 0f ? openDistance : FitOpenDistance();
+            Vector3 closed = Application.isPlaying ? closedLocalPosition : transform.localPosition;
+            Vector3 localMove = closed + slideAxis.normalized * distance - transform.localPosition;
+            Vector3 worldMove = transform.parent != null ? transform.parent.TransformVector(localMove) : localMove;
+
+            Bounds bounds = own.bounds;
+            Gizmos.color = new Color(1f, 0.55f, 0.1f, 0.6f);
+            Gizmos.DrawWireCube(bounds.center + worldMove, bounds.size);
         }
 
         private struct CarriedContent
