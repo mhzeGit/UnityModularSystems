@@ -10,10 +10,9 @@ the closed local position on Awake, slides along the slide axis by `Open Distanc
 
 - **Smart open distance**: leave `Open Distance` at 0 and the drawer fits itself. It measures its own colliders
   (depth along the slide axis, from their true rotated shape) and the nearest ancestor with colliders (the
-  furniture body, which gives the front face it slides out of). The drawer comes out until only `Keep Inside`
-  (default 4 cm, capped at `Keep Inside Max Fraction` of its depth) of its back is still inside the furniture:
-  fully out, never off the rails. The slide axis is in the parent's space, and so is the measurement, so rotated
-  and scaled imports work. Type a value into `Open Distance` only to override the fit.
+  furniture body, which gives the front face it slides out of). The drawer comes out until only `Keep Inside Fraction`
+  (default 10%) of its depth is still inside the furniture: fully out, never off the rails. The slide axis is in
+  the parent's space, and so is the measurement, so rotated and scaled imports work. Type a value into `Open Distance` only to override the fit.
 - **Gizmo**: selecting a drawer also draws its collider at the fitted fully-open pose (orange).
 
 - **Motion**: local slide axis, duration and an editable `AnimationCurve`. Interrupting mid-move reverses from

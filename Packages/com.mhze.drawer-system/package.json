@@ -1,6 +1,6 @@
 {
   "name": "com.mhze.drawer-system",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "displayName": "Drawer System",
   "description": "Sliding drawers with open/close sound, a non-blocking contents volume, and rigidbody-aware carrying of the items inside.",
   "unity": "2021.3",

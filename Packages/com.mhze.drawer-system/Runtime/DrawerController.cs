@@ -15,12 +15,10 @@ namespace MHZE.DrawerSystem
         [Header("Motion")]
         [Tooltip("Local axis the drawer slides along when it opens.")]
         [SerializeField] private Vector3 slideAxis = Vector3.forward;
-        [Tooltip("Distance the drawer slides out, in the parent's units. 0 fits it automatically: the drawer comes out until only Keep Inside of its back is still inside the furniture.")]
+        [Tooltip("Distance the drawer slides out, in the parent's units. 0 fits it automatically: the drawer comes out until Keep Inside Fraction of its depth is still inside the furniture.")]
         [SerializeField] private float openDistance = 0f;
-        [Tooltip("Automatic fit only: how much of the drawer's back stays inside the furniture when fully open, in the parent's units.")]
-        [SerializeField, Min(0f)] private float keepInsideDistance = 0.04f;
-        [Tooltip("Automatic fit only: upper limit of Keep Inside as a fraction of the drawer depth, so shallow drawers still come out far enough.")]
-        [SerializeField, Range(0f, 0.5f)] private float keepInsideMaxFraction = 0.2f;
+        [Tooltip("Automatic fit only: the fraction of the drawer's depth that always stays inside the furniture when fully open.")]
+        [SerializeField, Range(0f, 0.9f)] private float keepInsideFraction = 0.1f;
         [Tooltip("Duration of the open/close move in seconds.")]
         [SerializeField, Min(0.05f)] private float duration = 0.45f;
         [Tooltip("Curve sampled over the duration; 0 is closed and 1 is open.")]
@@ -383,7 +381,7 @@ namespace MHZE.DrawerSystem
                 return FallbackOpenDistance;
 
             float depth = drawerMax - drawerMin;
-            float keepInside = Mathf.Min(keepInsideDistance, depth * keepInsideMaxFraction);
+            float keepInside = depth * keepInsideFraction;
 
             // The drawer is fully out when its back edge reaches the furniture's front face, minus what stays inside.
             float travel = depth - keepInside;
