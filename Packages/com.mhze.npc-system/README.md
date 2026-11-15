@@ -87,3 +87,18 @@ features default to zero drag until a value is set.
 the target every tick while looking, ignoring Eye Degrees Per Second, so a smooth head drag never
 makes the gaze lag. Eye angle limits still apply, so the eyes lead a slow head and saturate at their
 limits until it catches up. Returning to rest after StopLooking still uses the normal eye speed. Off by default.
+
+## Door open gesture
+
+`NpcDoorOpenGesture` (optional presentation feature, in the `ModularNPC.Doors` integration) makes
+`NpcDoorNavigation` play a gesture before it opens a door: once the NPC stands at the closed door it
+plays the clip of an `NpcDoorOpenGestureProfile` (create one with **Create > Modular NPC > Door Open
+Gesture Profile**), opens the door at the profile's **Contact Point** (normalized clip time the hand
+touches the door), and walks on once the door is open and the clip has finished. The clip plays in
+its own playable graph over the Animator controller (the controller asset is not changed); the
+profile's **Weight** curve (x: normalized clip time, y: 0 = controller only, 1 = clip only) blends it
+in and out. NPCs without the feature, or with no profile or clip, open doors straight away as before.
+A new destination, a warp or a deactivated feature cancels the gesture at once. Any other
+`INpcDoorOpenGesture` feature (for example a procedural one) works the same way.
+
+Version 1.9.0 adds this backward-compatible feature.

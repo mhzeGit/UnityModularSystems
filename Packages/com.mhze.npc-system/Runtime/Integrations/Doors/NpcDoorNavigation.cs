@@ -23,6 +23,11 @@ namespace ModularNPC
     /// stops, pauses, opens the door, waits for it to finish opening, pauses again and then resumes
     /// the original destination. State machines are unaware of it and only issue normal MoveTo
     /// commands; <see cref="Status"/> is exposed for the rare machine that wants to react to a locked door.
+    ///
+    /// When the NPC also has an <see cref="INpcDoorOpenGesture"/> feature (for example
+    /// <see cref="NpcDoorOpenGesture"/>: raise a hand and tap the door), it plays that gesture once it
+    /// stands at the door, opens the door at the gesture's contact moment, and walks on only when the
+    /// door is open and the gesture has finished. Without one the door opens straight away.
     /// </summary>
     [Serializable]
     [MovedFrom(true, "BlahBlahFamily.Gameplay", "Assembly-CSharp", null)]
@@ -36,6 +41,8 @@ namespace ModularNPC
             Scanning,
             /// <summary>Stopped at the door, pausing before reaching for it.</summary>
             Settling,
+            /// <summary>Playing the NPC's door gesture; the door opens at its contact moment.</summary>
+            Gesturing,
             /// <summary>Door is opening, waiting for it to finish.</summary>
             Opening,
             /// <summary>Door is open, pausing before continuing the journey.</summary>
@@ -70,6 +77,7 @@ namespace ModularNPC
         [NonSerialized] private Phase _phase;
         [NonSerialized] private float _phaseEndsAt;
         [NonSerialized] private bool _failedBecauseLocked;
+        [NonSerialized] private INpcDoorOpenGesture _gesture;
 
         public NpcTickSettings TickSettings => NpcTickSettings.EveryUpdate;
 
@@ -81,6 +89,7 @@ namespace ModularNPC
                 switch (_phase)
                 {
                     case Phase.Settling:
+                    case Phase.Gesturing:
                     case Phase.Opening:
                     case Phase.Passing:
                         return NpcDoorNavigationStatus.OpeningDoor;
@@ -137,6 +146,12 @@ namespace ModularNPC
                     if (_agent.velocity.sqrMagnitude > 0.01f)
                         _phaseEndsAt = Time.time + _pauseBeforeOpen;
                     else if (Time.time >= _phaseEndsAt)
+                        ReachForDoor();
+                    break;
+
+                case Phase.Gesturing:
+                    // Open at the contact; also if the gesture stopped early or never reports it.
+                    if (_gesture == null || _gesture.HasReachedContact || !_gesture.IsPlaying || Time.time >= _phaseEndsAt)
                         TryOpenDoor();
                     break;
 
@@ -145,7 +160,8 @@ namespace ModularNPC
                     break;
 
                 case Phase.Passing:
-                    if (Time.time >= _phaseEndsAt)
+                    // Walk on only once the gesture is over: its clip holds the legs still.
+                    if (Time.time >= _phaseEndsAt && !IsGesturePlaying)
                         EndInteraction(true);
                     break;
 
@@ -262,6 +278,29 @@ namespace ModularNPC
 
         // ------------------------------------------------------------ interaction
 
+        private bool IsGesturePlaying => _gesture != null && _gesture.IsPlaying;
+
+        /// <summary>Standing at the door: play the NPC's door gesture if it has one, otherwise open now.</summary>
+        private void ReachForDoor()
+        {
+            if (_door == null || _door.State == UltimateDoorController.DoorState.Open)
+            {
+                TryOpenDoor();
+                return;
+            }
+
+            if (Npc.Features.TryGetOperational(out INpcDoorOpenGesture gesture) && gesture.CanPlay &&
+                gesture.Begin(_door.transform))
+            {
+                _gesture = gesture;
+                // A safety net only: the gesture reports its contact long before this.
+                EnterPhase(Phase.Gesturing, _openTimeout);
+                return;
+            }
+
+            TryOpenDoor();
+        }
+
         private void TryOpenDoor()
         {
             if (_door == null)
@@ -323,10 +362,10 @@ namespace ModularNPC
             }
         }
 
-        /// <summary>The door is open: resume at once, or after the optional pause.</summary>
+        /// <summary>The door is open: resume at once, or after the optional pause and the end of the gesture.</summary>
         private void BeginPassing()
         {
-            if (_pauseAfterOpen > 0f)
+            if (_pauseAfterOpen > 0f || IsGesturePlaying)
                 EnterPhase(Phase.Passing, _pauseAfterOpen);
             else
                 EndInteraction(true);
@@ -352,6 +391,10 @@ namespace ModularNPC
             _door = null;
             _command = default;
             _failedBecauseLocked = false;
+            // Interrupted (new destination, warp, skip): drop the gesture so the NPC never walks in it.
+            if (_gesture != null && _gesture.IsPlaying)
+                _gesture.Cancel();
+            _gesture = null;
 
             if (wasInteracting && resumeNavigation && _navigation != null)
                 _navigation.EndExternalNavigationControl();
