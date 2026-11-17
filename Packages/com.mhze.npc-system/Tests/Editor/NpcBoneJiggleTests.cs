@@ -74,5 +74,13 @@ namespace ModularNPC.Tests
             Assert.IsFalse(float.IsNaN(lag.x) || float.IsInfinity(lag.x));
             Assert.Less(lag.magnitude, 1f);
         }
+
+        [Test] public void PositionOffsetScalesAndCaps()
+        {
+            Vector3 lag = Vector3.right * 0.04f;
+            Assert.AreEqual(0f, NpcBoneJiggle.PositionOffset(lag, 0f, 0.03f).magnitude, 1e-6f, "0 = rotation only");
+            Assert.AreEqual(0.02f, NpcBoneJiggle.PositionOffset(lag, 0.5f, 0.03f).x, 1e-6f);
+            Assert.AreEqual(0.03f, NpcBoneJiggle.PositionOffset(lag, 2f, 0.03f).magnitude, 1e-6f, "never beyond the cap");
+        }
     }
 }

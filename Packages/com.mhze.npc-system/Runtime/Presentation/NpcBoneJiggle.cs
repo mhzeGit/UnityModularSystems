@@ -20,12 +20,21 @@ namespace ModularNPC
         [Tooltip("Multiplies the group's amount for this bone. 1 = as set on the feature. To switch a bone off, remove it from the list.")]
         [Range(0.05f, 2f)] public float strength;
 
-        public NpcJiggleBone(string boneName, string tipBoneName = "", float frequencyScale = 1f, float strength = 1f)
+        [Tooltip("How much the bone also slides with the flesh, on top of swinging. 0 = rotation only (default). 1 moves the bone by the same distance the tip lags behind; about 0.3 to 0.6 gives buttocks a soft bounce. The slide never exceeds the feature's Max Position Offset.")]
+        [Range(0f, 2f)] public float positionAmount;
+
+        public NpcJiggleBone(
+            string boneName,
+            string tipBoneName = "",
+            float frequencyScale = 1f,
+            float strength = 1f,
+            float positionAmount = 0f)
         {
             this.boneName = boneName;
             this.tipBoneName = tipBoneName;
             this.frequencyScale = frequencyScale;
             this.strength = strength;
+            this.positionAmount = positionAmount;
         }
     }
 
@@ -111,7 +120,8 @@ namespace ModularNPC
     /// The goofiness is set by four numbers on the feature: <b>Frequency</b> (how fast it wobbles),
     /// <b>Damping Ratio</b> (low rings for longer, around 0.3 gives about two bounces), <b>Inertia</b> (how
     /// much the flesh lags the body) and <b>Max Angle</b> (a hard cap so it never looks broken). Each bone
-    /// can also be given its own speed and strength so the left and right side drift apart.
+    /// can also be given its own speed and strength so the left and right side drift apart, and a <b>Position
+    /// Amount</b> so it slides with the flesh as well as swinging (capped by Max Position Offset).
     ///
     /// It drives the bones in <see cref="NpcTickPhase.LateUpdate"/>, after the Animator has posed the
     /// skeleton, and removes its own offset again before the Animator runs, so it works on bones the clips
@@ -146,6 +156,9 @@ namespace ModularNPC
         [Tooltip("The most a bone is ever turned away from its animated pose, in degrees. Keeps violent moves from folding the mesh.")]
         [SerializeField, Range(1f, 60f)] private float _maxAngleDegrees = 22f;
 
+        [Tooltip("The furthest a bone with a Position Amount slides from its animated place, in metres (world scale). Keeps the mesh from tearing away from its neighbours.")]
+        [SerializeField, Range(0f, 0.2f)] private float _maxPositionOffset = 0.03f;
+
         [Tooltip("A frame in which the animated tip jumps further than this many metres (a warp, or the NPC being placed for a scene) restarts the wobble instead of whipping the bone.")]
         [SerializeField, Min(0.05f)] private float _snapDistance = 0.6f;
 
@@ -162,6 +175,22 @@ namespace ModularNPC
             public bool Applied;
             public Quaternion LocalBefore;
             public Quaternion LocalAfter;
+            public float PositionAmount;
+            public bool PositionApplied;
+            public Vector3 LocalPositionBefore;
+            public Vector3 LocalPositionAfter;
+        }
+
+        /// <summary>
+        /// The distance a bone slides with the flesh: the (already scaled) sprung lag times the bone's position
+        /// amount, capped at <paramref name="maxOffset"/> metres.
+        /// </summary>
+        public static Vector3 PositionOffset(Vector3 lag, float amount, float maxOffset)
+        {
+            Vector3 offset = lag * Mathf.Max(0f, amount);
+            return offset.sqrMagnitude > maxOffset * maxOffset
+                ? offset.normalized * maxOffset
+                : offset;
         }
 
         /// <summary>Overall amount: 0 = off, 1 = as configured. Can be changed at any time.</summary>
@@ -202,15 +231,25 @@ namespace ModularNPC
             for (int i = 0; i < _runtime.Length; i++)
             {
                 Bone bone = _runtime[i];
-                if (!bone.Applied)
+                if (!bone.Applied && !bone.PositionApplied)
                 {
                     continue;
                 }
 
+                bool wasRotated = bone.Applied;
                 bone.Applied = false;
-                if (bone.Transform != null && bone.Transform.localRotation == bone.LocalAfter)
+                if (wasRotated && bone.Transform != null && bone.Transform.localRotation == bone.LocalAfter)
                 {
                     bone.Transform.localRotation = bone.LocalBefore;
+                }
+
+                if (bone.PositionApplied)
+                {
+                    bone.PositionApplied = false;
+                    if (bone.Transform != null && bone.Transform.localPosition == bone.LocalPositionAfter)
+                    {
+                        bone.Transform.localPosition = bone.LocalPositionBefore;
+                    }
                 }
             }
         }
@@ -260,7 +299,8 @@ namespace ModularNPC
                     bone.Spring.Position = restTip + lag;
                 }
 
-                Vector3 shown = lag * (_inertia * weight * bone.Strength);
+                Vector3 scaled = lag * (_inertia * weight * bone.Strength);
+                Vector3 shown = scaled;
                 if (shown.sqrMagnitude > limit * limit)
                 {
                     shown = shown.normalized * limit;
@@ -276,6 +316,16 @@ namespace ModularNPC
                 bone.Transform.rotation = turn * bone.Transform.rotation;
                 bone.LocalAfter = bone.Transform.localRotation;
                 bone.Applied = true;
+
+                if (bone.PositionAmount > 0f && _maxPositionOffset > 0f)
+                {
+                    // The flesh slides as well as swings. It follows the tip's lag, so a body that stops
+                    // pushes the cheeks on past where the animation holds them, then they settle back.
+                    bone.LocalPositionBefore = bone.Transform.localPosition;
+                    bone.Transform.position += PositionOffset(scaled, bone.PositionAmount, _maxPositionOffset);
+                    bone.LocalPositionAfter = bone.Transform.localPosition;
+                    bone.PositionApplied = true;
+                }
             }
         }
 
@@ -363,7 +413,8 @@ namespace ModularNPC
                         Transform = bone,
                         Tip = tip,
                         FrequencyScale = entry.frequencyScale > 0f ? entry.frequencyScale : 1f,
-                        Strength = entry.strength > 0f ? entry.strength : 1f
+                        Strength = entry.strength > 0f ? entry.strength : 1f,
+                        PositionAmount = Mathf.Max(0f, entry.positionAmount)
                     });
                 }
             }
