@@ -150,6 +150,12 @@ namespace ModularNPC
         private const float FallbackTipLength = 0.1f;
         private const float MaxWindUp = 1.5f;
 
+        // Unity does not run field initializers when it loads an existing prefab's feature data, so a setting
+        // added after a prefab was saved arrives as 0. Where 0 is not a useful value it means "use the default".
+        private const float DefaultMaxPositionOffset = 0.03f;
+        private const float DefaultPreviewInterval = 1.5f;
+        private const float DefaultPreviewSpeed = 1.5f;
+
         [Tooltip("Bones that jiggle, each with an optional tip bone.")]
         [SerializeField] private List<NpcJiggleBone> _bones = new List<NpcJiggleBone>();
 
@@ -168,7 +174,7 @@ namespace ModularNPC
         [Tooltip("The most a bone is ever turned away from its animated pose, in degrees. Keeps violent moves from folding the mesh.")]
         [SerializeField, Range(1f, 60f)] private float _maxAngleDegrees = 22f;
 
-        [Tooltip("The furthest a bone with a Position Amount slides from its animated place, in metres (world scale). Keeps the mesh from tearing away from its neighbours.")]
+        [Tooltip("The furthest a bone with a Position Amount slides from its animated place, in metres (world scale). Keeps the mesh from tearing away from its neighbours. 0 = use the default (0.03).")]
         [SerializeField, Range(0f, 0.2f)] private float _maxPositionOffset = 0.03f;
 
         [Header("Preview")]
@@ -348,12 +354,13 @@ namespace ModularNPC
                 bone.LocalAfter = bone.Transform.localRotation;
                 bone.Applied = true;
 
-                if (positionAmount > 0f && _maxPositionOffset > 0f)
+                float maxPositionOffset = _maxPositionOffset > 0f ? _maxPositionOffset : DefaultMaxPositionOffset;
+                if (positionAmount > 0f)
                 {
                     // The flesh slides as well as swings. It follows the tip's lag, so a body that stops
                     // pushes the cheeks on past where the animation holds them, then they settle back.
                     bone.LocalPositionBefore = bone.Transform.localPosition;
-                    bone.Transform.position += PositionOffset(scaled, positionAmount, _maxPositionOffset);
+                    bone.Transform.position += PositionOffset(scaled, positionAmount, maxPositionOffset);
                     bone.LocalPositionAfter = bone.Transform.localPosition;
                     bone.PositionApplied = true;
                 }
@@ -474,7 +481,7 @@ namespace ModularNPC
             }
 
             _kickTimer += deltaTime;
-            if (_kickTimer < _previewInterval)
+            if (_kickTimer < (_previewInterval > 0f ? _previewInterval : DefaultPreviewInterval))
             {
                 return;
             }
@@ -483,7 +490,7 @@ namespace ModularNPC
             _kickSign = -_kickSign;
             // Up and forward together, so the bones both slide and swing (a bone only turns for motion across its own
             // length, never for motion straight along it).
-            Vector3 jolt = (Vector3.up + Transform.forward * 0.8f).normalized * (_kickSign * _previewSpeed);
+            Vector3 jolt = (Vector3.up + Transform.forward * 0.8f).normalized * (_kickSign * (_previewSpeed > 0f ? _previewSpeed : DefaultPreviewSpeed));
             for (int i = 0; i < _runtime.Length; i++)
             {
                 if (_runtime[i].Spring.Primed)
