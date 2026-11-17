@@ -17,8 +17,14 @@ namespace ModularNPC
         [Tooltip("Multiplies the group's jiggle speed for this bone. Give each side a slightly different value (for example 1.0 and 1.08) so they never move in perfect sync, which looks more alive.")]
         [Range(0.25f, 3f)] public float frequencyScale;
 
-        [Tooltip("Multiplies the group's amount for this bone. 1 = as set on the feature. To switch a bone off, remove it from the list.")]
-        [Range(0.05f, 2f)] public float strength;
+        [Tooltip("Multiplies the group's amount for this bone. 1 = as set on the feature; above 1 exaggerates this bone. To switch a bone off, remove it from the list.")]
+        [Range(0.05f, 4f)] public float strength;
+
+        [Tooltip("This bone's own angle limit in degrees. 0 = use the feature's Max Angle. Raise it for a bone that should swing wider than the rest of the body.")]
+        [Range(0f, 60f)] public float maxAngleDegrees;
+
+        [Tooltip("This bone's own damping ratio. 0 = use the feature's Damping Ratio. Lower rings for longer (bouncier); a bone can be bouncy while the rest of the body stays heavy.")]
+        [Range(0f, 1f)] public float dampingRatio;
 
         [Tooltip("How much the bone also slides with the flesh, on top of swinging. 0 = rotation only (default). 1 moves the bone by the same distance the tip lags behind; about 0.3 to 0.6 gives buttocks a soft bounce. The slide never exceeds the feature's Max Position Offset.")]
         [Range(0f, 2f)] public float positionAmount;
@@ -28,13 +34,17 @@ namespace ModularNPC
             string tipBoneName = "",
             float frequencyScale = 1f,
             float strength = 1f,
-            float positionAmount = 0f)
+            float positionAmount = 0f,
+            float maxAngleDegrees = 0f,
+            float dampingRatio = 0f)
         {
             this.boneName = boneName;
             this.tipBoneName = tipBoneName;
             this.frequencyScale = frequencyScale;
             this.strength = strength;
             this.positionAmount = positionAmount;
+            this.maxAngleDegrees = maxAngleDegrees;
+            this.dampingRatio = dampingRatio;
         }
     }
 
@@ -121,7 +131,9 @@ namespace ModularNPC
     /// <b>Damping Ratio</b> (low rings for longer, around 0.3 gives about two bounces), <b>Inertia</b> (how
     /// much the flesh lags the body) and <b>Max Angle</b> (a hard cap so it never looks broken). Each bone
     /// can also be given its own speed and strength so the left and right side drift apart, and a <b>Position
-    /// Amount</b> so it slides with the flesh as well as swinging (capped by Max Position Offset).
+    /// Amount</b> so it slides with the flesh as well as swinging (capped by Max Position Offset). A bone can also
+    /// override the feature's Max Angle and Damping Ratio, so buttocks can swing wide and bouncy while the torso
+    /// stays heavy.
     ///
     /// It drives the bones in <see cref="NpcTickPhase.LateUpdate"/>, after the Animator has posed the
     /// skeleton, and removes its own offset again before the Animator runs, so it works on bones the clips
@@ -176,6 +188,8 @@ namespace ModularNPC
             public Quaternion LocalBefore;
             public Quaternion LocalAfter;
             public float PositionAmount;
+            public float MaxAngleDegrees;
+            public float DampingRatio;
             public bool PositionApplied;
             public Vector3 LocalPositionBefore;
             public Vector3 LocalPositionAfter;
@@ -265,7 +279,6 @@ namespace ModularNPC
 
             deltaTime = Mathf.Min(deltaTime, MaxDeltaTime);
             float weight = _weight;
-            float maxTan = Mathf.Tan(_maxAngleDegrees * Mathf.Deg2Rad);
 
             for (int i = 0; i < _runtime.Length; i++)
             {
@@ -288,10 +301,11 @@ namespace ModularNPC
                     restTip,
                     deltaTime,
                     _frequency * bone.FrequencyScale,
-                    _dampingRatio,
+                    bone.DampingRatio > 0f ? bone.DampingRatio : _dampingRatio,
                     _snapDistance);
 
-                float limit = length * maxTan;
+                float maxAngle = bone.MaxAngleDegrees > 0f ? bone.MaxAngleDegrees : _maxAngleDegrees;
+                float limit = length * Mathf.Tan(Mathf.Min(maxAngle, 80f) * Mathf.Deg2Rad);
                 if (lag.sqrMagnitude > limit * limit * MaxWindUp * MaxWindUp)
                 {
                     // Do not let the spring wind up far past what is shown.
@@ -414,7 +428,9 @@ namespace ModularNPC
                         Tip = tip,
                         FrequencyScale = entry.frequencyScale > 0f ? entry.frequencyScale : 1f,
                         Strength = entry.strength > 0f ? entry.strength : 1f,
-                        PositionAmount = Mathf.Max(0f, entry.positionAmount)
+                        PositionAmount = Mathf.Max(0f, entry.positionAmount),
+                        MaxAngleDegrees = Mathf.Max(0f, entry.maxAngleDegrees),
+                        DampingRatio = Mathf.Max(0f, entry.dampingRatio)
                     });
                 }
             }

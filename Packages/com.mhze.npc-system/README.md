@@ -120,6 +120,7 @@ settles. A still NPC does not move, and a steady walk only bobs with the steps.
 | Max Angle Degrees | Hard cap on how far a bone leaves its animated pose. |
 | Snap Distance | A warp or scene placement bigger than this restarts the wobble instead of whipping. |
 | per bone: Frequency Scale, Strength | Give left and right slightly different values so they drift out of sync. |
+| per bone: Max Angle Degrees, Damping Ratio | Override the feature's values for this bone (0 = use the feature's). Lets one bone swing wide and bounce while the rest of the body stays heavy. |
 | per bone: Position Amount | 0 (default) = the bone only swings. Above 0 it also slides with the flesh by that share of the tip's lag (about 0.3-0.6 gives buttocks a soft bounce). |
 | Max Position Offset | The furthest a bone slides from its animated place, in metres. |
 
@@ -127,4 +128,4 @@ The feature runs in LateUpdate after the Animator and removes its own rotation a
 Animator pass, so it works on bones the clips animate and on bones they do not. `ResetMotion()` calms
 the bones at once. The spring itself is `NpcJiggleSpring` (component-free, covered by edit-mode tests).
 
-Version 1.10.0 adds this backward-compatible feature; 1.11.0 adds Position Amount and Max Position Offset (existing bones keep rotation only).
+Version 1.10.0 adds this backward-compatible feature; 1.11.0 adds Position Amount and Max Position Offset (existing bones keep rotation only); 1.12.0 adds per-bone Max Angle Degrees and Damping Ratio (0 = feature value) and raises the per-bone Strength limit to 4.
