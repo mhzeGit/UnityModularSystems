@@ -102,3 +102,27 @@ A new destination, a warp or a deactivated feature cancels the gesture at once. 
 `INpcDoorOpenGesture` feature (for example a procedural one) works the same way.
 
 Version 1.9.0 adds this backward-compatible feature.
+
+## Bone jiggle
+
+`NpcBoneJiggle` (presentation feature, **Bone Jiggle**) adds a soft, springy follow-through to fleshy
+bones - buttocks, a belly, ears - on top of whatever the Animator plays. List the bones (for example
+`LeftButt`, `RightButt`); each swings about its own pivot toward a sprung copy of its tip (its child bone,
+or a named **Tip Bone Name**), which lags when the body speeds up, stops or is struck, overshoots, and
+settles. A still NPC does not move, and a steady walk only bobs with the steps.
+
+| Setting | Effect |
+| --- | --- |
+| Weight | Overall amount; 0 is off, 1 as configured, up to 2 to exaggerate. Settable from code (`Weight`). |
+| Frequency | Wobbles per second. About 3-6 reads as buttocks; lower is heavy, higher is tight. |
+| Damping Ratio | Low rings for longer. 0.3 gives about two bounces; 1 never overshoots. |
+| Inertia | How much the flesh lags the body. Above 1 is goofier. |
+| Max Angle Degrees | Hard cap on how far a bone leaves its animated pose. |
+| Snap Distance | A warp or scene placement bigger than this restarts the wobble instead of whipping. |
+| per bone: Frequency Scale, Strength | Give left and right slightly different values so they drift out of sync. |
+
+The feature runs in LateUpdate after the Animator and removes its own rotation again before the next
+Animator pass, so it works on bones the clips animate and on bones they do not. `ResetMotion()` calms
+the bones at once. The spring itself is `NpcJiggleSpring` (component-free, covered by edit-mode tests).
+
+Version 1.10.0 adds this backward-compatible feature.
