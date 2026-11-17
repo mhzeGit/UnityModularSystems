@@ -123,9 +123,10 @@ settles. A still NPC does not move, and a steady walk only bobs with the steps.
 | per bone: Max Angle Degrees, Damping Ratio | Override the feature's values for this bone (0 = use the feature's). Lets one bone swing wide and bounce while the rest of the body stays heavy. |
 | per bone: Position Amount | 0 (default) = the bone only swings. Above 0 it also slides with the flesh by that share of the tip's lag (about 0.3-0.6 gives buttocks a soft bounce). |
 | Max Position Offset | The furthest a bone slides from its animated place, in metres. |
+| Preview Kick, Preview Interval, Preview Speed | Tuning aid, off by default. Jolts every spring on a timer (alternating up and down) so you can watch and adjust the jiggle on an NPC that is standing still. |
 
 The feature runs in LateUpdate after the Animator and removes its own rotation again before the next
 Animator pass, so it works on bones the clips animate and on bones they do not. `ResetMotion()` calms
 the bones at once. The spring itself is `NpcJiggleSpring` (component-free, covered by edit-mode tests).
 
-Version 1.10.0 adds this backward-compatible feature; 1.11.0 adds Position Amount and Max Position Offset (existing bones keep rotation only); 1.12.0 adds per-bone Max Angle Degrees and Damping Ratio (0 = feature value) and raises the per-bone Strength limit to 4.
+Version 1.10.0 adds this backward-compatible feature; 1.11.0 adds Position Amount and Max Position Offset (existing bones keep rotation only); 1.12.0 adds per-bone Max Angle Degrees and Damping Ratio (0 = feature value) and raises the per-bone Strength limit to 4; 1.13.0 reads per-bone settings live (Inspector edits in Play Mode apply at once, also adding or removing a bone) and adds the Preview Kick tuning aid.

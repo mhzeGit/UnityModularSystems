@@ -171,25 +171,34 @@ namespace ModularNPC
         [Tooltip("The furthest a bone with a Position Amount slides from its animated place, in metres (world scale). Keeps the mesh from tearing away from its neighbours.")]
         [SerializeField, Range(0f, 0.2f)] private float _maxPositionOffset = 0.03f;
 
+        [Header("Preview")]
+        [Tooltip("Tuning aid: jolts every bone's spring on a timer (as if the body hopped), so you can see and adjust the jiggle on an NPC that is standing still. Off for normal play.")]
+        [SerializeField] private bool _previewKick;
+
+        [Tooltip("Seconds between preview jolts.")]
+        [SerializeField, Range(0.3f, 5f)] private float _previewInterval = 1.5f;
+
+        [Tooltip("Speed of the preview jolt in metres per second. 1 is a small hop, 3 is a hard jump. It alternates up-and-forward with down-and-back.")]
+        [SerializeField, Range(0.1f, 5f)] private float _previewSpeed = 1.5f;
+
         [Tooltip("A frame in which the animated tip jumps further than this many metres (a warp, or the NPC being placed for a scene) restarts the wobble instead of whipping the bone.")]
         [SerializeField, Min(0.05f)] private float _snapDistance = 0.6f;
 
         [NonSerialized] private Bone[] _runtime;
         [NonSerialized] private bool _bonesSearched;
+        [NonSerialized] private int _boundCount;
+        [NonSerialized] private float _kickTimer;
+        [NonSerialized] private float _kickSign = 1f;
 
         private sealed class Bone
         {
             public Transform Transform;
             public Transform Tip;
-            public float FrequencyScale;
-            public float Strength;
+            public int Index;
             public NpcJiggleSpring Spring;
             public bool Applied;
             public Quaternion LocalBefore;
             public Quaternion LocalAfter;
-            public float PositionAmount;
-            public float MaxAngleDegrees;
-            public float DampingRatio;
             public bool PositionApplied;
             public Vector3 LocalPositionBefore;
             public Vector3 LocalPositionAfter;
@@ -279,6 +288,7 @@ namespace ModularNPC
 
             deltaTime = Mathf.Min(deltaTime, MaxDeltaTime);
             float weight = _weight;
+            TickPreviewKick(deltaTime);
 
             for (int i = 0; i < _runtime.Length; i++)
             {
@@ -297,14 +307,21 @@ namespace ModularNPC
                     continue;
                 }
 
+                // Per-bone settings are read from the list every tick, so editing them in the Inspector during
+                // Play Mode takes effect at once.
+                NpcJiggleBone setting = _bones[bone.Index];
+                float frequencyScale = setting.frequencyScale > 0f ? setting.frequencyScale : 1f;
+                float strength = setting.strength > 0f ? setting.strength : 1f;
+                float positionAmount = Mathf.Max(0f, setting.positionAmount);
+
                 Vector3 lag = bone.Spring.Advance(
                     restTip,
                     deltaTime,
-                    _frequency * bone.FrequencyScale,
-                    bone.DampingRatio > 0f ? bone.DampingRatio : _dampingRatio,
+                    _frequency * frequencyScale,
+                    setting.dampingRatio > 0f ? setting.dampingRatio : _dampingRatio,
                     _snapDistance);
 
-                float maxAngle = bone.MaxAngleDegrees > 0f ? bone.MaxAngleDegrees : _maxAngleDegrees;
+                float maxAngle = setting.maxAngleDegrees > 0f ? setting.maxAngleDegrees : _maxAngleDegrees;
                 float limit = length * Mathf.Tan(Mathf.Min(maxAngle, 80f) * Mathf.Deg2Rad);
                 if (lag.sqrMagnitude > limit * limit * MaxWindUp * MaxWindUp)
                 {
@@ -313,7 +330,7 @@ namespace ModularNPC
                     bone.Spring.Position = restTip + lag;
                 }
 
-                Vector3 scaled = lag * (_inertia * weight * bone.Strength);
+                Vector3 scaled = lag * (_inertia * weight * strength);
                 Vector3 shown = scaled;
                 if (shown.sqrMagnitude > limit * limit)
                 {
@@ -331,12 +348,12 @@ namespace ModularNPC
                 bone.LocalAfter = bone.Transform.localRotation;
                 bone.Applied = true;
 
-                if (bone.PositionAmount > 0f && _maxPositionOffset > 0f)
+                if (positionAmount > 0f && _maxPositionOffset > 0f)
                 {
                     // The flesh slides as well as swings. It follows the tip's lag, so a body that stops
                     // pushes the cheeks on past where the animation holds them, then they settle back.
                     bone.LocalPositionBefore = bone.Transform.localPosition;
-                    bone.Transform.position += PositionOffset(scaled, bone.PositionAmount, _maxPositionOffset);
+                    bone.Transform.position += PositionOffset(scaled, positionAmount, _maxPositionOffset);
                     bone.LocalPositionAfter = bone.Transform.localPosition;
                     bone.PositionApplied = true;
                 }
@@ -393,12 +410,26 @@ namespace ModularNPC
 
         private void EnsureBones()
         {
-            if (_bonesSearched || Transform == null)
+            if (Transform == null)
+            {
+                return;
+            }
+
+            // The list was edited (a bone added or removed in the Inspector): take our offsets off first,
+            // then search again.
+            if (_bonesSearched && _bones != null && _bones.Count != _boundCount)
+            {
+                BeforeAnimation();
+                _bonesSearched = false;
+            }
+
+            if (_bonesSearched)
             {
                 return;
             }
 
             _bonesSearched = true;
+            _boundCount = _bones != null ? _bones.Count : 0;
             var found = new List<Bone>(_bones != null ? _bones.Count : 0);
             if (_bones != null)
             {
@@ -426,16 +457,40 @@ namespace ModularNPC
                     {
                         Transform = bone,
                         Tip = tip,
-                        FrequencyScale = entry.frequencyScale > 0f ? entry.frequencyScale : 1f,
-                        Strength = entry.strength > 0f ? entry.strength : 1f,
-                        PositionAmount = Mathf.Max(0f, entry.positionAmount),
-                        MaxAngleDegrees = Mathf.Max(0f, entry.maxAngleDegrees),
-                        DampingRatio = Mathf.Max(0f, entry.dampingRatio)
+                        Index = i
                     });
                 }
             }
 
             _runtime = found.ToArray();
+        }
+
+        private void TickPreviewKick(float deltaTime)
+        {
+            if (!_previewKick)
+            {
+                _kickTimer = 0f;
+                return;
+            }
+
+            _kickTimer += deltaTime;
+            if (_kickTimer < _previewInterval)
+            {
+                return;
+            }
+
+            _kickTimer = 0f;
+            _kickSign = -_kickSign;
+            // Up and forward together, so the bones both slide and swing (a bone only turns for motion across its own
+            // length, never for motion straight along it).
+            Vector3 jolt = (Vector3.up + Transform.forward * 0.8f).normalized * (_kickSign * _previewSpeed);
+            for (int i = 0; i < _runtime.Length; i++)
+            {
+                if (_runtime[i].Spring.Primed)
+                {
+                    _runtime[i].Spring.Velocity += jolt;
+                }
+            }
         }
 
         private static Vector3 TipPosition(Bone bone, Vector3 pivot)
