@@ -16,6 +16,10 @@ namespace ModularNPC
     /// The watched source defaults to any <see cref="AudioSource"/> under the NPC, which finds a dialog
     /// system's voice source on the character's head bone automatically. Assign
     /// <see cref="VoiceSource"/> to pin one source explicitly.
+    ///
+    /// Lines without audio can still move the mouth: <see cref="Hold"/> keeps the talking state raised for
+    /// as long as any holder asks (the Dialog System integration's <c>NpcDialogTalking</c> does this while
+    /// the character's silent line is on screen).
     /// </summary>
     [Serializable]
     [MovedFrom(true, "BlahBlahFamily.Gameplay", "Assembly-CSharp", null)]
@@ -39,6 +43,7 @@ namespace ModularNPC
 
         [NonSerialized] private AudioSource[] _sources;
         [NonSerialized] private float _nextSourceRefreshTime;
+        [NonSerialized] private System.Collections.Generic.HashSet<object> _holders;
 
         /// <summary>True while the talking animation is playing.</summary>
         public bool IsTalking => IsFlagRaised;
@@ -66,6 +71,7 @@ namespace ModularNPC
         {
             base.OnFeatureShutdown();
             _sources = null;
+            _holders?.Clear();
         }
 
         /// <summary>
@@ -81,9 +87,34 @@ namespace ModularNPC
             _nextSourceRefreshTime = Time.unscaledTime + SourceRefreshInterval;
         }
 
+        /// <summary>
+        /// Keeps the talking state raised while <paramref name="talking"/> is true for
+        /// <paramref name="holder"/>, whether or not any voice audio plays (a line without a voice clip).
+        /// Several holders can hold at once; the state drops when none holds and no voice plays.
+        /// </summary>
+        public void Hold(object holder, bool talking)
+        {
+            if (holder == null)
+            {
+                return;
+            }
+
+            if (talking)
+            {
+                (_holders ??= new System.Collections.Generic.HashSet<object>()).Add(holder);
+            }
+            else
+            {
+                _holders?.Remove(holder);
+            }
+        }
+
+        /// <summary>True while at least one <see cref="Hold"/> caller keeps the talking state up.</summary>
+        public bool IsHeld => _holders != null && _holders.Count > 0;
+
         protected override bool EvaluateFlag()
         {
-            return IsVoicePlaying();
+            return IsHeld || IsVoicePlaying();
         }
 
         private bool IsVoicePlaying()

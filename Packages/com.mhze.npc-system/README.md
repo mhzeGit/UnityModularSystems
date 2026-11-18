@@ -49,6 +49,15 @@ has a 0.3-second blend; unmapped lines and stop/replacement/completion ease back
 component never guesses emotion from text. Disabling detaches listeners. Gameplay callers should
 use a distinct owner so a dialog ending cannot clear a more recent gameplay reaction.
 
+`NpcTalking` raises the animator's `Talking` bool while voice audio plays under the NPC. A dialog line
+without a voice clip plays no audio, so on its own it leaves the speaker's mouth still. With Dialog
+System installed, add `NpcDialogTalking` to the NPC and list the speaker names its lines use (for
+example `Girlfriend`): while one of those lines without a voice clip is on screen it holds the talking
+state (`NpcTalking.Hold(owner, true)`) for about as long as the text takes to say (Characters Per Second,
+default 14; at least Minimum Seconds; never past the line's own duration), and releases it when the line
+changes or the dialog ends. Voiced lines are left to the audio. Any other code can hold the state the same
+way with its own owner object.
+
 Expression offsets are removed in the scheduler early Update/FixedUpdate pass, before an Animator
 can write a new face pose, and applied again in LateUpdate. This keeps a held expression visible
 when a body clip changes or animated jaw/lid channels evaluate, without accumulating offsets on
