@@ -112,6 +112,17 @@ A new destination, a warp or a deactivated feature cancels the gesture at once. 
 
 Version 1.9.0 adds this backward-compatible feature.
 
+### A door shut on the NPC (1.15.0)
+
+Somebody (usually the player) may shut a door again while the NPC is still opening it or about to
+walk through. The NPC no longer gives up: it lets its gesture finish, pauses briefly and reaches for
+the door again, as often as it takes. `NpcDoorNavigation.DoorShutOnNpc(door, closer)` fires each time
+the door was shut on it (`closer` is `UltimateDoorController.LastInteractor`: the transform that last
+operated the door, null for a script or an auto-close) so game code can count the interruptions. A door
+that does not open within **Open Timeout** is tried again too; a **locked** door still makes the NPC
+wait until it is unlocked. Needs Ultimate Door System 1.5.0 (`IsOpening` / `IsClosing`, because a
+door's `State` only changes when its swing ends).
+
 ## Bone jiggle
 
 `NpcBoneJiggle` (presentation feature, **Bone Jiggle**) adds a soft, springy follow-through to fleshy

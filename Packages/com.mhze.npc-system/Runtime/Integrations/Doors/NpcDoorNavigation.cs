@@ -28,6 +28,12 @@ namespace ModularNPC
     /// <see cref="NpcDoorOpenGesture"/>: raise a hand and tap the door), it plays that gesture once it
     /// stands at the door, opens the door at the gesture's contact moment, and walks on only when the
     /// door is open and the gesture has finished. Without one the door opens straight away.
+    ///
+    /// Somebody may shut the door again while the NPC is still opening it or about to walk through (the
+    /// player closing it as soon as it opens). The NPC never gives up on that: it finishes its gesture,
+    /// then reaches for the door again, as often as it takes, and raises <see cref="DoorShutOnNpc"/> each
+    /// time so game code can count the interruptions. A door that does not open within <c>Open Timeout</c>
+    /// is tried again too; only a locked door makes it stand and wait for the unlock.
     /// </summary>
     [Serializable]
     [MovedFrom(true, "BlahBlahFamily.Gameplay", "Assembly-CSharp", null)]
@@ -56,6 +62,12 @@ namespace ModularNPC
         private const float SenseHalfHeight = 0.6f;
         private const int MaxSensedColliders = 16;
 
+        // Constants, not serialized fields: a prefab saved before a field existed loads it as 0.
+        // Seconds the NPC waits after a door was shut on it (or never opened) before it reaches for it again.
+        private const float RetryPause = 0.45f;
+        // A door the NPC opened that is found shut again within this many seconds, still ahead of it, was shut on it.
+        private const float ShutWindow = 3f;
+
         [Tooltip("Distance from the NPC's pivot to the door surface at which it stops. The NPC capsule radius is added by the body itself, so ~0.6 leaves a small gap.")]
         [SerializeField, Min(0.2f)] private float _stopDistance = 0.6f;
         [Tooltip("Seconds the NPC stands still at the door before it reaches for it. Counted from when it has actually come to rest.")]
@@ -78,6 +90,19 @@ namespace ModularNPC
         [NonSerialized] private float _phaseEndsAt;
         [NonSerialized] private bool _failedBecauseLocked;
         [NonSerialized] private INpcDoorOpenGesture _gesture;
+        [NonSerialized] private UltimateDoorController _lastOpened;
+        [NonSerialized] private float _lastOpenedAt;
+        [NonSerialized] private int _shutCount;
+
+        /// <summary>
+        /// Somebody shut a door the NPC had opened (or was opening) before it got through. Arguments: the
+        /// door and whoever shut it (<see cref="UltimateDoorController.LastInteractor"/>, null when not
+        /// known). The NPC tries again by itself; this is only for counting and reacting.
+        /// </summary>
+        public event Action<UltimateDoorController, Transform> DoorShutOnNpc;
+
+        /// <summary>How many times the door the NPC is working on has been shut on it since it first reached for it.</summary>
+        public int ShutCountAtDoor => _phase == Phase.Scanning ? 0 : _shutCount;
 
         public NpcTickSettings TickSettings => NpcTickSettings.EveryUpdate;
 
@@ -142,9 +167,10 @@ namespace ModularNPC
                     break;
 
                 case Phase.Settling:
-                    // The pause only counts once the agent has actually braked to a halt.
-                    if (_agent.velocity.sqrMagnitude > 0.01f)
-                        _phaseEndsAt = Time.time + _pauseBeforeOpen;
+                    // The pause only counts once the agent has actually braked to a halt, and a gesture
+                    // still playing from the last try (the door was shut on it) is let finish first.
+                    if (_agent.velocity.sqrMagnitude > 0.01f || IsGesturePlaying)
+                        _phaseEndsAt = Mathf.Max(_phaseEndsAt, Time.time + _pauseBeforeOpen);
                     else if (Time.time >= _phaseEndsAt)
                         ReachForDoor();
                     break;
@@ -160,8 +186,11 @@ namespace ModularNPC
                     break;
 
                 case Phase.Passing:
+                    // Shut again before she got through: an interruption, she reaches for it again.
+                    if (!IsOpenAndStill(_door))
+                        DoorWasShut();
                     // Walk on only once the gesture is over: its clip holds the legs still.
-                    if (Time.time >= _phaseEndsAt && !IsGesturePlaying)
+                    else if (Time.time >= _phaseEndsAt && !IsGesturePlaying)
                         EndInteraction(true);
                     break;
 
@@ -222,6 +251,16 @@ namespace ModularNPC
             _door = door;
             _command = _navigation.ActiveCommand;
             _failedBecauseLocked = false;
+            _shutCount = 0;
+
+            // The very door she opened a moment ago, shut again while she was walking up to it.
+            if (door == _lastOpened && Time.time - _lastOpenedAt <= ShutWindow)
+            {
+                _lastOpened = null;
+                _shutCount = 1;
+                DoorShutOnNpc?.Invoke(door, door.LastInteractor);
+            }
+
             EnterPhase(Phase.Settling, _pauseBeforeOpen);
         }
 
@@ -248,7 +287,8 @@ namespace ModularNPC
                     continue;
 
                 UltimateDoorController door = sensed.GetComponentInParent<UltimateDoorController>();
-                if (door == null || door.State == UltimateDoorController.DoorState.Open)
+                // A door swinging shut counts as shut: its state still says Open until it has finished.
+                if (door == null || IsOpenAndStill(door))
                     continue;
 
                 Vector3 toDoor = ClosestPointOn(sensed, origin) - origin;
@@ -280,10 +320,14 @@ namespace ModularNPC
 
         private bool IsGesturePlaying => _gesture != null && _gesture.IsPlaying;
 
+        /// <summary>Fully open and not on its way shut: the NPC can walk through.</summary>
+        private static bool IsOpenAndStill(UltimateDoorController door) =>
+            door != null && door.State == UltimateDoorController.DoorState.Open && !door.IsClosing;
+
         /// <summary>Standing at the door: play the NPC's door gesture if it has one, otherwise open now.</summary>
         private void ReachForDoor()
         {
-            if (_door == null || _door.State == UltimateDoorController.DoorState.Open)
+            if (_door == null || IsOpenAndStill(_door))
             {
                 TryOpenDoor();
                 return;
@@ -310,9 +354,16 @@ namespace ModularNPC
             }
 
             // Somebody else (the player, another NPC) already opened it while we were pausing.
-            if (_door.State == UltimateDoorController.DoorState.Open)
+            if (IsOpenAndStill(_door))
             {
                 BeginPassing();
+                return;
+            }
+
+            // Somebody else is already swinging it open: just wait for it.
+            if (_door.IsOpening)
+            {
+                EnterPhase(Phase.Opening, _openTimeout);
                 return;
             }
 
@@ -333,21 +384,46 @@ namespace ModularNPC
                 return;
             }
 
-            switch (_door.State)
+            // The state only says Open once the door has finished swinging, and still says Closed while it
+            // swings open, so a door that was shut again is told apart by its motion: closing, or standing
+            // closed after the NPC asked it to open.
+            if (_door.State == UltimateDoorController.DoorState.Locked)
             {
-                case UltimateDoorController.DoorState.Open:
-                    BeginPassing();
-                    break;
-
-                case UltimateDoorController.DoorState.Locked:
-                    Fail(true);
-                    break;
-
-                default:
-                    if (Time.time >= _phaseEndsAt)
-                        Fail(false);
-                    break;
+                Fail(true);
             }
+            else if (_door.IsClosing || (!_door.IsAnimating && _door.State == UltimateDoorController.DoorState.Closed))
+            {
+                DoorWasShut();
+            }
+            else if (IsOpenAndStill(_door))
+            {
+                // Remember the door she opened: found shut again within moments, it was shut on her.
+                if (_door.LastInteractor == Npc.transform)
+                {
+                    _lastOpened = _door;
+                    _lastOpenedAt = Time.time;
+                }
+
+                BeginPassing();
+            }
+            else if (Time.time >= _phaseEndsAt)
+            {
+                // Never finished opening (stuck): try again rather than stand there for ever.
+                Fail(false);
+            }
+        }
+
+        /// <summary>
+        /// The door was shut on the NPC before it got through. Tell listeners, then reach for it again once
+        /// the gesture has finished and after a short pause.
+        /// </summary>
+        private void DoorWasShut()
+        {
+            _shutCount++;
+            _lastOpened = null;
+            UltimateDoorController door = _door;
+            EnterPhase(Phase.Settling, _pauseBeforeOpen + RetryPause);
+            DoorShutOnNpc?.Invoke(door, door != null ? door.LastInteractor : null);
         }
 
         private void TickFailed()
@@ -358,6 +434,11 @@ namespace ModularNPC
             else if (_failedBecauseLocked && _door.State != UltimateDoorController.DoorState.Locked)
             {
                 _failedBecauseLocked = false;
+                EnterPhase(Phase.Settling, _pauseBeforeOpen);
+            }
+            else if (!_failedBecauseLocked && Time.time >= _phaseEndsAt)
+            {
+                // The door never opened (it is not locked, so it will do): try again.
                 EnterPhase(Phase.Settling, _pauseBeforeOpen);
             }
         }
@@ -374,7 +455,7 @@ namespace ModularNPC
         private void Fail(bool locked)
         {
             _failedBecauseLocked = locked;
-            EnterPhase(Phase.Failed, 0f);
+            EnterPhase(Phase.Failed, locked ? 0f : RetryPause * 2f);
         }
 
         private void EnterPhase(Phase phase, float duration)
@@ -391,6 +472,7 @@ namespace ModularNPC
             _door = null;
             _command = default;
             _failedBecauseLocked = false;
+            _shutCount = 0;
             // Interrupted (new destination, warp, skip): drop the gesture so the NPC never walks in it.
             if (_gesture != null && _gesture.IsPlaying)
                 _gesture.Cancel();
