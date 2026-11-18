@@ -105,7 +105,30 @@ namespace MHZE.UltimateDoorSystem
     private Vector3 _rattleBasePos;
     private float _lastLockedSoundTime = -100f;
 
+    /// <remarks>
+    /// While a door swings open <see cref="State"/> is still <see cref="DoorState.Closed"/>, and while it
+    /// swings shut it is still <see cref="DoorState.Open"/>: the state only changes when the motion ends.
+    /// Use <see cref="IsOpening"/> / <see cref="IsClosing"/> to tell a door that is on its way from one
+    /// that is standing still.
+    /// </remarks>
     public DoorState State => _state;
+
+    /// <summary>The door is moving (opening or closing) right now.</summary>
+    public bool IsAnimating => _isAnimating;
+
+    /// <summary>The door is swinging open and has not finished yet.</summary>
+    public bool IsOpening => _isAnimating && _isOpening;
+
+    /// <summary>The door is swinging shut and has not finished yet (its <see cref="State"/> may still say Open).</summary>
+    public bool IsClosing => _isAnimating && !_isOpening;
+
+    /// <summary>
+    /// Whoever last passed themselves to <see cref="Open(Transform)"/>, <see cref="CloseBy"/> or
+    /// <see cref="Toggle"/>; null when the last call named nobody. Lets a listener tell the player's hand
+    /// from a script's.
+    /// </summary>
+    public Transform LastInteractor { get; private set; }
+
     public DoorMode Mode => _mode;
     public AnimationType AnimType => _animationType;
 
@@ -373,7 +396,9 @@ namespace MHZE.UltimateDoorSystem
         if (!_isAnimating && _state == DoorState.Open) return;
         if (!_allowIntruption && _isAnimating) return;
 
+        LastInteractor = interactor;
         StopExistingRoutine();
+        _isOpening = true;
 
         PlaySound(_openSound);
 
@@ -426,13 +451,22 @@ namespace MHZE.UltimateDoorSystem
         }
     }
 
-    public void Close()
+    public void Close() => CloseBy(null);
+
+    /// <summary>
+    /// Closes the door; <paramref name="interactor"/> (who is doing it) is kept in <see cref="LastInteractor"/>.
+    /// A different name from <see cref="Close()"/> on purpose: event bindings find methods by name, and an
+    /// overload would make <c>Close</c> ambiguous for them.
+    /// </summary>
+    public void CloseBy(Transform interactor)
     {
         if (_state == DoorState.Locked) return;
         if (!_isAnimating && _state == DoorState.Closed) return;
         if (!_allowIntruption && _isAnimating) return;
 
+        LastInteractor = interactor;
         StopExistingRoutine();
+        _isOpening = false;
 
         PlaySound(_closeSound);
 
@@ -475,14 +509,14 @@ namespace MHZE.UltimateDoorSystem
         if (_isAnimating)
         {
             if (_isOpening)
-                Close();
+                CloseBy(interactor);
             else
                 Open(interactor);
         }
         else
         {
             if (_state == DoorState.Open)
-                Close();
+                CloseBy(interactor);
             else
                 Open(interactor);
         }
