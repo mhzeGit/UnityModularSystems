@@ -37,11 +37,18 @@ namespace ModularNPC
         [Tooltip("Name of the bone to turn when no Look Transform is assigned, searched inside this NPC. Defaults to 'Head'.")]
         [SerializeField] private string _lookBoneName = DefaultLookBoneName;
 
-        [Tooltip("Metres from the bone's pivot up to the middle of the eyes, along the bone's up axis. " +
+        [Tooltip("Metres from the bone's pivot up to the middle of the eyes, along the face's up axis. " +
                  "A head bone usually sits at the base of the skull, so aiming the bone itself at a target " +
                  "makes the eyes look past it. Raise this until the eyes meet the target; 0 aims the pivot " +
                  "directly at it.")]
         [SerializeField, Min(0f)] private float _eyeHeightOffset;
+
+        [Tooltip("Rotation, in the bone's own axes, from the bone to the face: after it, +Z points where the eyes " +
+                 "look and +Y out of the top of the head. Zero suits rigs whose look bone already points +Z " +
+                 "forward and +Y up (most humanoid heads). Four-legged rigs often run the head bone along the " +
+                 "neck or the skull; set this so the face points straight ahead at rest. Yaw/pitch limits and " +
+                 "the eye height are measured in this face frame.")]
+        [SerializeField] private Vector3 _faceRotationOffset;
 
         [Tooltip("Head follow smoothing time in seconds. 0 follows instantly; higher values add smooth trailing drag. Not a wait before turning.")]
         [SerializeField, Min(0f)] private float _dragDelay;
@@ -153,6 +160,19 @@ namespace ModularNPC
             set => _eyeWeight = Mathf.Clamp01(value);
         }
 
+        /// <summary>
+        /// Euler rotation, in the bone's local axes, from the bone to its face frame (+Z where the eyes look,
+        /// +Y out of the top of the head). Zero for bones that already point that way. Safe to change at runtime.
+        /// </summary>
+        public Vector3 FaceRotationOffset
+        {
+            get => _faceRotationOffset;
+            set => _faceRotationOffset = value;
+        }
+
+        private bool HasFaceOffset => _faceRotationOffset.sqrMagnitude > 0.0000001f;
+        private Quaternion FaceOffset => HasFaceOffset ? Quaternion.Euler(_faceRotationOffset) : Quaternion.identity;
+
         /// <summary>Metres from the bone's pivot to the eyes. Safe to change at runtime.</summary>
         public float EyeHeightOffset
         {
@@ -227,10 +247,16 @@ namespace ModularNPC
             TickBodyTurn();
 
             Transform parent = bone.parent;
-            Vector3 up = parent != null ? parent.up : Vector3.up;
             // A partial head weight blends from this frame's animated pose. When nothing animated the
             // bone since our last write, blend from the rest pose instead, or the weight would creep to 1.
             Quaternion restWorldRotation = parent != null ? parent.rotation * _restLocalRotation : _restLocalRotation;
+            // The face frame's up at rest. A plain head bone uses its parent's up (a neck that stands
+            // upright); a bone with a face offset uses the top of its own head at rest, because the
+            // parent of a four-legged head is a neck lying along the body.
+            Quaternion faceOffset = FaceOffset;
+            Vector3 up = HasFaceOffset
+                ? restWorldRotation * faceOffset * Vector3.up
+                : parent != null ? parent.up : Vector3.up;
             Quaternion animatedRotation = _hasLastWritten && Quaternion.Angle(bone.rotation, _lastWrittenRotation) < 0.001f
                 ? restWorldRotation
                 : bone.rotation;
@@ -246,9 +272,10 @@ namespace ModularNPC
                 }
 
                 Vector3 aim = AimWithEyes(toTarget / distance, distance, up);
+                // The goal is worked out for the face, then turned back into the bone's own axes.
                 goal = _limitAngles
                     ? GetLimitedRotation(aim, parent)
-                    : Quaternion.LookRotation(aim, up);
+                    : Quaternion.LookRotation(aim, up) * Quaternion.Inverse(faceOffset);
                 if (_headWeight < 1f)
                 {
                     goal = Quaternion.Slerp(animatedRotation, goal, _headWeight);
@@ -438,9 +465,10 @@ namespace ModularNPC
 
         private Quaternion GetLimitedRotation(Vector3 worldDirection, Transform parent)
         {
-            Quaternion neutralWorldRotation = parent != null
+            Quaternion faceOffset = FaceOffset;
+            Quaternion neutralWorldRotation = (parent != null
                 ? parent.rotation * _restLocalRotation
-                : _restLocalRotation;
+                : _restLocalRotation) * faceOffset;
             Vector3 localDirection = Quaternion.Inverse(neutralWorldRotation) * worldDirection;
 
             float yaw = Mathf.Atan2(localDirection.x, localDirection.z) * Mathf.Rad2Deg;
@@ -450,7 +478,7 @@ namespace ModularNPC
 
             yaw = Mathf.Clamp(yaw, _minimumYaw, _maximumYaw);
             pitch = Mathf.Clamp(pitch, _minimumPitch, _maximumPitch);
-            return neutralWorldRotation * Quaternion.Euler(pitch, yaw, 0f);
+            return neutralWorldRotation * Quaternion.Euler(pitch, yaw, 0f) * Quaternion.Inverse(faceOffset);
         }
 
         private void ResetLook()
@@ -510,10 +538,11 @@ namespace ModularNPC
                             !eyes.Exists(e => e.Bone == candidate))
                         {
                             Quaternion parentRotation = candidate.parent.rotation;
+                            Quaternion face = _bone.rotation * FaceOffset;
                             eyes.Add(new EyePose { Bone = candidate, Rest = candidate.localRotation,
                                 Current = candidate.localRotation,
-                                Forward = Quaternion.Inverse(parentRotation) * _bone.forward,
-                                Up = Quaternion.Inverse(parentRotation) * _bone.up });
+                                Forward = Quaternion.Inverse(parentRotation) * (face * Vector3.forward),
+                                Up = Quaternion.Inverse(parentRotation) * (face * Vector3.up) });
                             break;
                         }
             }

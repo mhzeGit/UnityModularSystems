@@ -90,6 +90,16 @@ a runtime value (not serialized); callers that lower it should set it back to `1
 `EyeWeight` does the same for the eyes: `1` aims them fully at the target (within their angle limits),
 `0.5` half way from their rest pose, `0` keeps them at rest.
 
+### Face rotation offset (four-legged rigs)
+
+The look aims the bone's +Z at the target with its +Y up, which suits humanoid head bones. Many
+four-legged rigs run the head bone along the skull or the neck instead (a dog's `Head` bone points up
+and forward). **Face Rotation Offset** (`FaceRotationOffset`, Euler degrees in the bone's own axes) turns
+the bone's axes into the face's: after it, +Z points where the eyes look and +Y out of the top of the
+head, in the rest pose. The look then aims the face, keeps the top of the head up (the face's rest up,
+not the neck's), and measures the yaw/pitch limits and the eye height in the face frame. Zero (the
+default) leaves every existing character unchanged.
+
 ### Head follow drag
 
 `NpcLookAtTarget.DragDelay` (Inspector: **Drag Delay**) is the head follow smoothing time in
