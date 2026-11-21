@@ -14,6 +14,11 @@ namespace MHZE.UseSystem
         [Header("Raycast Settings")]
         [SerializeField] float maxUseDistance = 3f;
         [SerializeField] LayerMask usableLayers = -1;
+        [Tooltip("A wall or other solid collider between the camera and the target stops the use. Turn off only for a game where you can reach through things.")]
+        [SerializeField] bool blockedByObstacles = true;
+        [Tooltip("Layers that can stand in the way when Blocked By Obstacles is on. Triggers and the player's own colliders (including the held tool) never block. Ignore Raycast is off by default.")]
+        [SerializeField] LayerMask obstacleLayers = ~(1 << 2);
+        readonly RaycastHit[] obstacleBuffer = new RaycastHit[32];
 
         [Header("References")]
         public UseSystemDefinitions definitions;
@@ -68,7 +73,7 @@ namespace MHZE.UseSystem
 
             Ray ray = new Ray(mainCamera.transform.position, mainCamera.transform.forward);
 
-            if (Physics.Raycast(ray, out RaycastHit hit, maxUseDistance, usableLayers))
+            if (Physics.Raycast(ray, out RaycastHit hit, maxUseDistance, usableLayers) && !IsObstructed(ray, hit))
             {
                 OnDetectedObjectPerformed(hit);
             }
@@ -77,6 +82,22 @@ namespace MHZE.UseSystem
                 OnLostObjectPerformed();
             }
         }
+        /// <summary>True when a solid, non-trigger collider that is not the target, not part of it and not the player's own lies closer along the ray than the hit.</summary>
+        bool IsObstructed(Ray ray, RaycastHit hit)
+        {
+            if (!blockedByObstacles) return false;
+            int count = Physics.RaycastNonAlloc(ray, obstacleBuffer, hit.distance, obstacleLayers, QueryTriggerInteraction.Ignore);
+            Transform self = mainCamera.transform.root;
+            Transform target = hit.collider.transform;
+            for (int i = 0; i < count; i++)
+            {
+                Transform t = obstacleBuffer[i].collider.transform;
+                if (t.IsChildOf(self) || t.IsChildOf(target) || target.IsChildOf(t)) continue;
+                if (obstacleBuffer[i].distance < hit.distance - 0.001f) return true;
+            }
+            return false;
+        }
+
         #region Input Setup
         void OnEnable()
         {
