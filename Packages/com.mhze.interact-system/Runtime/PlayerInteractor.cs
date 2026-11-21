@@ -9,13 +9,19 @@ namespace MHZE.InteractSystem
         [SerializeField] private InputActionReference interactInputAction;
         [SerializeField] private Camera playerCamera;
         [SerializeField] private Transform playerTransform;
+        [Tooltip("Layers an interactable's collider can be on. Other layers never become the current interactable.")]
         [SerializeField] private LayerMask interactableLayer = -1;
-        [SerializeField] private float maxDistance = 5f;
+        [Tooltip("How far from the camera the player can interact, in metres. About arm's length plus a step: 2 to 3.")]
+        [SerializeField] private float maxDistance = 2.5f;
+        [Tooltip("A wall or other solid collider between the camera and an interactable stops the interaction. Turn off only for a game where you can reach through things.")]
+        [SerializeField] private bool blockedByObstacles = true;
+        [Tooltip("Layers that can stand in the way when Blocked By Obstacles is on. Triggers and the player's own colliders (including a held item) never block. Ignore Raycast is off by default.")]
+        [SerializeField] private LayerMask obstacleLayers = ~(1 << 2);
         [SerializeField] private bool showDebugRay = true;
 
         private static readonly IComparer<RaycastHit> NearestFirst = Comparer<RaycastHit>.Create((a, b) => a.distance.CompareTo(b.distance));
 
-        private readonly RaycastHit[] raycastHitBuffer = new RaycastHit[8];
+        private readonly RaycastHit[] raycastHitBuffer = new RaycastHit[32];
         private RaycastHit? lastRaycastHit;
         private bool isHolding;
         private float holdTimer;
@@ -126,21 +132,45 @@ namespace MHZE.InteractSystem
             }
 
             Ray ray = playerCamera.ViewportPointToRay(Vector3.one * 0.5f);
-            int hitCount = Physics.RaycastNonAlloc(ray, raycastHitBuffer, maxDistance, interactableLayer);
+            // One query over every layer that can be interactable or obstruct, so a wall is seen as well as the interactable behind it.
+            int mask = blockedByObstacles ? interactableLayer.value | obstacleLayers.value : interactableLayer.value;
+            int hitCount = Physics.RaycastNonAlloc(ray, raycastHitBuffer, maxDistance, mask, QueryTriggerInteraction.Collide);
 
-            // The physics query does not return its hits in any order: the nearest interactable under the crosshair is the one to use.
+            // The physics query does not return its hits in any order: the nearest hit under the crosshair decides.
             System.Array.Sort(raycastHitBuffer, 0, hitCount, NearestFirst);
+            Transform self = InteractorTransform;
             for (int i = 0; i < hitCount; i++)
             {
-                IInteractable interactable = raycastHitBuffer[i].collider.GetComponent<IInteractable>();
-                if (interactable == null) continue;
-                lastRaycastHit = raycastHitBuffer[i];
-                SetCurrentInteractable(interactable, raycastHitBuffer[i].collider.gameObject);
-                return;
+                Collider hitCollider = raycastHitBuffer[i].collider;
+                if (IsPartOfPlayer(hitCollider, self)) continue;
+
+                IInteractable interactable = (interactableLayer.value & (1 << hitCollider.gameObject.layer)) != 0
+                    ? hitCollider.GetComponent<IInteractable>()
+                    : null;
+                if (interactable != null)
+                {
+                    lastRaycastHit = raycastHitBuffer[i];
+                    SetCurrentInteractable(interactable, hitCollider.gameObject);
+                    return;
+                }
+
+                // A solid, non-interactable collider closer than anything interactable: the player cannot reach past it.
+                if (blockedByObstacles && !hitCollider.isTrigger && (obstacleLayers.value & (1 << hitCollider.gameObject.layer)) != 0)
+                {
+                    lastRaycastHit = raycastHitBuffer[i];
+                    ClearCurrentInteractable();
+                    return;
+                }
             }
 
             lastRaycastHit = null;
             ClearCurrentInteractable();
+        }
+
+        private bool IsPartOfPlayer(Collider hitCollider, Transform self)
+        {
+            Transform t = hitCollider.transform;
+            return (self != null && t.IsChildOf(self)) || (playerCamera != null && t.IsChildOf(playerCamera.transform));
         }
 
         private void DrawDebugRay()

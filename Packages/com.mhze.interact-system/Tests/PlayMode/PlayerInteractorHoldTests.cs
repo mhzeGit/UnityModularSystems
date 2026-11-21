@@ -131,6 +131,53 @@ namespace MHZE.InteractSystem.Tests
             Assert.That(holdEnds, Is.EqualTo(1));
         }
 
+        [UnityTest]
+        public IEnumerator SolidWallBetweenCameraAndTargetBlocksIt()
+        {
+            var wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            wall.transform.position = new Vector3(0, 0, 1); wall.transform.localScale = new Vector3(4, 4, .2f);
+            Physics.SyncTransforms();
+            yield return null; yield return null;
+            Assert.That(interactor.CurrentInteractable, Is.Null);
+            Object.Destroy(wall); yield return null; yield return null;
+            Assert.That(interactor.CurrentInteractable, Is.SameAs(first));
+        }
+
+        [UnityTest]
+        public IEnumerator WallOnAnotherLayerStillBlocksWhenInteractablesAreOnOneLayer()
+        {
+            // The project's player only lists the interactable layer, so a wall is on a layer the interactable mask omits.
+            firstObject.layer = 8;
+            SetField(interactor, "interactableLayer", (LayerMask)(1 << 8));
+            var wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            wall.transform.position = new Vector3(0, 0, 1); wall.transform.localScale = new Vector3(4, 4, .2f);
+            Physics.SyncTransforms();
+            yield return null; yield return null;
+            Assert.That(interactor.CurrentInteractable, Is.Null);
+            Object.Destroy(wall); yield return null; yield return null;
+            Assert.That(interactor.CurrentInteractable, Is.SameAs(first));
+        }
+
+        [UnityTest]
+        public IEnumerator TriggerVolumeInFrontDoesNotBlock()
+        {
+            var volume = new GameObject("Trigger volume"); volume.transform.position = new Vector3(0, 0, 1);
+            volume.AddComponent<BoxCollider>().isTrigger = true;
+            Physics.SyncTransforms();
+            yield return null; yield return null;
+            Assert.That(interactor.CurrentInteractable, Is.SameAs(first));
+            Object.Destroy(volume);
+        }
+
+        [UnityTest]
+        public IEnumerator TargetBeyondMaxDistanceIsNotInteractable()
+        {
+            firstObject.transform.position = new Vector3(0, 0, 6);
+            Physics.SyncTransforms();
+            yield return null; yield return null;
+            Assert.That(interactor.CurrentInteractable, Is.Null);
+        }
+
         private static InteractableItemBase MakeTarget(string name, Vector3 position, out GameObject obj)
         {
             obj = new GameObject(name); obj.transform.position = position;
