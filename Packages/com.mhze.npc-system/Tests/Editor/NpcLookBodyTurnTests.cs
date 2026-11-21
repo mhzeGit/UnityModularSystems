@@ -107,6 +107,27 @@ namespace ModularNPC.Tests
             Assert.That(Vector3.Angle(left.rotation * axis, target.transform.position - left.position), Is.LessThan(0.1f));
         }
 
+        [Test] public void HalfHeadWeightTurnsTheHeadHalfWayWhileTheEyesReachTheTarget()
+        {
+            look.BodyTurnThresholdDegrees = 0f;
+            look.DragDelay = 0f;
+            look.EyesFollowInstantly = true;
+            look.HeadWeight = 0.5f;
+            var head = root.transform.Find("Head");
+            var left = head.Find("LeftEye");
+            Vector3 axis = Quaternion.Inverse(left.rotation) * head.forward;
+            Quaternion rest = head.rotation;
+            target.transform.position = Quaternion.Euler(0f, 40f, 0f) * Vector3.forward * 2f + head.position;
+            look.LookAt(target.transform);
+            for (int i = 0; i < 60; i++) look.Tick(1f / 60f);
+            float headTurn = Quaternion.Angle(rest, head.rotation);
+            Assert.That(headTurn, Is.InRange(18f, 22f)); // half of 40 degrees, and it does not creep up
+            Assert.That(Vector3.Angle(left.rotation * axis, target.transform.position - left.position), Is.LessThan(0.5f));
+            Assert.That(((INpcLookWeight)look).HeadWeight, Is.EqualTo(0.5f));
+            look.HeadWeight = 2f;
+            Assert.That(look.HeadWeight, Is.EqualTo(1f));
+        }
+
         [Test] public void ZeroDragTracksImmediatelyIncludingRetargeting()
         {
             look.BodyTurnThresholdDegrees = 0f;

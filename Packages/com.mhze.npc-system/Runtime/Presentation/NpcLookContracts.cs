@@ -29,4 +29,14 @@ namespace ModularNPC
         /// <summary>Ends the look and eases the bone back to its rest pose.</summary>
         void StopLooking();
     }
+
+    /// <summary>
+    /// Optional companion to <see cref="INpcLook"/>: how strongly the head turns toward the target
+    /// (0..1). Eyes, when the look has them, keep aiming at the target itself.
+    /// </summary>
+    public interface INpcLookWeight
+    {
+        /// <summary>1 turns the head fully toward the target, 0.5 half way from its animated pose, 0 not at all.</summary>
+        float HeadWeight { get; set; }
+    }
 }

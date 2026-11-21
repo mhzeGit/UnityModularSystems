@@ -25,7 +25,7 @@ namespace ModularNPC
         "Look At Target",
         "Presentation",
         Description = "Turns a head, eye or aim bone toward any target Transform, with an eye-height offset so the eyes meet the target, and eases it back to rest when the look ends.")]
-    public sealed class NpcLookAtTarget : NpcFeature, INpcLook, INpcTickable
+    public sealed class NpcLookAtTarget : NpcFeature, INpcLook, INpcLookWeight, INpcTickable
     {
         private const string DefaultLookBoneName = "Head";
         private const float DefaultDegreesPerSecond = 360f;
@@ -93,6 +93,9 @@ namespace ModularNPC
         [NonSerialized] private float _remainingAngle;
         [NonSerialized] private bool _hasCurrentRotation;
         [NonSerialized] private bool _looking;
+        [NonSerialized] private float _headWeight = 1f;
+        [NonSerialized] private Quaternion _lastWrittenRotation;
+        [NonSerialized] private bool _hasLastWritten;
         [NonSerialized] private NpcCommandHandle _bodyTurn = NpcCommandHandle.Invalid;
 
         /// <summary>Follow smoothing time in seconds. Zero snaps to the target; higher values trail smoothly.</summary>
@@ -127,6 +130,17 @@ namespace ModularNPC
 
         /// <summary>Degrees left between the bone and its goal (the target, or rest while easing back).</summary>
         public float RemainingAngle => _remainingAngle;
+
+        /// <summary>
+        /// How far the head bone turns toward the target while looking: 1 (the default) aims it fully,
+        /// 0.5 turns it half way from its animated pose, 0 leaves the animated pose. The eyes still aim at
+        /// the target itself, within their angle limits. Runtime only; reset it to 1 when done.
+        /// </summary>
+        public float HeadWeight
+        {
+            get => _headWeight;
+            set => _headWeight = Mathf.Clamp01(value);
+        }
 
         /// <summary>Metres from the bone's pivot to the eyes. Safe to change at runtime.</summary>
         public float EyeHeightOffset
@@ -203,6 +217,12 @@ namespace ModularNPC
 
             Transform parent = bone.parent;
             Vector3 up = parent != null ? parent.up : Vector3.up;
+            // A partial head weight blends from this frame's animated pose. When nothing animated the
+            // bone since our last write, blend from the rest pose instead, or the weight would creep to 1.
+            Quaternion restWorldRotation = parent != null ? parent.rotation * _restLocalRotation : _restLocalRotation;
+            Quaternion animatedRotation = _hasLastWritten && Quaternion.Angle(bone.rotation, _lastWrittenRotation) < 0.001f
+                ? restWorldRotation
+                : bone.rotation;
 
             Quaternion goal;
             if (_looking)
@@ -218,6 +238,10 @@ namespace ModularNPC
                 goal = _limitAngles
                     ? GetLimitedRotation(aim, parent)
                     : Quaternion.LookRotation(aim, up);
+                if (_headWeight < 1f)
+                {
+                    goal = Quaternion.Slerp(animatedRotation, goal, _headWeight);
+                }
             }
             else
             {
@@ -246,6 +270,8 @@ namespace ModularNPC
                     _currentWorldRotation, goal, TurnSpeed * Mathf.Max(0f, deltaTime));
             }
             bone.rotation = _currentWorldRotation;
+            _lastWrittenRotation = bone.rotation;
+            _hasLastWritten = true;
             _remainingAngle = Quaternion.Angle(_currentWorldRotation, goal);
 
             bool eyesSettled = TickEyes(deltaTime);
@@ -425,6 +451,7 @@ namespace ModularNPC
             _looking = false;
             _target = null;
             _hasCurrentRotation = false;
+            _hasLastWritten = false;
             _remainingAngle = 0f;
         }
 

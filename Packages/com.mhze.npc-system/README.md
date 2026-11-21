@@ -80,6 +80,14 @@ for older SerializeReference instances. StopLooking, target destruction and deac
 the eyes; deactivation restores neutral immediately. Eye neutral is the bound rest pose, as with
 the head: animate the lids for blinks/expressions, rather than also animating eyeball gaze.
 
+### Head weight
+
+`NpcLookAtTarget.HeadWeight` (also through the optional `INpcLookWeight` contract) sets how far the
+head turns toward the target while looking: `1` (the default) aims it fully, `0.5` turns it half way
+from this frame's animated pose, `0` keeps the animated pose. The eyes still aim at the target itself,
+within their angle limits, so a half-weighted head with tracking eyes reads as a softer glance. It is
+a runtime value (not serialized); callers that lower it should set it back to `1` when they are done.
+
 ### Head follow drag
 
 `NpcLookAtTarget.DragDelay` (Inspector: **Drag Delay**) is the head follow smoothing time in
