@@ -128,6 +128,26 @@ namespace ModularNPC.Tests
             Assert.That(look.HeadWeight, Is.EqualTo(1f));
         }
 
+        [Test] public void EyeWeightTurnsTheEyesPartWay()
+        {
+            look.BodyTurnThresholdDegrees = 0f;
+            look.EyesFollowInstantly = true;
+            look.HeadWeight = 0f;
+            var left = root.transform.Find("Head/LeftEye");
+            Quaternion rest = left.localRotation;
+            target.transform.position = Quaternion.Euler(0f, 20f, 0f) * Vector3.forward * 2f;
+            look.LookAt(target.transform);
+            look.Tick(1f / 60f);
+            float full = Quaternion.Angle(rest, left.localRotation);
+            look.EyeWeight = 0.5f;
+            look.Tick(1f / 60f);
+            float half = Quaternion.Angle(rest, left.localRotation);
+            Assert.That(full, Is.GreaterThan(10f));
+            Assert.That(half, Is.EqualTo(full * 0.5f).Within(0.2f));
+            look.EyeWeight = -1f;
+            Assert.That(((INpcLookWeight)look).EyeWeight, Is.EqualTo(0f));
+        }
+
         [Test] public void ZeroDragTracksImmediatelyIncludingRetargeting()
         {
             look.BodyTurnThresholdDegrees = 0f;

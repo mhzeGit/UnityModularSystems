@@ -94,6 +94,7 @@ namespace ModularNPC
         [NonSerialized] private bool _hasCurrentRotation;
         [NonSerialized] private bool _looking;
         [NonSerialized] private float _headWeight = 1f;
+        [NonSerialized] private float _eyeWeight = 1f;
         [NonSerialized] private Quaternion _lastWrittenRotation;
         [NonSerialized] private bool _hasLastWritten;
         [NonSerialized] private NpcCommandHandle _bodyTurn = NpcCommandHandle.Invalid;
@@ -140,6 +141,16 @@ namespace ModularNPC
         {
             get => _headWeight;
             set => _headWeight = Mathf.Clamp01(value);
+        }
+
+        /// <summary>
+        /// How far the eyes turn toward the target while looking: 1 (the default) aims them fully (within their angle
+        /// limits), 0.5 half way from their rest pose, 0 keeps them at rest. Runtime only; reset it to 1 when done.
+        /// </summary>
+        public float EyeWeight
+        {
+            get => _eyeWeight;
+            set => _eyeWeight = Mathf.Clamp01(value);
         }
 
         /// <summary>Metres from the bone's pivot to the eyes. Safe to change at runtime.</summary>
@@ -534,6 +545,7 @@ namespace ModularNPC
                             new Vector2(local.x, local.z).magnitude) * Mathf.Rad2Deg, -pitchLimit, pitchLimit);
                         Vector3 aim = basis * (Quaternion.Euler(pitch, yaw, 0f) * Vector3.forward);
                         goal = Quaternion.FromToRotation(eye.Forward, aim) * eye.Rest;
+                        if (_eyeWeight < 1f) goal = Quaternion.Slerp(eye.Rest, goal, _eyeWeight);
                     }
                 }
                 // While looking, instant eyes land on the target this frame. Returning to rest keeps the

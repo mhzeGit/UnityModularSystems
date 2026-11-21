@@ -31,12 +31,15 @@ namespace ModularNPC
     }
 
     /// <summary>
-    /// Optional companion to <see cref="INpcLook"/>: how strongly the head turns toward the target
-    /// (0..1). Eyes, when the look has them, keep aiming at the target itself.
+    /// Optional companion to <see cref="INpcLook"/>: how strongly the head and the eyes turn toward the
+    /// target (0..1 each).
     /// </summary>
     public interface INpcLookWeight
     {
         /// <summary>1 turns the head fully toward the target, 0.5 half way from its animated pose, 0 not at all.</summary>
         float HeadWeight { get; set; }
+
+        /// <summary>1 aims the eyes fully at the target (within their limits), 0.5 half way from rest, 0 not at all.</summary>
+        float EyeWeight { get; set; }
     }
 }

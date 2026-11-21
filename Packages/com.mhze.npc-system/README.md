@@ -87,6 +87,8 @@ head turns toward the target while looking: `1` (the default) aims it fully, `0.
 from this frame's animated pose, `0` keeps the animated pose. The eyes still aim at the target itself,
 within their angle limits, so a half-weighted head with tracking eyes reads as a softer glance. It is
 a runtime value (not serialized); callers that lower it should set it back to `1` when they are done.
+`EyeWeight` does the same for the eyes: `1` aims them fully at the target (within their angle limits),
+`0.5` half way from their rest pose, `0` keeps them at rest.
 
 ### Head follow drag
 
