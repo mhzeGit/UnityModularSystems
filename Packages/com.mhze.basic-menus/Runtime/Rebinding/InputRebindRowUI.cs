@@ -190,6 +190,37 @@ namespace MHZE.BasicMenus
             PerformRebind(action, bindingIndex);
         }
 
+        /// <summary>
+        /// True while this row's binding differs from its default (the player rebound or cleared it), so a view
+        /// can offer its reset button only when there is something to reset. Rows whose default is empty count
+        /// as changed once they hold a control.
+        /// </summary>
+        public bool IsChangedFromDefault
+        {
+            get
+            {
+                if (!TryResolveBinding(out var action, out var bindingIndex)) return false;
+
+                var first = bindingIndex;
+                var last = bindingIndex;
+                if (action.bindings[bindingIndex].isComposite)
+                {
+                    first = bindingIndex + 1;
+                    last = first - 1;
+                    while (last + 1 < action.bindings.Count && action.bindings[last + 1].isPartOfComposite) last++;
+                }
+
+                for (var i = first; i <= last; i++)
+                {
+                    var binding = action.bindings[i];
+                    if (defaultBindingEmpty ? !string.IsNullOrEmpty(binding.overridePath) : binding.hasOverrides)
+                        return true;
+                }
+
+                return false;
+            }
+        }
+
         /// <summary>Remove any override and return to the default binding(s).</summary>
         public void ResetToDefault()
         {
