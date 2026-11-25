@@ -1,4 +1,4 @@
-// Central dialog controller. Plays a DialogSequence on a Canvas DialogView, reveals text with an optional typewriter effect, advances on input or after each line's duration, and raises started/finished/line-changed events. Access the active instance through DialogManager.Instance, or call Play from any script with a sequence reference.
+// Central dialog controller. Plays a DialogSequence on a Canvas DialogView, reveals text with an optional typewriter effect, advances on input or after each line's duration, and raises started/finished/line-changed events. Ask puts a question in the bubble with numbered answer buttons above it (DialogChoiceView) and reports the answer picked. Access the active instance through DialogManager.Instance, or call Play from any script with a sequence reference.
 
 using System;
 using System.Collections.Generic;
@@ -31,6 +31,19 @@ public class DialogManager : MonoBehaviour
     [Tooltip("Optional audio source used to play a line's voice-over clip.")]
     [SerializeField] private AudioSource voiceSource;
 
+    [Header("Choices")]
+    [Tooltip("The answer buttons of a question (Ask). Empty = built at runtime above the speech bubble, in the line's font.")]
+    [SerializeField] private DialogChoiceView choiceView;
+
+    [Tooltip("Optional sound when another answer is highlighted.")]
+    [SerializeField] private AudioClip choiceMoveSound;
+
+    [Tooltip("Optional sound when an answer is picked.")]
+    [SerializeField] private AudioClip choicePickSound;
+
+    [Tooltip("Optional sound when the player tries to pick a disabled answer.")]
+    [SerializeField] private AudioClip choiceDeniedSound;
+
     private readonly List<DialogLine> runtimeLines = new();
 
     private DialogSequence currentSequence;
@@ -42,6 +55,10 @@ public class DialogManager : MonoBehaviour
     private float revealedCharacters;
     private float lineTimer;
     private bool lineRevealed;
+    private bool choosing;
+    private Action<int> choiceCallback;
+    private readonly List<DialogChoice> choices = new();
+    private AudioSource uiSource;
 
     /// <summary>The active manager, or null when none exists in the scene.</summary>
     public static DialogManager Instance { get; private set; }
@@ -55,6 +72,21 @@ public class DialogManager : MonoBehaviour
     public event Action<string, string> LineChanged;
 
     public bool IsPlaying { get; private set; }
+
+    /// <summary>A question asked with <see cref="Ask"/> is waiting for its answer.</summary>
+    public bool IsChoosing => choosing;
+
+    /// <summary>The answers of the question waiting now (empty when none is).</summary>
+    public IReadOnlyList<DialogChoice> CurrentChoices => choices;
+
+    /// <summary>Raised with the index of the answer picked (after the bubble is hidden, before the Ask callback).</summary>
+    public event Action<int> ChoiceMade;
+
+    /// <summary>Raised when a waiting question is dropped without an answer (CancelChoice, Play or Stop over it, disabling).</summary>
+    public event Action ChoiceCancelled;
+
+    /// <summary>The answer buttons in use (built on first need when none is assigned).</summary>
+    public DialogChoiceView ChoiceView => EnsureChoiceView();
 
     public DialogSequence CurrentSequence => currentSequence;
 
@@ -123,6 +155,11 @@ public class DialogManager : MonoBehaviour
 
     private void OnDisable()
     {
+        if (choosing)
+        {
+            DropChoice();
+        }
+
         IsPlaying = false;
         currentIndex = -1;
         currentSequence = null;
@@ -150,6 +187,11 @@ public class DialogManager : MonoBehaviour
         {
             Stop();
             return;
+        }
+
+        if (choosing)
+        {
+            DropChoice();
         }
 
         if (runtimeSequence != null && runtimeSequence != sequence)
@@ -214,6 +256,12 @@ public class DialogManager : MonoBehaviour
     /// <summary>Ends the conversation immediately and hides the dialog UI.</summary>
     public void Stop()
     {
+        if (choosing)
+        {
+            DropChoice();
+            End();
+        }
+
         if (!IsPlaying && currentSequence == null)
         {
             return;
@@ -231,6 +279,12 @@ public class DialogManager : MonoBehaviour
 
     private void Update()
     {
+        if (choosing)
+        {
+            UpdateQuestion();
+            return;
+        }
+
         if (!IsPlaying)
         {
             return;
@@ -257,6 +311,175 @@ public class DialogManager : MonoBehaviour
                 NextLine();
             }
         }
+    }
+
+    /// <summary>
+    /// Asks the player a question: the bubble shows <paramref name="speaker"/> and <paramref name="question"/> (typed out like a
+    /// line) and, once it is fully shown, the answers appear above it as buttons numbered from 1. The mouse cursor is freed
+    /// while they are up. Picking an enabled answer hides everything and calls <paramref name="onChosen"/> with its index;
+    /// a disabled answer is greyed out, struck through and cannot be picked. Replaces any conversation or question already
+    /// showing. The question stays until it is answered, <see cref="CancelChoice"/> is called, or another sequence is played
+    /// over it (which raises <see cref="ChoiceCancelled"/>: ask again if the answer is still needed).
+    /// </summary>
+    public void Ask(string speaker, string question, IList<DialogChoice> options, Action<int> onChosen)
+    {
+        if (options == null || options.Count == 0)
+        {
+            Debug.LogWarning("[DialogManager] Ask needs at least one answer.", this);
+            return;
+        }
+
+        if (IsPlaying || currentSequence != null)
+        {
+            Stop();
+        }
+        else if (choosing)
+        {
+            DropChoice();
+        }
+
+        choices.Clear();
+        choices.AddRange(options);
+        choiceCallback = onChosen;
+        choosing = true;
+        speakerOverride = null;
+        currentSpeaker = speaker ?? string.Empty;
+        fullText = question ?? string.Empty;
+        revealedCharacters = 0f;
+        lineRevealed = charactersPerSecond <= 0f || fullText.Length == 0;
+
+        if (view != null)
+        {
+            view.Show();
+            view.SetSpeaker(currentSpeaker);
+            view.SetText(lineRevealed ? fullText : string.Empty);
+            view.SetContinueVisible(false);
+        }
+
+        if (voiceSource != null)
+        {
+            voiceSource.Stop();
+        }
+
+        LineChanged?.Invoke(currentSpeaker, fullText);
+        if (lineRevealed)
+        {
+            ShowChoices();
+        }
+    }
+
+    /// <summary>Picks an answer of the waiting question as if the player had (tools, tests). False when it is not available.</summary>
+    public bool Choose(int index)
+    {
+        if (!choosing || index < 0 || index >= choices.Count || !choices[index].Enabled)
+        {
+            return false;
+        }
+
+        Action<int> callback = choiceCallback;
+        choosing = false;
+        choiceCallback = null;
+        PlayUi(choicePickSound);
+        if (choiceView != null)
+        {
+            choiceView.Hide();
+        }
+
+        End();
+        choices.Clear();
+        ChoiceMade?.Invoke(index);
+        callback?.Invoke(index);
+        return true;
+    }
+
+    /// <summary>Drops the waiting question without an answer and hides the bubble.</summary>
+    public void CancelChoice()
+    {
+        if (!choosing)
+        {
+            return;
+        }
+
+        DropChoice();
+        End();
+    }
+
+    private void DropChoice()
+    {
+        choosing = false;
+        choiceCallback = null;
+        choices.Clear();
+        if (choiceView != null)
+        {
+            choiceView.Hide();
+        }
+
+        ChoiceCancelled?.Invoke();
+    }
+
+    private void UpdateQuestion()
+    {
+        if (lineRevealed)
+        {
+            if (choiceView != null && !choiceView.IsShown)
+            {
+                ShowChoices();
+            }
+
+            return;
+        }
+
+        if (WasAdvancePressed())
+        {
+            RevealAll();
+            return;
+        }
+
+        Reveal();
+    }
+
+    private void ShowChoices()
+    {
+        DialogChoiceView buttons = EnsureChoiceView();
+        if (buttons == null)
+        {
+            Debug.LogWarning("[DialogManager] No DialogView to show the answers on.", this);
+            return;
+        }
+
+        buttons.Show(choices, i => Choose(i), _ => PlayUi(choiceMoveSound), _ => PlayUi(choiceDeniedSound));
+    }
+
+    private DialogChoiceView EnsureChoiceView()
+    {
+        if (choiceView != null || view == null)
+        {
+            return choiceView;
+        }
+
+        Transform parent = view.PanelRoot != null ? view.PanelRoot.transform : view.transform;
+        var go = new GameObject("DialogChoices", typeof(RectTransform));
+        go.transform.SetParent(parent, false);
+        choiceView = go.AddComponent<DialogChoiceView>();
+        choiceView.MatchText(view.DialogText);
+        return choiceView;
+    }
+
+    private void PlayUi(AudioClip clip)
+    {
+        if (clip == null)
+        {
+            return;
+        }
+
+        if (uiSource == null)
+        {
+            uiSource = gameObject.AddComponent<AudioSource>();
+            uiSource.playOnAwake = false;
+            uiSource.spatialBlend = 0f;
+        }
+
+        uiSource.PlayOneShot(clip);
     }
 
     private void NextLine()
@@ -332,7 +555,12 @@ public class DialogManager : MonoBehaviour
         if (view != null)
         {
             view.SetText(fullText);
-            view.SetContinueVisible(true);
+            view.SetContinueVisible(!choosing);
+        }
+
+        if (choosing)
+        {
+            ShowChoices();
         }
     }
 

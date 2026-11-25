@@ -1,8 +1,8 @@
 {
   "name": "com.mhze.dialog-system",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "displayName": "Dialog System",
-  "description": "Simple, adjustable Canvas dialog system with editable ScriptableObject sequences, live dialog workbench, a Canvas UI view, central DialogManager, and proximity triggers.",
+  "description": "Simple, adjustable Canvas dialog system with editable ScriptableObject sequences, live dialog workbench, a Canvas UI view, questions with answer buttons, central DialogManager, and proximity triggers.",
   "unity": "2022.3",
   "author": {
     "name": "MHZE",

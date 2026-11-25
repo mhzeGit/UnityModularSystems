@@ -16,7 +16,8 @@ https://github.com/mhzeGit/mhzeModularSystems.git?path=/Packages/com.mhze.dialog
 | `DialogLine` | One spoken line: speaker, text, auto-advance duration, optional voice-over. |
 | `DialogSequence` | ScriptableObject asset holding an ordered list of lines. |
 | `DialogView` | Canvas UI: a speech bubble that sizes itself to its text and shows `{Name}:"Text"`, plus a continue hint at the bottom-right of the screen. |
-| `DialogManager` | Plays sequences, typewriter reveal, advance input, auto-advance, events. |
+| `DialogManager` | Plays sequences, typewriter reveal, advance input, auto-advance, events; asks questions (`Ask`). |
+| `DialogChoiceView` / `DialogChoice` | The numbered answer buttons above the bubble, and one answer (label, enabled). |
 | `DialogWorkbenchWindow` | Editor-only live and completed dialog history, with persistent sequence editing during Play Mode. |
 | `DialogProximityTrigger` | Starts a sequence when the target (player) comes within range, optionally only while another actor is near the trigger. |
 
@@ -88,6 +89,32 @@ Rounded corners are a standalone, reusable component rather than a dialog settin
 - While a line is fully shown, a **ContinueHint** label appears in the bottom-right corner of the
   screen ("Click LMB to continue"). Edit the wording on that label — `DialogView` only shows and
   hides it, and it is independent of the bubble's size.
+
+## Questions and answers (`DialogManager.Ask`)
+
+```csharp
+var answers = new[] { new DialogChoice("Sure"), new DialogChoice("Hell no", enabled: false) };
+DialogManager.Instance.Ask("Niko", "Do you wanna play with me?", answers, index => { /* 0 = Sure */ });
+```
+
+- The question is typed out in the speech bubble like a line (speaker and text). Once it is fully shown, the
+  answers appear as rounded buttons stacked above the bubble, numbered 1, 2, 3... (`DialogChoiceView`). Advancing
+  (Space, Enter, click) while it types shows it at once; it never skips the question.
+- The player picks with the mouse (hover highlights, click picks), the number keys, Up/Down or W/S plus Enter or
+  Space, or a gamepad (d-pad or left stick, south button). Input is ignored for **Input Delay** (0.3 s) after the
+  answers appear, so a key held to skip the question cannot pick an answer.
+- A `DialogChoice` with `Enabled = false` is shown greyed out and struck through. Trying to pick it shakes the
+  button (and plays **Choice Denied Sound**); it is never picked.
+- The mouse cursor is freed and shown while the answers are up and put back afterwards (**Unlock Cursor** on the
+  view). Turning off the player's own controls during the question is the caller's job.
+- Picking an answer hides the bubble and the buttons, raises `ChoiceMade(index)` and calls the `Ask` callback.
+  `IsChoosing`, `CurrentChoices`, `Choose(index)` (pick as if the player did; false for a disabled answer) and
+  `CancelChoice()` are available for scripting and tests.
+- Playing a sequence, `Stop()`, a new `Ask` or disabling the manager drops a waiting question without an answer and
+  raises `ChoiceCancelled`: ask again if the answer is still needed.
+- With no **Choice View** assigned on the `DialogManager`, one is built at runtime under the bubble's panel, in the
+  line's font and size. Its colours, sizes and spacing are on the `DialogChoiceView` component. Optional
+  **Choice Move / Pick / Denied** sounds on the manager play on a 2D source.
 
 ## Optional extras
 
