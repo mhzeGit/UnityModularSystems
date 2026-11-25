@@ -1,6 +1,6 @@
 {
   "name": "com.mhze.dialog-system",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "displayName": "Dialog System",
   "description": "Simple, adjustable Canvas dialog system with editable ScriptableObject sequences, live dialog workbench, a Canvas UI view, questions with answer buttons, central DialogManager, and proximity triggers.",
   "unity": "2022.3",

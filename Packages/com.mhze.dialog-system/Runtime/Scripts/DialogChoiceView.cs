@@ -31,8 +31,9 @@ public class DialogChoiceView : MonoBehaviour
     [Tooltip("The answer that Enter would pick (also the one under the mouse).")]
     [SerializeField] private Color highlightColor = new Color(1f, 0.86f, 0.45f, 0.96f);
     [SerializeField] private Color highlightTextColor = new Color(0.13f, 0.08f, 0.04f, 1f);
-    [SerializeField] private Color disabledColor = new Color(0.1f, 0.1f, 0.1f, 0.5f);
-    [SerializeField] private Color disabledTextColor = new Color(0.62f, 0.62f, 0.62f, 0.7f);
+    [Tooltip("A disabled answer: still clearly readable, but grey and struck through.")]
+    [SerializeField] private Color disabledColor = new Color(0.16f, 0.16f, 0.16f, 0.74f);
+    [SerializeField] private Color disabledTextColor = new Color(0.68f, 0.68f, 0.68f, 0.95f);
 
     [Header("Input")]
     [Tooltip("Seconds after the answers appear before input counts, so a key held to skip the question cannot pick an answer.")]
@@ -134,7 +135,7 @@ public class DialogChoiceView : MonoBehaviour
             row.rect.anchoredPosition = row.home;
             row.rect.localScale = Vector3.one;
             float textWidth = MeasureWidth(row.label, (i + 1) + "    " + row.text);
-            row.strike.sizeDelta = new Vector2(textWidth + 14f, Mathf.Max(2f, fontSize * 0.1f));
+            row.strike.sizeDelta = new Vector2(textWidth + 14f, Mathf.Max(3f, fontSize * 0.12f));
             row.strike.gameObject.SetActive(!row.enabled);
         }
 
