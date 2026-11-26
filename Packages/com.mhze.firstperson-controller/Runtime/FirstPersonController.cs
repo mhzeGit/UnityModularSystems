@@ -53,6 +53,7 @@ namespace MHZE.FirstPersonController
         private float actualHorizontalSpeed;    // post-collision |v.xz|
         private float speedSampleDistance;
         private float speedSampleTime;
+        private readonly System.Collections.Generic.HashSet<object> bodyHolds = new System.Collections.Generic.HashSet<object>();
         private UnityEngine.InputSystem.Keyboard keyboard;
         private UnityEngine.InputSystem.Mouse mouse;
 
@@ -167,6 +168,12 @@ namespace MHZE.FirstPersonController
         /// </summary>
         public float CameraHeightOffset { get; set; }
 
+        /// <summary>
+        /// Roll of the view in degrees, added to the camera every frame without touching the look. Used by
+        /// scripted camera moves (banking, a knock); set it back to 0 afterwards.
+        /// </summary>
+        public float CameraRoll { get; set; }
+
         public event Action<FPCState> OnStateChanged;
         public event Action OnCrouchStarted;
         public event Action OnCrouchEnded;
@@ -195,6 +202,40 @@ namespace MHZE.FirstPersonController
         public void EndSoftLookLock(object owner) => look?.EndSoftLookLock(owner);
         public bool IsSoftLookLocked => look != null && look.IsSoftLookLocked;
 
+        /// <summary>
+        /// Turns the view by this much (degrees; positive yaw turns right, positive pitch looks down) without
+        /// taking it from the player: their own look input adds on top. A scripted camera passes the change
+        /// since the last frame, after <see cref="HoldBody"/>.
+        /// </summary>
+        public void TurnView(float yawDegrees, float pitchDegrees) => look?.Turn(yawDegrees, pitchDegrees);
+
+        // --- Held body API ---------------------------------------
+
+        /// <summary>True while any owner holds the body (see <see cref="HoldBody"/>).</summary>
+        public bool IsBodyHeld => bodyHolds.Count > 0;
+
+        /// <summary>
+        /// Holds the body for a scripted moment without taking the view: no walking, running, jumping, crouching,
+        /// gravity, force move, head bob, landing or speed effects, while looking and the cursor work as normal.
+        /// The caller may place the player with <see cref="SetPosition"/> and turn the view with
+        /// <see cref="TurnView"/>. Use this instead of <see cref="DisableControls"/> when the player should keep
+        /// looking around. Each owner releases its own hold with <see cref="ReleaseBody"/> (also on cancel);
+        /// a destroyed Unity object that held it is released automatically.
+        /// </summary>
+        public void HoldBody(object owner)
+        {
+            if (owner == null) throw new ArgumentNullException(nameof(owner));
+            if (!bodyHolds.Add(owner) || bodyHolds.Count > 1) return;
+            StopForceMove();
+            RestBody();
+        }
+
+        /// <summary>Releases this owner's hold; the body moves again when no owner is left. Safe to call without a hold.</summary>
+        public void ReleaseBody(object owner)
+        {
+            if (owner != null && bodyHolds.Remove(owner) && bodyHolds.Count == 0) RestBody();
+        }
+
         // --- Force Move API --------------------------------------
 
         public void ForceMoveTo(Vector3 position, float? speed = null, Action onArrived = null)
@@ -213,10 +254,13 @@ namespace MHZE.FirstPersonController
 
         // --- Direct Control API ----------------------------------
 
+        /// <summary>
+        /// Places the player. The view, including look input that is still being smoothed, is left alone, so this
+        /// may be called every frame while the player looks around.
+        /// </summary>
         public void SetPosition(Vector3 position)
         {
             movement?.Teleport(position, transform.rotation);
-            look?.SyncWithTransform();
             headbob?.Snap();
             cameraEffects?.Snap();
             SnapCameraSmoother();
@@ -374,10 +418,17 @@ namespace MHZE.FirstPersonController
                     LockCursor();
             }
 
-            input.Poll();
-            movement.Update(input, Time.deltaTime);
+            if (bodyHolds.Count > 0 && bodyHolds.RemoveWhere(IsDestroyed) > 0 && bodyHolds.Count == 0)
+                RestBody();
+            bool held = IsBodyHeld;
 
-            forceMove.Update(Time.deltaTime);
+            input.Poll();
+            if (!held)
+            {
+                movement.Update(input, Time.deltaTime);
+                forceMove.Update(Time.deltaTime);
+            }
+
             look.Update(input, Time.deltaTime);
             forceLook.Update(Time.deltaTime);
 
@@ -390,8 +441,11 @@ namespace MHZE.FirstPersonController
             Vector3 displacement = transform.position - lastPosition;
             lastPosition = transform.position;
 
-            speedSampleDistance += new Vector3(displacement.x, 0f, displacement.z).magnitude;
-            speedSampleTime += Time.deltaTime;
+            if (!held)
+            {
+                speedSampleDistance += new Vector3(displacement.x, 0f, displacement.z).magnitude;
+                speedSampleTime += Time.deltaTime;
+            }
             if (speedSampleTime >= settings.speedMeasurementTime)
             {
                 actualHorizontalSpeed = speedSampleTime > 0.0001f
@@ -402,18 +456,21 @@ namespace MHZE.FirstPersonController
             }
 
             ApplyCameraCrouchOffset();
-            ApplyFovSpeedEffect();
+            if (!held) ApplyFovSpeedEffect();
 
             ApplyCameraSmoothing();
 
-            if (cameraEffects != null)
-                cameraEffects.Revert();
+            if (!held)
+            {
+                if (cameraEffects != null)
+                    cameraEffects.Revert();
 
-            if (headbob != null)
-                headbob.Update(actualHorizontalSpeed, movement.IsGrounded, Time.deltaTime);
+                if (headbob != null)
+                    headbob.Update(actualHorizontalSpeed, movement.IsGrounded, Time.deltaTime);
 
-            if (cameraEffects != null)
-                cameraEffects.Apply(Time.deltaTime);
+                if (cameraEffects != null)
+                    cameraEffects.Apply(Time.deltaTime);
+            }
 
             UpdateState();
             input.ConsumeFrame();
@@ -551,15 +608,31 @@ namespace MHZE.FirstPersonController
                 ref cameraSmoothVelocity,
                 settings.cameraSmoothTime);
 
-            cameraSmoother.transform.rotation = cachedCameraPivot.rotation;
+            cameraSmoother.transform.rotation = ViewRotation();
         }
+
+        private Quaternion ViewRotation() => cachedCameraPivot.rotation * Quaternion.Euler(0f, 0f, CameraRoll);
+
+        // A body that starts or stops being held carries no speed, effect or measured motion across.
+        private void RestBody()
+        {
+            movement?.StopMotion();
+            headbob?.Snap();
+            cameraEffects?.Snap();
+            lastPosition = transform.position;
+            actualHorizontalSpeed = 0f;
+            speedSampleDistance = 0f;
+            speedSampleTime = 0f;
+        }
+
+        private static bool IsDestroyed(object owner) => owner is UnityEngine.Object o && o == null;
 
         private void SnapCameraSmoother()
         {
             if (cameraSmoother == null || cachedCameraPivot == null) return;
 
             cameraSmoother.transform.position = cachedCameraPivot.position;
-            cameraSmoother.transform.rotation = cachedCameraPivot.rotation;
+            cameraSmoother.transform.rotation = ViewRotation();
             cameraSmoothVelocity = Vector3.zero;
         }
 

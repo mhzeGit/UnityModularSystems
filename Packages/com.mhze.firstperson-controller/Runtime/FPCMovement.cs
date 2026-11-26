@@ -349,6 +349,15 @@ namespace MHZE.FirstPersonController
             return (settings.standHeight - currentHeight) / range;
         }
 
+        /// <summary>Drops all speed and any buffered jump, as when a scripted moment takes or returns the body.</summary>
+        public void StopMotion()
+        {
+            moveVelocity = Vector3.zero;
+            verticalVelocity = 0f;
+            jumpBufferTimer = -1f;
+            coyoteTimer = -1f;
+        }
+
         public void Teleport(Vector3 position, Quaternion rotation)
         {
             driver.Teleport(position, rotation);

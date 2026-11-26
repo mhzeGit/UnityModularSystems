@@ -285,6 +285,21 @@ namespace MHZE.FirstPersonController
             }
         }
 
+        /// <summary>
+        /// Turn the shown view and the player's pending target together (degrees; positive pitch looks down),
+        /// so look input that is still being smoothed is kept.
+        /// </summary>
+        public void Turn(float yawDegrees, float pitchDegrees)
+        {
+            float min = settings.verticalRange.x, max = settings.verticalRange.y;
+            targetYaw += yawDegrees;
+            currentYaw += yawDegrees;
+            targetPitch = Mathf.Clamp(targetPitch + pitchDegrees, min, max);
+            currentPitch = Mathf.Clamp(currentPitch + pitchDegrees, min, max);
+            if (IsSoftLookLocked) softLockCenter += new Vector2(yawDegrees, pitchDegrees);
+            ApplyRotation();
+        }
+
         public void AddYaw(float degrees)
         {
             targetYaw += degrees;

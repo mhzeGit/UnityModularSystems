@@ -8,7 +8,12 @@ is the entry point; `FPCSettings` holds the tuning values.
 
 - `ForceLookAt`, `StopForceLook`: turn the view toward a point or transform.
 - `ForceMoveTo`, `StopForceMove`: walk the player to a position.
-- `SetPosition`, `SetRotation`, `SetPositionAndRotation`: place the player.
+- `SetPosition` moves the player and leaves the view alone (safe every frame while they look around);
+  `SetRotation` and `SetPositionAndRotation` also set where they face.
+- `HoldBody(owner)` / `ReleaseBody(owner)` stop walking, jumping, gravity and motion effects for a scripted
+  moment while looking keeps working. Prefer this to `DisableControls` for scripted moments.
+- `TurnView(yaw, pitch)` turns the view by a delta with the player's own look input added on top;
+  `CameraRoll` banks it. Together with `HoldBody` they drive a camera ride the player can still look around in.
 - `EnableControls` / `DisableControls` switch every input off or on (looking too).
 - `EnableMove`, `EnableRun`, `EnableJump`, `EnableCrouch`, `EnableLook` switch one input.
 - `CameraHeightOffset` raises or lowers the eyes (metres, negative lowers).
@@ -45,7 +50,7 @@ seat.Cancel(exitPoint);                                    // the same, instantl
 
 - The seat transform's **position** is the top of the seat, where the feet would rest if the
   player stood on it. Give the seat a collider so the capsule is held there. Its **forward** is
-  the way the player faces when they sit.
+  the way the player faces when they sit; `SitDown(seat, false)` moves them without turning the view.
 - `Seated` and `StoodUp` fire when the movement has finished; `IsSeated` is true from the moment
   `SitDown` is called until `StandUp` is called.
 - The eyes drop through `FirstPersonController.CameraHeightOffset` (added to the crouch camera height

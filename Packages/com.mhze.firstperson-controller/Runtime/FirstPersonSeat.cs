@@ -83,7 +83,13 @@ namespace MHZE.FirstPersonController
         /// Sits the player down on a seat. Walking, running, jumping and crouching are switched off
         /// until <see cref="StandUp"/>; looking stays on.
         /// </summary>
-        public void SitDown(Transform seat)
+        public void SitDown(Transform seat) => SitDown(seat, true);
+
+        /// <summary>
+        /// As <see cref="SitDown(Transform)"/>. With <paramref name="turnToSeat"/> off the view is not turned to the
+        /// seat's facing: the player is only moved, and keeps looking where they look.
+        /// </summary>
+        public void SitDown(Transform seat, bool turnToSeat)
         {
             if (seat == null || !Resolve())
             {
@@ -95,7 +101,7 @@ namespace MHZE.FirstPersonController
             IsSeated = true;
             controller.StopForceMove();
             SetWalking(false);
-            _routine = StartCoroutine(SitRoutine(seat));
+            _routine = StartCoroutine(SitRoutine(seat, turnToSeat));
         }
 
         /// <summary>
@@ -139,7 +145,7 @@ namespace MHZE.FirstPersonController
 
         // ---------------------------------------------------------------- routines
 
-        private IEnumerator SitRoutine(Transform seat)
+        private IEnumerator SitRoutine(Transform seat, bool turnToSeat)
         {
             Vector3 from = controller.transform.position;
             Quaternion fromRotation = controller.transform.rotation;
@@ -153,12 +159,14 @@ namespace MHZE.FirstPersonController
                 Vector3 position = Vector3.Lerp(from, seat.position, k);
                 // A small hop so the body rises over the edge of the seat instead of through it.
                 position.y += Mathf.Sin(k * Mathf.PI) * 0.12f;
-                controller.SetPositionAndRotation(position, Quaternion.Slerp(fromRotation, toRotation, k));
+                if (turnToSeat) controller.SetPositionAndRotation(position, Quaternion.Slerp(fromRotation, toRotation, k));
+                else controller.SetPosition(position);
                 controller.CameraHeightOffset = Mathf.Lerp(startOffset, -drop, k);
                 yield return null;
             }
 
-            controller.SetPositionAndRotation(seat.position, toRotation);
+            if (turnToSeat) controller.SetPositionAndRotation(seat.position, toRotation);
+            else controller.SetPosition(seat.position);
             controller.CameraHeightOffset = -drop;
             _routine = null;
             Seated?.Invoke();
@@ -174,7 +182,7 @@ namespace MHZE.FirstPersonController
                 float k = Smooth(t / standSeconds);
                 Vector3 position = Vector3.Lerp(from, to, k);
                 position.y += Mathf.Sin(k * Mathf.PI) * 0.08f;
-                controller.SetPositionAndRotation(position, controller.transform.rotation);
+                controller.SetPosition(position);
                 controller.CameraHeightOffset = Mathf.Lerp(startOffset, 0f, k);
                 yield return null;
             }
@@ -182,7 +190,7 @@ namespace MHZE.FirstPersonController
             controller.CameraHeightOffset = 0f;
             if (exit != null)
             {
-                controller.SetPositionAndRotation(exit.position, controller.transform.rotation);
+                controller.SetPosition(exit.position);
             }
 
             SetWalking(true);
