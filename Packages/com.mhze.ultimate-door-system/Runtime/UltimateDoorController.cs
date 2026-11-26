@@ -191,14 +191,17 @@ namespace MHZE.UltimateDoorSystem
     }
 
     private IEnumerator AnimateMove(Quaternion startRot, Vector3 startPos, Quaternion targetRot, Vector3 targetPos, bool opening)
+        => AnimateMove(startRot, startPos, targetRot, targetPos, opening, _animationDuration, _movementCurve);
+
+    private IEnumerator AnimateMove(Quaternion startRot, Vector3 startPos, Quaternion targetRot, Vector3 targetPos, bool opening, float duration, AnimationCurve curve)
     {
         float elapsed = 0f;
 
-        while (elapsed < _animationDuration)
+        while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
-            float t = Mathf.Clamp01(elapsed / _animationDuration);
-            float curveT = _movementCurve.Evaluate(t);
+            float t = Mathf.Clamp01(elapsed / duration);
+            float curveT = curve.Evaluate(t);
 
             if (_mode == DoorMode.Rotating)
                 _transform.localRotation = Quaternion.SlerpUnclamped(startRot, targetRot, curveT);
@@ -261,17 +264,41 @@ namespace MHZE.UltimateDoorSystem
 
         _rattleBaseRot = _transform.localRotation;
         _rattleBasePos = _transform.localPosition;
-        _rattleRoutine = StartCoroutine(RattleRoutine(profile));
+        _rattleRoutine = StartCoroutine(RattleRoutine(profile, _rattleAmplitude, true));
     }
 
-    private IEnumerator RattleRoutine(DoorRattleProfile profile)
+    /// <summary>
+    /// Shakes the shut door on its hinge (or along its slide) with <paramref name="profile"/>'s curve: a knock, a bang or a
+    /// shove from the other side. Works whether the door is locked or not and plays no sound (the caller plays its own
+    /// knock). <paramref name="amplitude"/> scales the profile's peak; a negative one swings the other way first. A shake
+    /// already running restarts from the pose it started from, and the door always ends exactly there; opening, closing,
+    /// unlocking or disabling the door cancels it. Returns false (and does nothing) while the door is open or moving, or for
+    /// a door animated by an Animation or Animator component.
+    /// </summary>
+    /// <param name="profile">Curve, duration and peak of the shake. Null = the door's own rattle profile (or the default).</param>
+    public bool Shake(DoorRattleProfile profile = null, float amplitude = 1f)
+    {
+        if (_transform == null) _transform = transform;
+        if (_isAnimating || _state == DoorState.Open) return false;
+        if (_animationType != AnimationType.Procedural && _animationType != AnimationType.None) return false;
+        if (profile == null) profile = _rattleProfile != null ? _rattleProfile : DoorRattleProfile.Default;
+        if (Mathf.Approximately(amplitude, 0f) || profile.duration <= 0f) return false;
+
+        CancelRattle();
+        _rattleBaseRot = _transform.localRotation;
+        _rattleBasePos = _transform.localPosition;
+        _rattleRoutine = StartCoroutine(RattleRoutine(profile, amplitude, false));
+        return true;
+    }
+
+    private IEnumerator RattleRoutine(DoorRattleProfile profile, float amplitude, bool lockedOnly)
     {
         float elapsed = 0f;
         while (elapsed < profile.duration)
         {
-            if (_state != DoorState.Locked || _isAnimating) break;
+            if ((lockedOnly ? _state != DoorState.Locked : _state == DoorState.Open) || _isAnimating) break;
             elapsed += Time.deltaTime;
-            float v = profile.offsetCurve.Evaluate(Mathf.Clamp01(elapsed / profile.duration)) * _rattleAmplitude;
+            float v = profile.offsetCurve.Evaluate(Mathf.Clamp01(elapsed / profile.duration)) * amplitude;
 
             if (_mode == DoorMode.Rotating)
                 _transform.localRotation = _rattleBaseRot * Quaternion.AngleAxis(v * profile.peakDegrees, _rotationAxis.normalized);
@@ -386,7 +413,25 @@ namespace MHZE.UltimateDoorSystem
         }
     }
 
-    public void Open(Transform interactor = null)
+    public void Open(Transform interactor = null) => OpenSwing(interactor, _animationDuration, _movementCurve, true);
+
+    /// <summary>
+    /// Opens the door like <see cref="Open(Transform)"/>, but with its own timing and motion for this one swing: a door kicked
+    /// or burst open, slamming against its stop and bouncing back a little. <paramref name="curve"/> runs over
+    /// <paramref name="duration"/> seconds from 0 (where the door is now) to 1 (open); it is not clamped, so values over 1
+    /// swing past the open pose. It should end at 1. A locked door only rattles, as with <see cref="Open(Transform)"/>.
+    /// Only a Procedural door uses the duration and curve; the other animation types open as usual. A separate name from
+    /// <c>Open</c> on purpose: event bindings look methods up by name.
+    /// </summary>
+    /// <param name="interactor">Who opens it (the door swings away from them); kept in <see cref="LastInteractor"/>.</param>
+    /// <param name="curve">Null = the door's own movement curve.</param>
+    /// <param name="playOpenSound">False when the caller plays its own sound (a slam).</param>
+    public void OpenWith(Transform interactor, float duration, AnimationCurve curve, bool playOpenSound = true)
+    {
+        OpenSwing(interactor, duration > 0f ? duration : _animationDuration, curve ?? _movementCurve, playOpenSound);
+    }
+
+    private void OpenSwing(Transform interactor, float duration, AnimationCurve curve, bool playOpenSound)
     {
         if (_state == DoorState.Locked)
         {
@@ -400,7 +445,7 @@ namespace MHZE.UltimateDoorSystem
         StopExistingRoutine();
         _isOpening = true;
 
-        PlaySound(_openSound);
+        if (playOpenSound) PlaySound(_openSound);
 
         switch (_animationType)
         {
@@ -433,7 +478,7 @@ namespace MHZE.UltimateDoorSystem
                     targetPos = _restPosition + axis * _slideDistance;
                 }
 
-                _moveRoutine = StartCoroutine(AnimateMove(startRot, startPos, targetRot, targetPos, true));
+                _moveRoutine = StartCoroutine(AnimateMove(startRot, startPos, targetRot, targetPos, true, duration, curve));
                 break;
             }
             case AnimationType.Animation:
