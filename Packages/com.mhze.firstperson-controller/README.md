@@ -12,6 +12,9 @@ is the entry point; `FPCSettings` holds the tuning values.
   `SetRotation` and `SetPositionAndRotation` also set where they face.
 - `HoldBody(owner)` / `ReleaseBody(owner)` stop walking, jumping, gravity and motion effects for a scripted
   moment while looking keeps working. Prefer this to `DisableControls` for scripted moments.
+- `HoldLook(owner)` / `ReleaseLook(owner)` hold the view still while the player uses the mouse cursor on UI
+  (answer buttons, a picker): look input is ignored and a click does not recapture the cursor; walking keeps
+  working. The caller shows the cursor. The dialog package does this for its questions by itself.
 - `TurnView(yaw, pitch)` turns the view by a delta with the player's own look input added on top;
   `CameraRoll` banks it. Together with `HoldBody` they drive a camera ride the player can still look around in.
 - `EnableControls` / `DisableControls` switch every input off or on (looking too).

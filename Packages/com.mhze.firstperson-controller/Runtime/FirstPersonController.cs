@@ -54,6 +54,7 @@ namespace MHZE.FirstPersonController
         private float speedSampleDistance;
         private float speedSampleTime;
         private readonly System.Collections.Generic.HashSet<object> bodyHolds = new System.Collections.Generic.HashSet<object>();
+        private readonly System.Collections.Generic.HashSet<object> lookHolds = new System.Collections.Generic.HashSet<object>();
         private UnityEngine.InputSystem.Keyboard keyboard;
         private UnityEngine.InputSystem.Mouse mouse;
 
@@ -236,6 +237,30 @@ namespace MHZE.FirstPersonController
             if (owner != null && bodyHolds.Remove(owner) && bodyHolds.Count == 0) RestBody();
         }
 
+        // --- Held look API ---------------------------------------
+
+        /// <summary>True while any owner holds the look (see <see cref="HoldLook"/>).</summary>
+        public bool IsLookHeld => lookHolds.Count > 0;
+
+        /// <summary>
+        /// Holds the view still while the player uses the mouse cursor on UI (answer buttons, a picker): look input
+        /// is ignored, and neither a click nor regaining focus recaptures the cursor. Showing the cursor stays the
+        /// caller's job. Walking and every other input work as normal, and so do <see cref="TurnView"/> and the
+        /// forced look. Each owner releases its own hold with <see cref="ReleaseLook"/> (also on cancel); a
+        /// destroyed Unity object that held it is released automatically.
+        /// </summary>
+        public void HoldLook(object owner)
+        {
+            if (owner == null) throw new ArgumentNullException(nameof(owner));
+            lookHolds.Add(owner);
+        }
+
+        /// <summary>Releases this owner's hold; looking works again when no owner is left. Safe to call without a hold.</summary>
+        public void ReleaseLook(object owner)
+        {
+            if (owner != null) lookHolds.Remove(owner);
+        }
+
         // --- Force Move API --------------------------------------
 
         public void ForceMoveTo(Vector3 position, float? speed = null, Action onArrived = null)
@@ -294,7 +319,7 @@ namespace MHZE.FirstPersonController
         {
             controlsEnabled = true;
             input?.Enable();
-            LockCursor();
+            if (!IsLookHeld) LockCursor();
         }
 
         public void DisableControls()
@@ -374,7 +399,7 @@ namespace MHZE.FirstPersonController
 
         private void Start()
         {
-            if (controlsEnabled)
+            if (controlsEnabled && !IsLookHeld)
                 LockCursor();
             UpdateState();
 
@@ -397,10 +422,10 @@ namespace MHZE.FirstPersonController
 
         private void OnApplicationFocus(bool hasFocus)
         {
-            if (hasFocus && controlsEnabled)
-                LockCursor();
-            else
+            if (!hasFocus || !controlsEnabled)
                 UnlockCursor();
+            else if (!IsLookHeld)
+                LockCursor();
         }
 
         private void Update()
@@ -408,9 +433,11 @@ namespace MHZE.FirstPersonController
             if (!controlsEnabled || settings == null || movement == null) return;
 
             // --- Cursor management -------------------------------
+            if (lookHolds.Count > 0) lookHolds.RemoveWhere(IsDestroyed);
+
             if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
                 UnlockCursor();
-            else if (Cursor.lockState == CursorLockMode.None && mouse != null)
+            else if (!IsLookHeld && Cursor.lockState == CursorLockMode.None && mouse != null)
             {
                 if (mouse.leftButton.wasPressedThisFrame
                     || mouse.rightButton.wasPressedThisFrame
@@ -422,6 +449,7 @@ namespace MHZE.FirstPersonController
                 RestBody();
             bool held = IsBodyHeld;
 
+            input.lookHeld = IsLookHeld;
             input.Poll();
             if (!held)
             {

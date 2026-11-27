@@ -55,6 +55,9 @@ namespace MHZE.FirstPersonController
         public bool crouchEnabled = true;
         public bool sprintEnabled = true;
 
+        /// <summary>Look reads as zero while true, whatever <see cref="lookEnabled"/> says (the controller's look holds).</summary>
+        public bool lookHeld;
+
         public void SetAllInputsEnabled(bool enabled)
         {
             jumpEnabled = enabled;
@@ -127,7 +130,7 @@ namespace MHZE.FirstPersonController
                 MoveInput = moveEnabled ? moveAction.action.ReadValue<Vector2>() : Vector2.zero;
 
             if (lookAction != null)
-                LookInput = lookEnabled ? lookAction.action.ReadValue<Vector2>() : Vector2.zero;
+                LookInput = lookEnabled && !lookHeld ? lookAction.action.ReadValue<Vector2>() : Vector2.zero;
 
             if (sprintAction != null)
                 SprintHeld = sprintEnabled && sprintAction.action.IsPressed();
