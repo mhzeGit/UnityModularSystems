@@ -106,7 +106,10 @@ DialogManager.Instance.Ask("Niko", "Do you wanna play with me?", answers, index 
 - A `DialogChoice` with `Enabled = false` is shown greyed out and struck through. Trying to pick it shakes the
   button (and plays **Choice Denied Sound**); it is never picked.
 - The mouse cursor is freed and shown while the answers are up and put back afterwards (**Unlock Cursor** on the
-  view). Turning off the player's own controls during the question is the caller's job.
+  view). Turning off the player's own controls during the question is the caller's job, except the camera: with
+  the First Person Controller package (1.7.0 or newer) installed, the view stops following the mouse while the
+  answers are up, and a click beside them does not recapture the cursor (`Runtime/Integrations/FirstPerson`).
+  `DialogChoiceView.ShownChanged` tells other camera or input systems to do the same.
 - Picking an answer hides the bubble and the buttons, raises `ChoiceMade(index)` and calls the `Ask` callback.
   `IsChoosing`, `CurrentChoices`, `Choose(index)` (pick as if the player did; false for a disabled answer) and
   `CancelChoice()` are available for scripting and tests.

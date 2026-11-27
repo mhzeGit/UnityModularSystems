@@ -1,0 +1,25 @@
+{
+  "name": "com.mhze.dialog-system.FirstPerson",
+  "rootNamespace": "MHZE.DialogSystem",
+  "references": [
+    "com.mhze.dialog-system.Runtime",
+    "com.mhze.firstperson-controller.Runtime"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [
+    "MHZE_DIALOG_FIRSTPERSON"
+  ],
+  "versionDefines": [
+    {
+      "name": "com.mhze.firstperson-controller",
+      "expression": "1.7.0",
+      "define": "MHZE_DIALOG_FIRSTPERSON"
+    }
+  ],
+  "noEngineReferences": false
+}

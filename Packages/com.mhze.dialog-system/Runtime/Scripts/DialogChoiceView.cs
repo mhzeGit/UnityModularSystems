@@ -72,6 +72,12 @@ public class DialogChoiceView : MonoBehaviour
 
     public bool IsShown => shown;
 
+    /// <summary>The answers use the mouse: the cursor is freed while they are up (<b>Unlock Cursor</b>).</summary>
+    public bool UsesPointer => unlockCursor;
+
+    /// <summary>Raised when any view's answers appear (true) or go away (false), after the cursor was freed or put back.</summary>
+    public static event Action<DialogChoiceView, bool> ShownChanged;
+
     /// <summary>The answer Enter would pick now (-1 when none can be picked).</summary>
     public int Highlighted => highlight;
 
@@ -144,6 +150,7 @@ public class DialogChoiceView : MonoBehaviour
         highlight = FirstEnabled(count);
         acceptAt = Time.unscaledTime + inputDelay;
         lastMouse = new Vector2(float.NaN, float.NaN);
+        bool wasShown = shown;
         shown = count > 0;
         if (shown && unlockCursor)
         {
@@ -159,10 +166,20 @@ public class DialogChoiceView : MonoBehaviour
         }
 
         Refresh(true);
+        if (shown != wasShown)
+        {
+            if (!shown)
+            {
+                RestoreCursor();
+            }
+
+            ShownChanged?.Invoke(this, shown);
+        }
     }
 
     public void Hide()
     {
+        bool wasShown = shown;
         shown = false;
         onPick = null;
         onMove = null;
@@ -174,6 +191,10 @@ public class DialogChoiceView : MonoBehaviour
         }
 
         RestoreCursor();
+        if (wasShown)
+        {
+            ShownChanged?.Invoke(this, false);
+        }
     }
 
     private void OnDisable()
