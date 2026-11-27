@@ -30,6 +30,8 @@ namespace ModularNPC
         private const string DefaultLookBoneName = "Head";
         private const float DefaultDegreesPerSecond = 360f;
         private const float DefaultSettleToleranceDegrees = 0.5f;
+        // With a swing speed, a target this close to directly behind does not make the head change sides.
+        private const float BehindHoldDegrees = 25f;
 
         [Tooltip("The bone that is turned. Leave empty to find it by name below.")]
         [SerializeField] private Transform _lookTransform;
@@ -67,6 +69,12 @@ namespace ModularNPC
         [SerializeField, Range(-90f, 0f)] private float _minimumPitch = -45f;
         [SerializeField, Range(0f, 90f)] private float _maximumPitch = 60f;
 
+        [Tooltip("With Limit Angles on: the fastest the limited yaw and pitch change, in degrees per second, measured " +
+                 "from the neck. A target that crosses behind the character then swings the head across the front instead " +
+                 "of jumping from one shoulder to the other, a target close to directly behind keeps the head on its side, " +
+                 "and a new look eases in. Body turns slower than this do not make the look lag. 0 = no cap (instant).")]
+        [SerializeField, Min(0f)] private float _limitedDegreesPerSecond;
+
         [Tooltip("While stationary, turn the body to face the target when its horizontal bearing exceeds this angle. 0 disables body turns. Existing rotation commands take precedence.")]
         [SerializeField, Range(0f, 180f)] private float _bodyTurnThresholdDegrees;
 
@@ -97,6 +105,9 @@ namespace ModularNPC
         [NonSerialized] private float _rootScale = 1f;
         [NonSerialized] private Quaternion _restLocalRotation = Quaternion.identity;
         [NonSerialized] private Quaternion _currentWorldRotation;
+        [NonSerialized] private Quaternion _currentLocalRotation = Quaternion.identity;
+        [NonSerialized] private Vector2 _limitedAngles;   // x = yaw, y = pitch, from the neck
+        [NonSerialized] private bool _hasLimitedAngles;
         [NonSerialized] private float _remainingAngle;
         [NonSerialized] private bool _hasCurrentRotation;
         [NonSerialized] private bool _looking;
@@ -209,6 +220,7 @@ namespace ModularNPC
             {
                 // Pick the pose up from wherever the Animator left the bone so the turn starts smoothly.
                 _hasCurrentRotation = false;
+                _hasLimitedAngles = false;
                 _looking = true;
             }
 
@@ -274,7 +286,7 @@ namespace ModularNPC
                 Vector3 aim = AimWithEyes(toTarget / distance, distance, up);
                 // The goal is worked out for the face, then turned back into the bone's own axes.
                 goal = _limitAngles
-                    ? GetLimitedRotation(aim, parent)
+                    ? GetLimitedRotation(aim, bone, deltaTime)
                     : Quaternion.LookRotation(aim, up) * Quaternion.Inverse(faceOffset);
                 if (_headWeight < 1f)
                 {
@@ -291,6 +303,7 @@ namespace ModularNPC
             if (!_hasCurrentRotation)
             {
                 _currentWorldRotation = bone.rotation;
+                _currentLocalRotation = bone.localRotation;
                 _hasCurrentRotation = true;
             }
 
@@ -301,13 +314,18 @@ namespace ModularNPC
                 float delay = DragDelay;
                 float follow = delay <= 0f ? 1f : 1f - Mathf.Exp(-Mathf.Max(0f, deltaTime) / delay);
                 _currentWorldRotation = Quaternion.Slerp(_currentWorldRotation, goal, follow);
+                bone.rotation = _currentWorldRotation;
+                _currentLocalRotation = bone.localRotation;
             }
             else
             {
-                _currentWorldRotation = Quaternion.RotateTowards(
-                    _currentWorldRotation, goal, TurnSpeed * Mathf.Max(0f, deltaTime));
+                // Eased back in the parent's space: a body that turns meanwhile carries the head with it, so a
+                // quick spin can never leave the head facing where the body used to.
+                _currentLocalRotation = Quaternion.RotateTowards(
+                    _currentLocalRotation, _restLocalRotation, TurnSpeed * Mathf.Max(0f, deltaTime));
+                bone.localRotation = _currentLocalRotation;
+                _currentWorldRotation = bone.rotation;
             }
-            bone.rotation = _currentWorldRotation;
             _lastWrittenRotation = bone.rotation;
             _hasLastWritten = true;
             _remainingAngle = Quaternion.Angle(_currentWorldRotation, goal);
@@ -385,6 +403,7 @@ namespace ModularNPC
             // predates the field, and TurnSpeed/SettleTolerance fall back to their defaults for it.
             // Clamping 0 up to the inspector minimum would turn that fallback into 1 degree/second.
             _dragDelay = Mathf.Max(0f, _dragDelay);
+            _limitedDegreesPerSecond = Mathf.Max(0f, _limitedDegreesPerSecond);
             _eyeHeightOffset = Mathf.Max(0f, _eyeHeightOffset);
             _degreesPerSecond = Mathf.Max(0f, _degreesPerSecond);
             _settleToleranceDegrees = Mathf.Max(0f, _settleToleranceDegrees);
@@ -463,22 +482,60 @@ namespace ModularNPC
             return Quaternion.AngleAxis(pitchDownDegrees, pitchAxis.normalized) * directionToTarget;
         }
 
-        private Quaternion GetLimitedRotation(Vector3 worldDirection, Transform parent)
+        private Quaternion GetLimitedRotation(Vector3 worldDirection, Transform bone, float deltaTime)
         {
+            Transform parent = bone.parent;
             Quaternion faceOffset = FaceOffset;
             Quaternion neutralWorldRotation = (parent != null
                 ? parent.rotation * _restLocalRotation
                 : _restLocalRotation) * faceOffset;
-            Vector3 localDirection = Quaternion.Inverse(neutralWorldRotation) * worldDirection;
+            Vector2 goal = YawPitch(neutralWorldRotation, worldDirection);
+            float speed = _limitedDegreesPerSecond;
+            if (speed <= 0f)
+            {
+                goal = ClampAngles(goal);
+            }
+            else
+            {
+                if (!_hasLimitedAngles)
+                {
+                    // Start where the head points now, so a new look eases in from that pose.
+                    _limitedAngles = ClampAngles(
+                        YawPitch(neutralWorldRotation, bone.rotation * faceOffset * Vector3.forward));
+                    _hasLimitedAngles = true;
+                }
 
-            float yaw = Mathf.Atan2(localDirection.x, localDirection.z) * Mathf.Rad2Deg;
-            float horizontalLength = Mathf.Sqrt(
-                localDirection.x * localDirection.x + localDirection.z * localDirection.z);
-            float pitch = -Mathf.Atan2(localDirection.y, horizontalLength) * Mathf.Rad2Deg;
+                // Close to directly behind, both yaw limits are about as near: stay on the side the head is on.
+                if (Mathf.Abs(goal.x) > 180f - BehindHoldDegrees && goal.x * _limitedAngles.x < 0f)
+                {
+                    goal.x = -goal.x;
+                }
 
-            yaw = Mathf.Clamp(yaw, _minimumYaw, _maximumYaw);
-            pitch = Mathf.Clamp(pitch, _minimumPitch, _maximumPitch);
-            return neutralWorldRotation * Quaternion.Euler(pitch, yaw, 0f) * Quaternion.Inverse(faceOffset);
+                // Plain (not shortest-arc) steps: from one limit to the other the head goes through the front.
+                goal = ClampAngles(goal);
+                float step = speed * Mathf.Max(0f, deltaTime);
+                _limitedAngles.x = Mathf.MoveTowards(_limitedAngles.x, goal.x, step);
+                _limitedAngles.y = Mathf.MoveTowards(_limitedAngles.y, goal.y, step);
+                goal = _limitedAngles;
+            }
+
+            return neutralWorldRotation * Quaternion.Euler(goal.y, goal.x, 0f) * Quaternion.Inverse(faceOffset);
+        }
+
+        // Yaw (x) and pitch (y, positive down) of a world direction, seen from the face's neutral rotation.
+        private static Vector2 YawPitch(Quaternion neutralWorldRotation, Vector3 worldDirection)
+        {
+            Vector3 local = Quaternion.Inverse(neutralWorldRotation) * worldDirection;
+            float yaw = Mathf.Atan2(local.x, local.z) * Mathf.Rad2Deg;
+            float horizontalLength = Mathf.Sqrt(local.x * local.x + local.z * local.z);
+            return new Vector2(yaw, -Mathf.Atan2(local.y, horizontalLength) * Mathf.Rad2Deg);
+        }
+
+        private Vector2 ClampAngles(Vector2 yawPitch)
+        {
+            return new Vector2(
+                Mathf.Clamp(yawPitch.x, _minimumYaw, _maximumYaw),
+                Mathf.Clamp(yawPitch.y, _minimumPitch, _maximumPitch));
         }
 
         private void ResetLook()
@@ -490,6 +547,7 @@ namespace ModularNPC
             _looking = false;
             _target = null;
             _hasCurrentRotation = false;
+            _hasLimitedAngles = false;
             _hasLastWritten = false;
             _remainingAngle = 0f;
         }

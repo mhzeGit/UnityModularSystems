@@ -100,6 +100,16 @@ head, in the rest pose. The look then aims the face, keeps the top of the head u
 not the neck's), and measures the yaw/pitch limits and the eye height in the face frame. Zero (the
 default) leaves every existing character unchanged.
 
+### Limit angles and the swing speed (1.19.0)
+
+**Limit Angles** keeps the look inside a yaw/pitch range around the head's rest pose; without it the
+head aims straight at the target, also when the target is behind the character. **Limited Degrees Per
+Second** (`0` = no cap, the default) additionally caps how fast those limited angles change, measured
+from the neck: a target that crosses behind the character swings the head across the front instead of
+jumping from one shoulder to the other, a target within 25 degrees of directly behind keeps the head on
+the side it is on, and a new look eases in. Body turns slower than the cap add no lag. After
+`StopLooking` the head eases back in the neck's own space, so a body that spins meanwhile carries it round.
+
 ### Head follow drag
 
 `NpcLookAtTarget.DragDelay` (Inspector: **Drag Delay**) is the head follow smoothing time in
