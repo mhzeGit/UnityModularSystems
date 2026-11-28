@@ -1,4 +1,4 @@
-// Manages the object pool of InputPromptView instances and assigns them to the correct screen anchor (left, center, or right). Handles view lifecycle — getting a pooled or newly-instantiated view, releasing views back to the pool, releasing all views, and trimming the pool to a maximum size to prevent memory leaks.
+// Manages the object pool of InputPromptView instances and assigns them to the correct screen anchor (left, center, or right). Handles view lifecycle — getting a pooled or newly-instantiated view, releasing views back to the pool, releasing all views, and trimming the pool to a maximum size to prevent memory leaks. Also owns the hold progress ring, creating one at the centre of the root canvas when none is assigned.
 
 using System.Collections.Generic;
 using UnityEngine;
@@ -14,7 +14,34 @@ public class InputPromptUI : MonoBehaviour
     [SerializeField] private RectTransform centerAnchor;
     [SerializeField] private RectTransform rightAnchor;
 
+    [Tooltip("Ring that fills around the screen centre during hold interactions. Empty: one is created at the centre of the root canvas when first needed.")]
+    [SerializeField] private InputPromptHoldRing holdRing;
+
     private readonly List<InputPromptView> promptPool = new();
+
+    /// <summary>The hold progress ring; created on first use when none is assigned.</summary>
+    public InputPromptHoldRing HoldRing
+    {
+        get
+        {
+            if (holdRing == null)
+            {
+                holdRing = CreateHoldRing();
+            }
+
+            return holdRing;
+        }
+    }
+
+    private InputPromptHoldRing CreateHoldRing()
+    {
+        var canvas = GetComponentInParent<Canvas>();
+        var parent = canvas != null ? canvas.rootCanvas.transform : transform;
+        var go = new GameObject("HoldRing", typeof(RectTransform));
+        go.layer = parent.gameObject.layer;
+        go.transform.SetParent(parent, false);
+        return go.AddComponent<InputPromptHoldRing>();
+    }
 
     public InputPromptView GetView(InputPromptLocation location)
     {

@@ -1,4 +1,4 @@
-// Central controller that manages all input prompts on screen. It detects whether the player is using keyboard+mouse or a gamepad, looks up the right binding icon from the icon library, and coordinates prompt visibility. UI management (pool, anchors, views) is delegated to InputPromptUI. Supports both predefined prompts from a collection and fully custom ones with your own text and icon. Automatically refreshes everything when the player switches input devices.
+// Central controller that manages all input prompts on screen. It detects whether the player is using keyboard+mouse or a gamepad, looks up the right binding icon from the icon library, and coordinates prompt visibility. UI management (pool, anchors, views) is delegated to InputPromptUI. Supports both predefined prompts from a collection and fully custom ones with your own text and icon. Automatically refreshes everything when the player switches input devices. Also drives the hold progress ring (ShowHoldProgress, CompleteHoldProgress, CancelHoldProgress) for hold-to-interact prompts.
 
 using System.Collections.Generic;
 using UnityEngine;
@@ -291,6 +291,50 @@ public class InputPromptManager : MonoBehaviour
         }
     }
 
+    /// <summary>Shows the ring around the screen centre and fills it over <paramref name="holdSeconds"/> of game time.</summary>
+    public void ShowHoldProgress(float holdSeconds)
+    {
+        if (!promptSystemEnabled || promptUI == null)
+        {
+            return;
+        }
+
+        promptUI.HoldRing.Begin(holdSeconds);
+    }
+
+    /// <summary>Sets the ring's fill (0 to 1) directly, for holds whose progress is not plain time.</summary>
+    public void SetHoldProgress(float normalized)
+    {
+        if (promptUI == null)
+        {
+            return;
+        }
+
+        promptUI.HoldRing.SetProgress(normalized);
+    }
+
+    /// <summary>The hold succeeded: the ring fills and bursts away.</summary>
+    public void CompleteHoldProgress()
+    {
+        if (promptUI == null)
+        {
+            return;
+        }
+
+        promptUI.HoldRing.Complete();
+    }
+
+    /// <summary>The hold was let go or interrupted: the ring drains away.</summary>
+    public void CancelHoldProgress()
+    {
+        if (promptUI == null)
+        {
+            return;
+        }
+
+        promptUI.HoldRing.Cancel();
+    }
+
     public void HidePromptByKey(string promptKey)
     {
         HidePrompt(promptKey);
@@ -313,6 +357,10 @@ public class InputPromptManager : MonoBehaviour
         if (!enabled)
         {
             HideAllPrompts();
+            if (promptUI != null)
+            {
+                promptUI.HoldRing.HideImmediate();
+            }
         }
     }
 
